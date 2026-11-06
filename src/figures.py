@@ -2,15 +2,18 @@
 PDF) for the paper and 16:9 (300 dpi PNG) for slides.
 
     python -m src.figures grid --data-root tests/fixture --out figures
+    python -m src.figures sweep --sweep <run_dir>/sweep_<run_id>.json --out figures
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 from collections.abc import Callable
 from pathlib import Path
 
 import matplotlib
+import numpy as np
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -102,16 +105,327 @@ def corruption_grid(data_root: str, filename: str | None = None) -> Callable[[st
     return build
 
 
+# ---- sweep figures ---------------------------------------------------------------------
+# Inputs: the sweep JSON and sweep logits written by src.evaluate. Every number plotted
+# comes from those two files; nothing is recomputed from images here.
+
+LABEL = {"gaussian_blur": "Gaussian blur", "brightness": "Brighten",
+         "darkness": "Darken", "occlusion": "Occlusion"}
+STYLE = {  # identity never by colour alone: colour + line style + marker
+    "gaussian_blur": (BLUE, "-", "o"), "brightness": (RED, "--", "s"),
+    "darkness": (INK, ":", "^"), "occlusion": (MUTED, "-.", "D")}
+
+
+def _ramp(frac: float) -> str:
+    """One-hue ramp for ordered series: frac 0 = light grey, 1 = INK."""
+    lo, hi = np.array([0xb0, 0xaf, 0xaa]), np.array([0x0b, 0x0b, 0x0b])
+    return "#" + "".join(f"{int(round(v)):02x}" for v in lo + (hi - lo) * frac)
+
+
+def _sev_colour(s: int) -> str:
+    """Severity colour: clean is BLUE; 1..5 run light grey -> INK."""
+    return BLUE if s == 0 else _ramp((s - 1) / 4)
+
+
+def _rows(sweep: dict, corruption: str) -> list[dict]:
+    return sorted((r for r in sweep["rows"] if r["corruption"] == corruption),
+                  key=lambda r: r["severity"])
+
+
+def _panels(size: str, n: int = 4, aspect: float = 0.85, sharey: bool = True
+            ) -> tuple[Figure, list]:
+    shape = (2, 2) if size == "paper" else (1, n)
+    fig, axes = plt.subplots(*shape, figsize=_figsize(size, aspect), sharex=True,
+                             sharey=sharey, constrained_layout=True)
+    return fig, list(np.ravel(axes))
+
+
+def _t_lbfgs_name(sweep: dict) -> str:
+    t = sweep["temperatures"]["T_lbfgs"]
+    return (f"T = {t:.3g}, LBFGS endpoint (as-fitted, degenerate)" if sweep["t_lbfgs"]["degenerate"]
+            else f"T = {t:.3g}, fitted on clean validation")
+
+
+def _finish(fig: Figure, axes: list, size: str, xlabel: str, ylabel: str, ncols: int) -> None:
+    """Shared axis labels at body size, and one legend anchored just below the figure
+    (savefig bbox_inches="tight" grows the canvas to hold it), so it can collide with
+    neither the suptitle nor the shared x label."""
+    fig.supxlabel(xlabel, fontsize=FONT[size])
+    fig.supylabel(ylabel, fontsize=FONT[size])
+    h, lab = axes[0].get_legend_handles_labels()
+    fig.legend(h, lab, loc="upper center", bbox_to_anchor=(0.5, 0.0), ncols=ncols, frameon=False)
+
+
+def accuracy_vs_severity(sweep: dict) -> Callable[[str], Figure]:
+    from src.degrade import CORRUPTIONS
+
+    def build(size: str) -> Figure:
+        fig, ax = plt.subplots(figsize=_figsize(size, 0.72), constrained_layout=True)
+        for c in CORRUPTIONS:
+            rs = _rows(sweep, c)
+            x = np.array([r["severity"] for r in rs], float)
+            y = np.array([r["accuracy"] for r in rs])
+            lo = y - np.array([r["accuracy_wilson95"][0] for r in rs])
+            hi = np.array([r["accuracy_wilson95"][1] for r in rs]) - y
+            col, ls, mk = STYLE[c]
+            off = (CORRUPTIONS.index(c) - 1.5) * 0.06  # dodge so CIs do not overlap
+            ax.errorbar(x + off, y, yerr=[lo, hi], color=col, ls=ls, marker=mk,
+                        ms=3 if size == "paper" else 7, capsize=2, label=LABEL[c])
+        ax.set(xlabel="Severity level (0 = clean)", ylabel="Test accuracy (fraction)",
+               xticks=range(6))
+        ax.grid(axis="y")
+        fig.legend(*ax.get_legend_handles_labels(), loc="upper center",
+                   bbox_to_anchor=(0.5, 0.0), ncols=4, frameon=False)
+        fig.suptitle("Accuracy under corruption, Wilson 95% CI "
+                     f"(n = {sweep['n_test']} test images)")
+        return fig
+
+    return build
+
+
+def ece_vs_severity(sweep: dict) -> Callable[[str], Figure]:
+    from src.degrade import CORRUPTIONS
+    lb = _t_lbfgs_name(sweep)
+
+    def build(size: str) -> Figure:
+        fig, axes = _panels(size)
+        for ax, c in zip(axes, CORRUPTIONS, strict=True):
+            rs = _rows(sweep, c)
+            x = [r["severity"] for r in rs]
+            for key, col, ls, mk, lab in (("T=1", BLUE, "-", "o", "T = 1 (no temperature)"),
+                                          ("T_lbfgs", RED, "--", "s", lb)):
+                y = [r["temperature"][key]["ece"] for r in rs]
+                lo = [r["temperature"][key]["ece_bootstrap95"][0] for r in rs]
+                hi = [r["temperature"][key]["ece_bootstrap95"][1] for r in rs]
+                ax.fill_between(x, lo, hi, color=col, alpha=0.15, lw=0)
+                ax.plot(x, y, color=col, ls=ls, marker=mk, ms=3 if size == "paper" else 7,
+                        label=lab)
+            ax.set_title(LABEL[c])
+            ax.set_xticks(range(6))
+            ax.grid(axis="y")
+        _finish(fig, axes, size, "Severity level (0 = clean)",
+                "ECE, 15 bins (bands: bootstrap 95% CI)", 1 if size == "paper" else 2)
+        fig.suptitle(f"Calibration error under corruption (n = {sweep['n_test']} test images)")
+        return fig
+
+    return build
+
+
+def _selective_accuracy(score: np.ndarray, correct: np.ndarray
+                        ) -> tuple[np.ndarray, np.ndarray]:
+    order = np.argsort(-score, kind="stable")
+    k = np.arange(1, score.size + 1)
+    return k / score.size, np.cumsum(correct[order]) / k
+
+
+def coverage_curves(sweep: dict, logits: dict) -> Callable[[str], Figure]:
+    from src.degrade import CORRUPTIONS, SEVERITIES
+    from src.evaluate import scores
+    y = logits["labels"]
+
+    def build(size: str) -> Figure:
+        fig, axes = _panels(size)
+        for ax, c in zip(axes, CORRUPTIONS, strict=True):
+            for s in SEVERITIES:
+                lg = logits[f"{c}_s{s}"]
+                cov, acc = _selective_accuracy(scores(lg)["max_softmax"],
+                                               (lg.argmax(1) == y).astype(float))
+                ax.plot(cov, acc, color=_sev_colour(s), lw=1.0 if size == "paper" else 2.2,
+                        label="clean" if s == 0 else f"severity {s}")
+            ax.set_title(LABEL[c])
+            ax.set_xlim(0, 1)
+            ax.grid(axis="y")
+        _finish(fig, axes, size, "Coverage (fraction accepted, most confident first)",
+                "Accuracy on accepted (fraction)", 3 if size == "paper" else 6)
+        fig.suptitle(f"Coverage curves, max softmax at T = 1 (n = {sweep['n_test']} test images)")
+        return fig
+
+    return build
+
+
+def confidence_hist(sweep: dict, logits: dict) -> Callable[[str], Figure]:
+    from src.degrade import CORRUPTIONS, SEVERITIES
+    from src.evaluate import scores
+    bins = np.linspace(0, 1, sweep["config"]["n_bins"] + 1)
+
+    def build(size: str) -> Figure:
+        fig, axes = _panels(size)
+        for ax, c in zip(axes, CORRUPTIONS, strict=True):
+            for s in SEVERITIES:
+                conf = scores(logits[f"{c}_s{s}"])["max_softmax"]
+                w = np.full(conf.size, 1 / conf.size)
+                ax.hist(conf, bins=bins, weights=w, histtype="step", color=_sev_colour(s),
+                        lw=1.0 if size == "paper" else 2.2,
+                        label="clean" if s == 0 else f"severity {s}")
+            ax.set_title(LABEL[c])
+            ax.set_xlim(0, 1)
+            ax.grid(axis="y")
+        _finish(fig, axes, size, "Confidence (max softmax, T = 1; 15 equal-width bins)",
+                "Fraction of test images", 3 if size == "paper" else 6)
+        fig.suptitle(f"Confidence distribution by severity (n = {sweep['n_test']} test images)")
+        return fig
+
+    return build
+
+
+def reliability(sweep: dict) -> Callable[[str], Figure]:
+    """Clean test set: T = 1 against the LBFGS endpoint T."""
+    clean = next(r for r in sweep["rows"] if r["severity"] == 0)
+    panels = (("T=1", "T = 1 (no temperature)"), ("T_lbfgs", _t_lbfgs_name(sweep)))
+
+    def build(size: str) -> Figure:
+        fig, axes = plt.subplots(1, 2, figsize=_figsize(size, 0.58), sharey=True,
+                                 constrained_layout=True)
+        for ax, (key, title) in zip(axes, panels, strict=True):
+            cond = clean["temperature"][key]
+            b = [r for r in cond["reliability_bins"] if r["n"]]
+            centre = [(r["lo"] + r["hi"]) / 2 for r in b]
+            width = (b[0]["hi"] - b[0]["lo"]) * 0.9 if b else 0.06
+            ax.bar(centre, [r["acc"] for r in b], width=width, color=BLUE, label="Accuracy")
+            ax.plot([0, 1], [0, 1], color=MUTED, ls="--", lw=1, label="Perfect calibration")
+            for r, xc in zip(b, centre, strict=True):
+                ax.annotate(f"{r['n']}", (xc, r["acc"]), ha="center", va="bottom",
+                            fontsize=FONT[size] - 2, color=MUTED, xytext=(0, 1),
+                            textcoords="offset points")
+            ax.set(xlim=(0, 1), ylim=(0, 1.08), xlabel="Confidence (max softmax)")
+            ax.set_title(f"{title}\nECE = {cond['ece']:.3f}", fontsize=FONT[size] - 1)
+            ax.grid(axis="y")
+        axes[0].set_ylabel("Accuracy in bin (fraction)")
+        fig.legend(*axes[0].get_legend_handles_labels(), loc="upper center",
+                   bbox_to_anchor=(0.5, 0.0), ncols=2, frameon=False)
+        fig.suptitle(f"Reliability on clean test images (n = {sweep['n_test']}; "
+                     "numbers = images per bin)")
+        return fig
+
+    return build
+
+
+def degeneracy(sweep: dict) -> Callable[[str], Figure]:
+    d = sweep["degeneracy"]
+    n_val = sweep["t_lbfgs"]["n_val"]
+
+    def build(size: str) -> Figure:
+        fig, ax = plt.subplots(figsize=_figsize(size, 0.68), constrained_layout=True)
+        ax.plot(d["T_grid"], d["val_nll"], color=BLUE, label="Validation NLL")
+        ends, end_nll = d["lbfgs_endpoint_by_max_iter"], d["lbfgs_endpoint_nll_by_max_iter"]
+        groups: dict[float, list[str]] = {}
+        for m, t in ends.items():  # max_iter values that stopped at the same T share a label
+            groups.setdefault(round(float(np.log10(t)), 2), []).append(m)  # ~2% apart
+        for ms in groups.values():
+            t, y = ends[ms[0]], end_nll[ms[0]]
+            ax.plot(t, y, marker="s", color=RED, ms=3 if size == "paper" else 7, ls="none")
+            ax.annotate(", ".join(ms), (t, y), xytext=(3, 4), textcoords="offset points",
+                        fontsize=FONT[size] - 2, color=INK)
+        ax.plot([], [], marker="s", color=RED, ls="none",
+                label="LBFGS endpoint (label = max_iter)")
+        ax.set_xscale("log")
+        ax.set(xlabel="Temperature T (log scale)", ylabel="Validation NLL (nats per image)")
+        verdict = ("no minimum: NLL falls as T → 0" if d["minimum_at_lower_edge"]
+                   else f"minimum at T ≈ {d['argmin_T']:.2g}")
+        ax.set_title(f"Temperature fit on clean validation (n = {n_val}, "
+                     f"{d['n_val_errors']} errors): {verdict}", fontsize=FONT[size] - 0.5)
+        ax.grid(axis="y")
+        ax.legend(frameon=False)
+        return fig
+
+    return build
+
+
+def aurc_by_score(sweep: dict) -> Callable[[str], Figure]:
+    from src.degrade import CORRUPTIONS
+    sty = {"max_softmax": (BLUE, "-", "o", "Max softmax"),
+           "neg_entropy": (RED, "--", "s", "Entropy"), "margin": (INK, ":", "^", "Logit margin")}
+
+    def build(size: str) -> Figure:
+        fig, axes = _panels(size)
+        for ax, c in zip(axes, CORRUPTIONS, strict=True):
+            rs = _rows(sweep, c)
+            for k, (col, ls, mk, lab) in sty.items():
+                ax.plot([r["severity"] for r in rs], [r["scores"][k]["aurc"] for r in rs],
+                        color=col, ls=ls, marker=mk, ms=3 if size == "paper" else 7, label=lab)
+            ax.set_title(LABEL[c])
+            ax.set_xticks(range(6))
+            ax.grid(axis="y")
+        _finish(fig, axes, size, "Severity level (0 = clean)", "AURC (lower is better)", 3)
+        fig.suptitle(f"Ranking quality of three confidence scores (n = {sweep['n_test']})")
+        return fig
+
+    return build
+
+
+def ece_by_fixed_t(sweep: dict) -> Callable[[str], Figure]:
+    """Amended protocol, condition 3: every T in the fixed grid, chosen in advance and held
+    fixed across all severities. Does any single clean-data temperature help under shift?"""
+    from src.degrade import CORRUPTIONS
+    grid = [k for k in sweep["temperatures"] if k.startswith("T=")]
+    ts = [sweep["temperatures"][k] for k in grid]
+    lo, hi = np.log(min(ts)), np.log(max(ts))
+
+    def colour(t: float) -> str:  # one ramp, light (small T) -> dark (large T); T = 1 in BLUE
+        if t == 1.0:
+            return BLUE
+        return _ramp(float((np.log(t) - lo) / (hi - lo)))
+
+    def build(size: str) -> Figure:
+        fig, axes = _panels(size)
+        for ax, c in zip(axes, CORRUPTIONS, strict=True):
+            rs = _rows(sweep, c)
+            for k, t in zip(grid, ts, strict=True):
+                ax.plot([r["severity"] for r in rs], [r["temperature"][k]["ece"] for r in rs],
+                        color=colour(t), ls="-" if t == 1.0 else "--",
+                        marker="o" if t == 1.0 else ".", ms=3 if size == "paper" else 7,
+                        lw=1.4 if t == 1.0 else 1.0, label=f"T = {t:g}")
+            ax.set_title(LABEL[c])
+            ax.set_xticks(range(6))
+            ax.grid(axis="y")
+        _finish(fig, axes, size, "Severity level (0 = clean)", "ECE, 15 bins",
+                3 if size == "paper" else 5)
+        fig.suptitle(f"ECE for each fixed temperature, held across severities "
+                     f"(n = {sweep['n_test']})")
+        return fig
+
+    return build
+
+
+SWEEP_FIGURES = {
+    "accuracy_vs_severity": lambda s, lg: accuracy_vs_severity(s),
+    "ece_vs_severity": lambda s, lg: ece_vs_severity(s),
+    "ece_by_fixed_t": lambda s, lg: ece_by_fixed_t(s),
+    "coverage_curves": coverage_curves,
+    "confidence_hist": confidence_hist,
+    "reliability_clean": lambda s, lg: reliability(s),
+    "temperature_degeneracy": lambda s, lg: degeneracy(s),
+    "aurc_by_score": lambda s, lg: aurc_by_score(s),
+}
+
+
+def render_sweep(sweep_path: str | Path, out: str | Path) -> list[Path]:
+    sweep_path = Path(sweep_path)
+    sweep = json.loads(sweep_path.read_text())
+    lg = dict(np.load(sweep_path.parent / sweep_path.name.replace("sweep_", "sweep_logits_")
+                      .replace(".json", ".npz")))
+    paths = []
+    for name, make in SWEEP_FIGURES.items():
+        paths += render(make(sweep, lg), name, out)
+    return paths
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("figure", choices=["grid"])
-    ap.add_argument("--data-root", required=True)
-    ap.add_argument("--leaf", help="filename of the leaf to show (default: first original)")
+    ap.add_argument("figure", choices=["grid", "sweep"])
+    ap.add_argument("--data-root", help="grid: dataset root")
+    ap.add_argument("--leaf", help="grid: filename of the leaf to show")
+    ap.add_argument("--sweep", help="sweep: path to sweep_<run_id>.json")
     ap.add_argument("--out", default="figures")
     a = ap.parse_args()
     if a.figure == "grid":
-        for p in render(corruption_grid(a.data_root, a.leaf), "corruption_grid", a.out):
-            print("wrote", p)
+        assert a.data_root, "--data-root is required for the grid"
+        paths = render(corruption_grid(a.data_root, a.leaf), "corruption_grid", a.out)
+    else:
+        assert a.sweep, "--sweep is required"
+        paths = render_sweep(a.sweep, a.out)
+    for p in paths:
+        print("wrote", p)
 
 
 if __name__ == "__main__":

@@ -154,18 +154,27 @@ def evaluate_logits(logits: np.ndarray, labels: np.ndarray, classes: list[str],
 # ---- degeneracy demonstration (condition 1) ----------------------------------------------
 
 def degeneracy(val_logits: np.ndarray, val_labels: np.ndarray, cfg: Config) -> dict:
+    """Validation NLL over T, and where LBFGS stops for several max_iter. The T grid starts
+    at NLL_T_RANGE[0] or below the smallest endpoint, whichever is lower, so every endpoint
+    lies on the plotted curve."""
     z = torch.as_tensor(val_logits, dtype=torch.float32)
     y = torch.as_tensor(val_labels, dtype=torch.long)
-    ts = np.geomspace(*NLL_T_RANGE, 200)
-    nll = [float(F.cross_entropy(z / t, y)) for t in ts]
-    i_min = int(np.argmin(nll))
+
+    def nll_at(t: float) -> float:
+        return float(F.cross_entropy(z / t, y))
+
     endpoints = {str(m): lbfgs_temperature(val_logits, val_labels, cfg.temperature_lr, m)
                  ["t_lbfgs_endpoint"] for m in LBFGS_MAX_ITERS}
+    lower = min(NLL_T_RANGE[0], 0.8 * min(endpoints.values()))
+    ts = np.geomspace(lower, NLL_T_RANGE[1], 240)
+    nll = [nll_at(t) for t in ts]
+    i_min = int(np.argmin(nll))
     return {"T_grid": ts.tolist(), "val_nll": nll,
             "argmin_T": float(ts[i_min]), "minimum_at_lower_edge": i_min == 0,
             "nll_monotone_increasing": bool(np.all(np.diff(nll) > 0)),
             "n_val_errors": int((z.argmax(1) != y).sum()),
-            "lbfgs_endpoint_by_max_iter": endpoints}
+            "lbfgs_endpoint_by_max_iter": endpoints,
+            "lbfgs_endpoint_nll_by_max_iter": {m: nll_at(t) for m, t in endpoints.items()}}
 
 
 # ---- the sweep ----------------------------------------------------------------------------
@@ -341,6 +350,22 @@ def threshold_analysis(logits_store: dict[str, np.ndarray]) -> dict:
     return out
 
 
+def print_threshold(th: dict) -> None:
+    """Plain-language summary of the threshold analysis."""
+    for score, by_t in th["by_score"].items():
+        print(f"threshold on {score} ({th['score_units'][score]}):")
+        for tgt, r in by_t.items():
+            if not r["found"]:
+                print(f"  target {tgt}: NO threshold reaches it in every condition")
+                continue
+            note = (" -- accepts NOTHING anywhere: not usable" if r["accepts_nothing_anywhere"]
+                    else f", {len(r['vacuous_conditions'])} condition(s) fully referred"
+                    if r["vacuous_conditions"] else "")
+            print(f"  target {tgt}: t = {r['threshold']:.6g}; coverage min "
+                  f"{r['coverage_min']:.3f}, mean {r['coverage_mean']:.3f} "
+                  f"(referred to a human: {r['referred_mean']:.1%} on average){note}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -349,7 +374,7 @@ def main() -> None:
     ap.add_argument("--batch-size", type=int)
     ap.add_argument("--num-workers", type=int)
     a = ap.parse_args()
-    sweep(a.results, a.data_root, a.batch_size, a.num_workers)
+    print_threshold(sweep(a.results, a.data_root, a.batch_size, a.num_workers)["threshold"])
 
 
 if __name__ == "__main__":
