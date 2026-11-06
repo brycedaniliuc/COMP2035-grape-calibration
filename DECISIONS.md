@@ -6,7 +6,9 @@ supervisor) confirms it. Status is **OPEN** until then.
 
 ---
 
-## D1 · Temperature scaling on a validation set with zero errors — OPEN
+## D1 · Temperature scaling on a validation set with zero errors — RESOLVED
+
+**RESOLVED 2026-11-07 (owner):** superseded by the AMENDED Stage 4 in BRIEF.md. Demonstrate the degeneracy (NLL vs T, LBFGS endpoint vs max_iter), use T = 1 as the primary condition, sweep a fixed T grid, and report the LBFGS endpoint only as the as-fitted (degenerate) value, never as a fitted temperature.
 
 **Observation.** In both September runs the checkpoint that was kept had validation accuracy
 1.0000 (`history` in both results JSONs). With no validation errors, validation NLL keeps
@@ -24,7 +26,9 @@ the optimiser settings in the output JSON. Also report how T varies with `max_it
 evidence for the degeneracy. Do not clip or regularise T silently. If the supervisor
 prefers a bounded T, record that as a separate, labelled variant.
 
-## D2 · What "reproduces" means for the Colab re-run (Tier 2) — OPEN
+## D2 · What "reproduces" means for the Colab re-run (Tier 2) — RESOLVED
+
+**RESOLVED 2026-11-07 (owner):** split sizes and audit numbers must match exactly. Accuracy, mean confidence and ECE must match within ±0.01 absolute. T is reported as information only, with no pass/fail. Deterministic cuDNN is on for the new run (`Config.deterministic=True`).
 
 **Observation.** The split is seeded through `sklearn` and does reproduce exactly. Training
 does not reproduce bit for bit. The notebook does not set
@@ -37,7 +41,9 @@ exactly. It checks accuracy, mean confidence and ECE within a tolerance stated i
 and reports T without a pass/fail. Also turn on deterministic cuDNN for the new run, so
 future Colab re-runs reproduce each other even if they cannot reproduce September.
 
-## D3 · Class-weighted cross-entropy — OPEN (needs checking against Canoski et al.)
+## D3 · Class-weighted cross-entropy — RESOLVED
+
+**RESOLVED 2026-11-07:** checked against Canoski et al. §5.2 (arXiv 2608.20608v1, PDF p. 50). The paper uses "weighted cross-entropy loss with label smoothing of 0.1" with balanced class weights from the training partition only, so it is **not a deviation**. CLAUDE.md is corrected to list it. The only protocol deviation is the epoch budget: 5 + 25 with patience 5, against the paper's maximum of 100 with patience 20.
 
 **Observation.** The notebook weights the loss by inverse class frequency over the training
 partition. `CLAUDE.md`'s training configuration does not mention this. The notebook says
@@ -46,7 +52,9 @@ the protocol follows Canoski et al., but this has not been checked against the p
 **Recommendation.** Keep it, because it produced the only existing results. Check it against
 the Canoski PDF during Stage 2 and correct `CLAUDE.md`'s configuration list either way.
 
-## D4 · The prototype output promised in the paper — OPEN
+## D4 · The prototype output promised in the paper — RESOLVED
+
+**RESOLVED 2026-11-07 (owner):** approved. This is Stage 10 in BRIEF.md.
 
 **Observation.** The abstract and §1 promise a returned "disease prediction, a confidence
 indicator, an explicit warning for uncertain cases". `BRIEF.md` has no stage that builds
@@ -56,7 +64,9 @@ this.
 built on the derived threshold, or on the documented absence of one. It costs about an hour
 and closes a promise the marker can check.
 
-## D5 · Repo visibility, and whether `CLAUDE.md` is committed — OPEN
+## D5 · Repo visibility, and whether `CLAUDE.md` is committed — RESOLVED
+
+**RESOLVED 2026-11-07 (owner):** the repo is public. CLAUDE.md and BRIEF.md stay out of git permanently (both gitignored). The README carries the owner's name and course code, not the student ID.
 
 **Observation.** The notebooks clone this repo, so a private repo needs a token in Colab and
 a public one does not. `CLAUDE.md` carries a student ID and supervisor names. `BRIEF.md`
