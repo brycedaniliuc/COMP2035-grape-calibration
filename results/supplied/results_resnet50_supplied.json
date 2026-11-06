@@ -1,0 +1,290 @@
+{
+  "run": "resnet50_supplied",
+  "config": {
+    "DATA_ROOT": "/content/grape_dataset",
+    "SPLIT_MODE": "supplied",
+    "EVAL_ON_ORIGINALS_ONLY": true,
+    "TRAIN_FRAC": 0.7,
+    "VAL_FRAC": 0.15,
+    "TEST_FRAC": 0.15,
+    "MODEL": "resnet50",
+    "IMG_SIZE": 224,
+    "RESIZE": 256,
+    "BATCH_SIZE": 64,
+    "HEAD_EPOCHS": 5,
+    "FINETUNE_EPOCHS": 25,
+    "PATIENCE": 5,
+    "LR_HEAD": 0.001,
+    "LR_BACKBONE": 0.0001,
+    "WEIGHT_DECAY": 0.0001,
+    "LR_MIN_STAGE1": 1e-05,
+    "LR_MIN_STAGE2": 1e-06,
+    "LABEL_SMOOTHING": 0.1,
+    "NUM_WORKERS": 2,
+    "SEED": 42,
+    "USE_AMP": true,
+    "N_BINS": 15,
+    "OUT_DIR": "/content/outputs"
+  },
+  "classes": [
+    "Black_rot",
+    "Esca_(Black_Measles)",
+    "Leaf_blight_(Isariopsis_Leaf_Spot)",
+    "healthy"
+  ],
+  "audit": {
+    "n_images": 9027,
+    "n_source_leaves": 4062,
+    "n_originals": 4062,
+    "n_augmented": 4965,
+    "augmentation_vocabulary": {
+      "(original)": 4062,
+      "_flipLR": 3273,
+      "_90deg": 423,
+      "_new30degFlipLR": 423,
+      "_270deg": 423,
+      "_180deg": 423
+    },
+    "supplied_train_leaves": 3867,
+    "supplied_test_leaves": 1539,
+    "test_leaves_also_in_train": 1344,
+    "pct_test_leaves_also_in_train": 87.3,
+    "n_test_originals": 816,
+    "n_test_originals_leaf_in_train": 621,
+    "pct_test_originals_leaf_in_train": 76.1,
+    "per_class_pct_test_leaves_also_in_train": {
+      "Black_rot": 89.7,
+      "Esca_(Black_Measles)": 76.5,
+      "Leaf_blight_(Isariopsis_Leaf_Spot)": 87.7,
+      "healthy": 100.0
+    }
+  },
+  "dropped_augmented_from_eval": 0,
+  "split_sizes": {
+    "test": 1805,
+    "train": 6138,
+    "val": 1084
+  },
+  "split_leaves": {
+    "test": 1539,
+    "train": 3625,
+    "val": 994
+  },
+  "split_originals": {
+    "test": 816,
+    "train": 2776,
+    "val": 470
+  },
+  "epochs_run": 21,
+  "stopped_early": true,
+  "minutes": 17.8,
+  "best_val_loss": 0.35146221859428717,
+  "test_accuracy": 1.0,
+  "per_class_accuracy": {
+    "Black_rot": 1.0,
+    "Esca_(Black_Measles)": 1.0,
+    "Leaf_blight_(Isariopsis_Leaf_Spot)": 1.0,
+    "healthy": 1.0
+  },
+  "confusion_matrix": [
+    [
+      472,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      480,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      430,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      423
+    ]
+  ],
+  "mean_confidence": 0.9255359768867493,
+  "ece": 0.07446407307548206,
+  "temperature": 0.05074942484498024,
+  "ece_after_temperature": 0.0,
+  "mean_confidence_after": 1.0,
+  "history": [
+    {
+      "stage": 1,
+      "epoch": 1,
+      "train_loss": 0.7885047271920556,
+      "train_acc": 0.8418051482567611,
+      "val_loss": 0.5537349502538843,
+      "val_acc": 0.9575645756457565
+    },
+    {
+      "stage": 1,
+      "epoch": 2,
+      "train_loss": 0.5318489509166433,
+      "train_acc": 0.946236559139785,
+      "val_loss": 0.4965420050814583,
+      "val_acc": 0.9630996309963099
+    },
+    {
+      "stage": 1,
+      "epoch": 3,
+      "train_loss": 0.496052367460382,
+      "train_acc": 0.9631801889866406,
+      "val_loss": 0.4783409166380048,
+      "val_acc": 0.9658671586715867
+    },
+    {
+      "stage": 1,
+      "epoch": 4,
+      "train_loss": 0.48344195794111433,
+      "train_acc": 0.9669273378950798,
+      "val_loss": 0.4739834503494066,
+      "val_acc": 0.9704797047970479
+    },
+    {
+      "stage": 1,
+      "epoch": 5,
+      "train_loss": 0.4773218958608566,
+      "train_acc": 0.9687194525904204,
+      "val_loss": 0.47041637541183245,
+      "val_acc": 0.9686346863468634
+    },
+    {
+      "stage": 2,
+      "epoch": 1,
+      "train_loss": 0.41409982516074967,
+      "train_acc": 0.9869664385793419,
+      "val_loss": 0.3769734567821686,
+      "val_acc": 0.996309963099631
+    },
+    {
+      "stage": 2,
+      "epoch": 2,
+      "train_loss": 0.37716362978589385,
+      "train_acc": 0.9957640925382861,
+      "val_loss": 0.36358562364789393,
+      "val_acc": 0.996309963099631
+    },
+    {
+      "stage": 2,
+      "epoch": 3,
+      "train_loss": 0.36835664009651714,
+      "train_acc": 0.9962528510915608,
+      "val_loss": 0.35780026332038795,
+      "val_acc": 0.9990774907749077
+    },
+    {
+      "stage": 2,
+      "epoch": 4,
+      "train_loss": 0.364134662953057,
+      "train_acc": 0.9967416096448355,
+      "val_loss": 0.35672267490647375,
+      "val_acc": 1.0
+    },
+    {
+      "stage": 2,
+      "epoch": 5,
+      "train_loss": 0.3603445207035553,
+      "train_acc": 0.9982078853046595,
+      "val_loss": 0.3535874266026205,
+      "val_acc": 1.0
+    },
+    {
+      "stage": 2,
+      "epoch": 6,
+      "train_loss": 0.35825424812522916,
+      "train_acc": 0.998533724340176,
+      "val_loss": 0.355503633893284,
+      "val_acc": 0.9990774907749077
+    },
+    {
+      "stage": 2,
+      "epoch": 7,
+      "train_loss": 0.3585111389975083,
+      "train_acc": 0.9977191267513849,
+      "val_loss": 0.3547020122353881,
+      "val_acc": 0.9981549815498155
+    },
+    {
+      "stage": 2,
+      "epoch": 8,
+      "train_loss": 0.35907484475934726,
+      "train_acc": 0.9969045291625936,
+      "val_loss": 0.35272616279961,
+      "val_acc": 1.0
+    },
+    {
+      "stage": 2,
+      "epoch": 9,
+      "train_loss": 0.35662499445002876,
+      "train_acc": 0.9983708048224177,
+      "val_loss": 0.35184474316910186,
+      "val_acc": 1.0
+    },
+    {
+      "stage": 2,
+      "epoch": 10,
+      "train_loss": 0.355452610648933,
+      "train_acc": 0.9988595633756924,
+      "val_loss": 0.3515227978079961,
+      "val_acc": 1.0
+    },
+    {
+      "stage": 2,
+      "epoch": 11,
+      "train_loss": 0.3540279714651005,
+      "train_acc": 0.9988595633756924,
+      "val_loss": 0.35146221859428717,
+      "val_acc": 1.0
+    },
+    {
+      "stage": 2,
+      "epoch": 12,
+      "train_loss": 0.3538758774831498,
+      "train_acc": 0.9986966438579342,
+      "val_loss": 0.35248993903508485,
+      "val_acc": 0.9981549815498155
+    },
+    {
+      "stage": 2,
+      "epoch": 13,
+      "train_loss": 0.35412699164766254,
+      "train_acc": 0.9988595633756924,
+      "val_loss": 0.3517131218171208,
+      "val_acc": 1.0
+    },
+    {
+      "stage": 2,
+      "epoch": 14,
+      "train_loss": 0.35393508755061476,
+      "train_acc": 0.9986966438579342,
+      "val_loss": 0.3515017842014777,
+      "val_acc": 0.9990774907749077
+    },
+    {
+      "stage": 2,
+      "epoch": 15,
+      "train_loss": 0.35287372267335587,
+      "train_acc": 0.9996741609644836,
+      "val_loss": 0.3520131291498557,
+      "val_acc": 0.9990774907749077
+    },
+    {
+      "stage": 2,
+      "epoch": 16,
+      "train_loss": 0.3526728215571839,
+      "train_acc": 0.9995112414467253,
+      "val_loss": 0.3515859899485683,
+      "val_acc": 0.9990774907749077
+    }
+  ]
+}

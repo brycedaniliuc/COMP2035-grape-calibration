@@ -1,0 +1,22 @@
+# Python environment and caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Checkpoints and large artefacts
+*.pt
+*.pth
+*.zip
+
+# Dataset (never committed)
+grape_dataset/
+data/
+
+# Working-process brief (not part of the deliverable)
+BRIEF.md
+
+# macOS
+.DS_Store

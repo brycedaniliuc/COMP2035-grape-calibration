@@ -1,0 +1,27 @@
+{
+  "n_images": 9027,
+  "n_source_leaves": 4062,
+  "n_originals": 4062,
+  "n_augmented": 4965,
+  "augmentation_vocabulary": {
+    "(original)": 4062,
+    "_flipLR": 3273,
+    "_90deg": 423,
+    "_new30degFlipLR": 423,
+    "_270deg": 423,
+    "_180deg": 423
+  },
+  "supplied_train_leaves": 3867,
+  "supplied_test_leaves": 1539,
+  "test_leaves_also_in_train": 1344,
+  "pct_test_leaves_also_in_train": 87.3,
+  "n_test_originals": 816,
+  "n_test_originals_leaf_in_train": 621,
+  "pct_test_originals_leaf_in_train": 76.1,
+  "per_class_pct_test_leaves_also_in_train": {
+    "Black_rot": 89.7,
+    "Esca_(Black_Measles)": 76.5,
+    "Leaf_blight_(Isariopsis_Leaf_Spot)": 87.7,
+    "healthy": 100.0
+  }
+}
