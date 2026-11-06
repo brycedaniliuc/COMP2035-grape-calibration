@@ -9,7 +9,7 @@ import math
 import numpy as np
 import pytest
 
-from src.calibrate import calibration_summary, ece_and_bins, fit_temperature
+from src.calibrate import calibration_summary, ece_and_bins, lbfgs_temperature
 
 
 def test_ece_known_answer():
@@ -75,8 +75,8 @@ def _overconfident_logits(n=400, seed=0):
 
 def test_temperature_softens_overconfident_logits():
     logits, y = _overconfident_logits()
-    fit = fit_temperature(logits, y)
-    assert fit["temperature"] > 1.0
+    fit = lbfgs_temperature(logits, y)
+    assert fit["t_lbfgs_endpoint"] > 1.0
     assert fit["val_nll_after"] < fit["val_nll_before"]
     assert not fit["degenerate"]
 
@@ -84,15 +84,15 @@ def test_temperature_softens_overconfident_logits():
 def test_temperature_preserves_predictions_and_reduces_ece():
     logits, y = _overconfident_logits(seed=1)
     val_logits, val_y = _overconfident_logits(seed=2)
-    t = fit_temperature(val_logits, val_y)["temperature"]
+    t = lbfgs_temperature(val_logits, val_y)["t_lbfgs_endpoint"]
     s = calibration_summary(logits, y, t, 15)  # asserts accuracy and predictions unchanged
-    assert s["ece_after_temperature"] < s["ece"]
+    assert s["ece_at_t"] < s["ece"]
 
 
 def test_temperature_with_zero_errors_is_flagged_degenerate():
     y = np.arange(40) % 4
     logits = np.zeros((40, 4), dtype=np.float32)
     logits[np.arange(40), y] = 2.0
-    fit = fit_temperature(logits, y)
+    fit = lbfgs_temperature(logits, y)
     assert fit["degenerate"] and fit["n_val_errors"] == 0
-    assert 0 < fit["temperature"] < 1  # sharpens: NLL keeps falling as T -> 0
+    assert 0 < fit["t_lbfgs_endpoint"] < 1  # sharpens: NLL keeps falling as T -> 0

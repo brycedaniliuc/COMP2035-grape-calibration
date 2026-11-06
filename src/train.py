@@ -29,7 +29,7 @@ from torch.utils.data import DataLoader
 from torchvision import models
 
 from src.audit import leaking_leaves, print_audit, supplied_split_audit
-from src.calibrate import calibration_summary, fit_temperature, softmax_outputs
+from src.calibrate import calibration_summary, lbfgs_temperature, softmax_outputs
 from src.config import Config
 from src.data import (
     build_transforms,
@@ -252,8 +252,8 @@ def run(cfg: Config, stamp: str | None = None) -> dict:
     val_logits, val_y = collect_logits(model, val_dl, device)
     assert test_y.tolist() == [cls2idx[r.cls] for r in splits.test], "test label order drifted"
 
-    t_fit = fit_temperature(val_logits, val_y, cfg.temperature_lr, cfg.temperature_max_iter)
-    cal = calibration_summary(test_logits, test_y, t_fit["temperature"], cfg.n_bins)
+    t_fit = lbfgs_temperature(val_logits, val_y, cfg.temperature_lr, cfg.temperature_max_iter)
+    cal = calibration_summary(test_logits, test_y, t_fit["t_lbfgs_endpoint"], cfg.n_bins)
     _, preds, _, correct = softmax_outputs(test_logits, test_y)
     cm = np.zeros((len(classes), len(classes)), int)
     for t_, p_ in zip(test_y, preds, strict=True):
@@ -262,7 +262,7 @@ def run(cfg: Config, stamp: str | None = None) -> dict:
     logits_path = out / f"logits_{run_id}.npz"
     np.savez(logits_path, test_logits=test_logits, test_labels=test_y,
              val_logits=val_logits, val_labels=val_y,
-             temperature=np.array([t_fit["temperature"]]))
+             t_lbfgs_endpoint=np.array([t_fit["t_lbfgs_endpoint"]]))
     splits_path = out / f"splits_{run_id}.json"
     splits_path.write_text(json.dumps(save_split_lists(splits, cfg.data_root), indent=1))
 
@@ -280,8 +280,14 @@ def run(cfg: Config, stamp: str | None = None) -> dict:
         "per_class_accuracy": {c: float(correct[test_y == i].mean())
                                for i, c in enumerate(classes)},
         "confusion_matrix": cm.tolist(),
-        **{k: v for k, v in cal.items() if k != "accuracy"},
-        "temperature_fit": t_fit,
+        "mean_confidence": cal["mean_confidence"], "ece": cal["ece"],
+        "reliability_bins": cal["reliability_bins"],
+        # LBFGS endpoint over T on validation NLL. Not a fitted temperature when
+        # t_lbfgs["degenerate"] is true (zero validation errors): see DECISIONS.md D1.
+        "t_lbfgs": t_fit,
+        "mean_confidence_at_t_lbfgs": cal["mean_confidence_at_t"],
+        "ece_at_t_lbfgs": cal["ece_at_t"],
+        "reliability_bins_at_t_lbfgs": cal["reliability_bins_at_t"],
         "history": fit["history"],
         "artefacts": {"checkpoint": ckpt.name, "logits": logits_path.name,
                       "splits": splits_path.name},
@@ -298,9 +304,9 @@ def run(cfg: Config, stamp: str | None = None) -> dict:
     print(f" test accuracy         {cal['accuracy']:.4f}")
     print(f" mean confidence       {cal['mean_confidence']:.4f}")
     print(f" ECE                   {cal['ece']:.4f}")
-    print(f" temperature           {t_fit['temperature']:.3f}"
+    print(f" T, LBFGS endpoint     {t_fit['t_lbfgs_endpoint']:.3f}"
           f"{'  (DEGENERATE: zero validation errors)' if t_fit['degenerate'] else ''}")
-    print(f" ECE after scaling     {cal['ece_after_temperature']:.4f}")
+    print(f" ECE at that T         {cal['ece_at_t']:.4f}")
     print(f"{bar}\nwritten -> {res_path}")
     return results
 

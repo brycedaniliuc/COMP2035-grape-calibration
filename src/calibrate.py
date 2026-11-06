@@ -57,9 +57,12 @@ def ece_and_bins(confs: np.ndarray, correct: np.ndarray, n_bins: int = 15
     return ece, rows
 
 
-def fit_temperature(val_logits: np.ndarray, val_labels: np.ndarray,
+def lbfgs_temperature(val_logits: np.ndarray, val_labels: np.ndarray,
                     lr: float = 0.1, max_iter: int = 100) -> dict:
-    """Fit T on validation NLL. Same optimiser and settings as notebook 01.
+    """Run LBFGS on validation NLL over T. Same optimiser and settings as notebook 01.
+
+    The output is the LBFGS *endpoint*. It is a fitted temperature only when the fit is
+    not degenerate.
 
     If the validation set has no errors, NLL has no minimum (it keeps falling as T -> 0)
     and T is wherever LBFGS stops. This is reported as `degenerate`, not hidden (D1).
@@ -84,7 +87,7 @@ def fit_temperature(val_logits: np.ndarray, val_labels: np.ndarray,
         nll_after = float(nll(logits / t, labels))
     assert math.isfinite(t) and t > 0, f"temperature fit failed: T = {t}"
     n_err = int((logits.argmax(1) != labels).sum())
-    return {"temperature": t, "val_nll_before": nll_before, "val_nll_after": nll_after,
+    return {"t_lbfgs_endpoint": t, "val_nll_before": nll_before, "val_nll_after": nll_after,
             "n_val": int(labels.numel()), "n_val_errors": n_err, "degenerate": n_err == 0,
             "lr": lr, "max_iter": max_iter}
 
@@ -100,6 +103,6 @@ def calibration_summary(logits: np.ndarray, labels: np.ndarray, temperature: flo
     ece, bins = ece_and_bins(confs, correct, n_bins)
     ece_t, bins_t = ece_and_bins(confs_t, correct_t, n_bins)
     return {"accuracy": acc, "mean_confidence": float(confs.mean()), "ece": ece,
-            "reliability_bins": bins, "temperature": temperature,
-            "mean_confidence_after": float(confs_t.mean()), "ece_after_temperature": ece_t,
-            "reliability_bins_after": bins_t}
+            "reliability_bins": bins, "t": temperature,
+            "mean_confidence_at_t": float(confs_t.mean()), "ece_at_t": ece_t,
+            "reliability_bins_at_t": bins_t}
