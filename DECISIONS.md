@@ -1,0 +1,69 @@
+# DECISIONS — not yet confirmed with the supervisor
+
+Each item is a design choice that `CLAUDE.md` and the submitted paper do not fix. Each has a
+recommendation, which stays a recommendation until the owner (and where needed the
+supervisor) confirms it. Status is **OPEN** until then.
+
+---
+
+## D1 · Temperature scaling on a validation set with zero errors — OPEN
+
+**Observation.** In both September runs the checkpoint that was kept had validation accuracy
+1.0000 (`history` in both results JSONs). With no validation errors, validation NLL keeps
+falling as T falls, so it has no minimum. The reported T (0.237 `source`, 0.051 `supplied`)
+is wherever LBFGS stopped (`lr=0.1`, `max_iter=100`), not a fitted optimum. A different
+`max_iter` would give a different T.
+
+**Why it matters for Stage 4.** The promised protocol fits T on clean validation and holds it
+fixed for the degraded test sets. With T ≈ 0.24, every degraded prediction gets sharpened
+towards probability 1, including the wrong ones. That may well be the central finding.
+It must be reported as a consequence of the degenerate fit, not hidden.
+
+**Recommendation.** Keep the promised protocol: fit on clean validation, hold fixed. Record
+the optimiser settings in the output JSON. Also report how T varies with `max_iter`, as
+evidence for the degeneracy. Do not clip or regularise T silently. If the supervisor
+prefers a bounded T, record that as a separate, labelled variant.
+
+## D2 · What "reproduces" means for the Colab re-run (Tier 2) — OPEN
+
+**Observation.** The split is seeded through `sklearn` and does reproduce exactly. Training
+does not reproduce bit for bit. The notebook does not set
+`torch.backends.cudnn.deterministic` or `torch.use_deterministic_algorithms`, uses AMP, and
+does not seed DataLoader workers explicitly. A re-run will not reproduce 0.9222 / 0.0778 /
+0.237 exactly, and T (see D1) is the least likely to match.
+
+**Recommendation.** Tier 2 checks split sizes (6,315 / 609 / 610) and the audit numbers
+exactly. It checks accuracy, mean confidence and ECE within a tolerance stated in advance,
+and reports T without a pass/fail. Also turn on deterministic cuDNN for the new run, so
+future Colab re-runs reproduce each other even if they cannot reproduce September.
+
+## D3 · Class-weighted cross-entropy — OPEN (needs checking against Canoski et al.)
+
+**Observation.** The notebook weights the loss by inverse class frequency over the training
+partition. `CLAUDE.md`'s training configuration does not mention this. The notebook says
+the protocol follows Canoski et al., but this has not been checked against the paper.
+
+**Recommendation.** Keep it, because it produced the only existing results. Check it against
+the Canoski PDF during Stage 2 and correct `CLAUDE.md`'s configuration list either way.
+
+## D4 · The prototype output promised in the paper — OPEN
+
+**Observation.** The abstract and §1 promise a returned "disease prediction, a confidence
+indicator, an explicit warning for uncertain cases". `BRIEF.md` has no stage that builds
+this.
+
+**Recommendation.** After Stage 5, add a small `predict(image) -> (label, confidence, warning)`
+built on the derived threshold, or on the documented absence of one. It costs about an hour
+and closes a promise the marker can check.
+
+## D5 · Repo visibility, and whether `CLAUDE.md` is committed — OPEN
+
+**Observation.** The notebooks clone this repo, so a private repo needs a token in Colab and
+a public one does not. `CLAUDE.md` carries a student ID and supervisor names. `BRIEF.md`
+describes the working process.
+
+**Current state.** `BRIEF.md` is gitignored. `CLAUDE.md` is deliberately **left uncommitted**,
+so it can still be kept out of history if the repo goes public. Adding it later is easy;
+removing it from history is not.
+
+**Recommendation.** The owner decides. It must be decided before anything is pushed (Gate 8).
