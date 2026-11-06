@@ -90,3 +90,37 @@ known leaks to find, and they are named in `tests/fixture/MANIFEST.md`.
 
 **Recommendation.** Keep it. If an artificially planted leak is wanted as well, it can be added
 under a separate role.
+
+## D7 · Degradation severities — OPEN (two of four are our own design)
+
+**Verified from source.** These come from hendrycks/robustness,
+`ImageNet-C/create_c/make_imagenet_c.py` (commit e0377d4), by Hendrycks & Dietterich
+(ICLR 2019). The paper itself gives no numbers and defers to this code.
+- **Gaussian blur**: sigma = 1, 2, 3, 4, 6 px. This is `gaussian_blur`, verbatim
+  (`skimage.filters.gaussian`, on [0, 1]).
+- **Brightness +**: HSV V += 0.1, 0.2, 0.3, 0.4, 0.5, clipped. This is `brightness`,
+  verbatim. ImageNet-C only brightens.
+- **Pipeline**: ImageNet-C applies its corruptions after `Resize(256)` → `CenterCrop(224)`
+  and casts with `np.uint8` (truncation). We do the same, so the sigmas are on the same pixel
+  scale. **Difference:** ImageNet-C then saves JPEG at quality 85. We corrupt in memory and
+  skip that second lossy step.
+
+**Our adaptations (not from ImageNet-C):**
+- **Brightness −** (darkening): HSV V −= 0.1 … 0.5, the mirror of `brightness`. The brief
+  asks for exposure shift "in both directions" and ImageNet-C has no darkening. Severity 5
+  is close to black (see `figures/corruption_grid_*`), which is harsh by construction.
+- **Occlusion**: one solid black square covering 5, 10, 20, 30, 40 % of the 224×224 crop,
+  at a uniformly random position seeded per (image, corruption, severity) with `zlib.crc32`.
+  ImageNet-C has no occlusion corruption. The nearest is `spatter` (mud blobs), which is not
+  a controlled occluder.
+
+**Recommendation.** Keep these. Report the two adapted series as our own design in the
+Method section, not as ImageNet-C.
+
+## D8 · Redistributing PlantVillage images in a public repo — OPEN
+
+`tests/fixture/` (80 images) and `figures/corruption_grid_*` contain PlantVillage images.
+The repo is public (D5). Before pushing, the dataset licence must be verified from its
+source and stated in the README. If it does not permit redistribution, the fixture must be
+fetched at test time instead of committed. To be checked in Stage 8. Nothing has been
+pushed.
