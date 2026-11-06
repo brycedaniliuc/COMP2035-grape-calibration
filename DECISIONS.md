@@ -67,3 +67,16 @@ so it can still be kept out of history if the repo goes public. Adding it later 
 removing it from history is not.
 
 **Recommendation.** The owner decides. It must be decided before anything is pushed (Gate 8).
+
+## D6 · Fixture leaks are real, not relocated — OPEN (low stakes)
+
+**Observation.** `BRIEF.md` asks for leaves whose copies are "deliberately placed" to create a
+leak. The fixture instead *selects* 8 leaves (2 per class) that really do span `train/` and
+`test/` in the supplied split. Each file is kept in the folder it actually occupies.
+
+**Why.** Moving a file into the other partition would make the fixture disagree with the real
+dataset, and a test could then pass on a layout that never occurs. The audit still has
+known leaks to find, and they are named in `tests/fixture/MANIFEST.md`.
+
+**Recommendation.** Keep it. If an artificially planted leak is wanted as well, it can be added
+under a separate role.
