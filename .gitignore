@@ -1,5 +1,7 @@
 # Python environment and caches
+.venv
 .venv/
+*.nosync
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -20,3 +22,7 @@ BRIEF.md
 
 # macOS
 .DS_Store
+
+# Run outputs (checkpoints, logits, results) from local runs
+outputs
+outputs/

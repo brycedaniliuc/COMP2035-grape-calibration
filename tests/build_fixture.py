@@ -47,7 +47,7 @@ FIXTURE = REPO / "tests" / "fixture"
 
 def index(root: Path) -> list[dict]:
     recs = []
-    skipped = Counter()
+    skipped: Counter[str] = Counter()
     for part in PARTS:
         for cls_dir in sorted(p for p in (root / part).iterdir() if p.is_dir()):
             for f in sorted(cls_dir.iterdir()):

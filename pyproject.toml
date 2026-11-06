@@ -1,0 +1,29 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# F: undefined names, unused imports/variables (the bugs that produce a silently wrong
+#    number). E/W: pycodestyle. B: bugbear (mutable defaults, loop-variable capture).
+# I: import order. UP: modern syntax.
+select = ["F", "E", "W", "B", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# The builder emits MANIFEST.md table rows as literal strings; wrapping them would
+# only hide the Markdown it writes.
+"tests/build_fixture.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.13"
+files = ["src", "tests"]
+check_untyped_defs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["sklearn.*", "torchvision.*"]
+ignore_missing_imports = true
