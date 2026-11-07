@@ -117,10 +117,22 @@ under a separate role.
 **Recommendation.** Keep these. Report the two adapted series as our own design in the
 Method section, not as ImageNet-C.
 
-## D8 · Redistributing PlantVillage images in a public repo — OPEN
+## D8 · Redistributing PlantVillage images in a public repo — RECOMMENDATION READY (owner to confirm at Gate 8)
 
 `tests/fixture/` (80 images) and `figures/corruption_grid_*` contain PlantVillage images.
-The repo is public (D5). Before pushing, the dataset licence must be verified from its
-source and stated in the README. If it does not permit redistribution, the fixture must be
-fetched at test time instead of committed. To be checked in Stage 8. Nothing has been
-pushed.
+
+**Verified 2026-11-07 (fetched sources):**
+- The dataset author's Hugging Face card, https://huggingface.co/datasets/mohanty/PlantVillage
+  (account `mohanty`), gives `license: cc-by-sa-3.0`, both on the page and in the raw README
+  YAML. This is the only explicit licence found for the images.
+- The Kaggle copy we actually use ("New Plant Diseases Dataset", vipoooool / Samir Bhattarai)
+  is labelled "Data files © Original Authors". It is an offline-augmented derivative of
+  https://github.com/spMohanty/PlantVillage-Dataset.
+- The GitHub repos (spMohanty, salathegroup) show no licence file. The GitHub API returned
+  404 for both.
+
+**Recommendation.** Commit the fixture. Code is MIT. The images keep CC BY-SA 3.0, with
+attribution to Hughes & Salathé (PlantVillage) and Mohanty, Hughes & Salathé (2016), stated
+in `tests/fixture/IMAGES-LICENSE.md` and the README. Share-alike applies to those images
+(and the grid figure), not to the code. Not verified: that the Hugging Face label covers
+every image. It is the author's own statement, which is the best available evidence.

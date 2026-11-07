@@ -191,7 +191,8 @@ paths = render_sweep(f"{OUT}/sweep_{run_id}.json", fig_dir, tag=run_id)
 paths += render(corruption_grid(DATA_ROOT), "corruption_grid", fig_dir, tag=run_id)
 print(len(paths), "files ->", fig_dir)'''),
     md("## Verify everything (Tier 1 must pass)"),
-    code('''r = subprocess.run([sys.executable, "-m", "src.verify", "--run", SOURCE_RESULTS],
+    code('''r = subprocess.run([sys.executable, "-m", "src.verify", "--run", SOURCE_RESULTS,
+                    "--require-sweep"],
                    capture_output=True, text=True)
 print(r.stdout[-8000:], r.stderr[-3000:])
 assert r.returncode == 0, "a Tier 1 check failed: stop and investigate"

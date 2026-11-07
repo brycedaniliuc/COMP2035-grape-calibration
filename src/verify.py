@@ -68,7 +68,7 @@ def selective_acc(score: np.ndarray, correct: np.ndarray) -> np.ndarray:
 
 # ---- checks ------------------------------------------------------------------------------
 
-def tier1(run_path: Path) -> list[Check]:
+def tier1(run_path: Path, require_sweep: bool = False) -> list[Check]:
     out: list[Check] = []
     res = json.loads(run_path.read_text())
     d = run_path.parent
@@ -117,8 +117,11 @@ def tier1(run_path: Path) -> list[Check]:
     if sw_path.exists():
         out += tier1_sweep(res, json.loads(sw_path.read_text()),
                            dict(np.load(d / f"sweep_logits_{res['run_id']}.npz")), tl)
-    else:
+    elif require_sweep:
         out.append(("sweep present", 1, "FAIL", f"missing {sw_path.name}"))
+    else:  # notebook 01 verifies before notebook 02 has produced the sweep
+        out.append(("sweep and figure checks", 1, "SKIPPED",
+                    "no sweep yet (run src.evaluate; use --require-sweep to demand it)"))
     return out
 
 
@@ -284,11 +287,13 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", required=True, help="results_<run_id>.json")
+    ap.add_argument("--require-sweep", action="store_true",
+                    help="fail if the run has no sweep yet (notebook 02 sets this)")
     ap.add_argument("--determinism", metavar="DATA_ROOT",
                     help="also train + sweep twice on DATA_ROOT (the fixture) and compare")
     a = ap.parse_args()
     run_path = Path(a.run)
-    checks = tier1(run_path)
+    checks = tier1(run_path, a.require_sweep)
     if a.determinism:
         checks += determinism(a.determinism)
     checks += tier2(run_path)
@@ -296,8 +301,10 @@ def main() -> None:
     print(f"\n{'check':<{w}}  tier  status         detail")
     for name, tier, status, detail in checks:
         print(f"{name:<{w}}  {tier:^4}  {status:<13}  {detail}")
-    fails = [c for c in checks if c[1] == 1 and c[2] != "PASS"]
-    print(f"\nTier 1: {sum(c[1] == 1 for c in checks) - len(fails)} passed, {len(fails)} failed. "
+    fails = [c for c in checks if c[1] == 1 and c[2] == "FAIL"]
+    passed = sum(c[1] == 1 and c[2] == "PASS" for c in checks)
+    skipped = sum(c[1] == 1 and c[2] == "SKIPPED" for c in checks)
+    print(f"\nTier 1: {passed} passed, {len(fails)} failed, {skipped} skipped. "
           f"Tier 2: {sum(c[1] == 2 for c in checks)} checks, "
           f"{sum(c[2] == 'PENDING COLAB' for c in checks)} pending Colab.")
     sys.exit(1 if fails else 0)
