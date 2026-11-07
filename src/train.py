@@ -21,6 +21,10 @@ from dataclasses import fields
 from datetime import datetime
 from pathlib import Path
 
+# Must be set before CUDA initialises (select_device() calls get_device_name), or
+# deterministic cuBLAS silently does not apply. Harmless on CPU.
+os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -48,6 +52,19 @@ def select_device() -> torch.device:
     return device
 
 
+def environment(device: torch.device) -> dict:
+    """Library versions and hardware, recorded with every run."""
+    from importlib.metadata import version
+    return {"device": device.type,
+            "device_name": (torch.cuda.get_device_name(0) if device.type == "cuda"
+                            else platform.processor()),
+            "python": sys.version.split()[0], "torch": torch.__version__,
+            "torchvision": torchvision.__version__, "numpy": np.__version__,
+            "scikit-learn": version("scikit-learn"), "scikit-image": version("scikit-image"),
+            "cuda": torch.version.cuda, "cudnn": torch.backends.cudnn.version(),
+            "platform": platform.platform()}
+
+
 def set_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
@@ -60,7 +77,7 @@ def configure_determinism(enabled: bool) -> None:
     pooling backward) have no deterministic version, so those warn rather than fail."""
     if not enabled:
         return
-    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    assert os.environ.get("CUBLAS_WORKSPACE_CONFIG"), "set before CUDA initialises"
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.use_deterministic_algorithms(True, warn_only=torch.cuda.is_available())
@@ -217,6 +234,7 @@ def run(cfg: Config, stamp: str | None = None) -> dict:
     run_id = f"{cfg.model}_{cfg.split_mode}_{stamp}"
     out = Path(cfg.out_dir)
     out.mkdir(parents=True, exist_ok=True)
+    assert not (out / f"results_{run_id}.json").exists(), f"run {run_id} already exists"
     print(f"run id: {run_id}")
     print(json.dumps(cfg.to_dict(), indent=2))
 
@@ -269,9 +287,7 @@ def run(cfg: Config, stamp: str | None = None) -> dict:
     results = {
         "run_id": run_id,
         "config": cfg.to_dict(),
-        "environment": {"device": device.type, "python": sys.version.split()[0],
-                        "torch": torch.__version__, "torchvision": torchvision.__version__,
-                        "numpy": np.__version__, "platform": platform.platform()},
+        "environment": environment(device),
         "classes": classes,
         "audit": audit,
         **splits.summary(),

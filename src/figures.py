@@ -38,15 +38,17 @@ def style(size: str) -> None:
     })
 
 
-def render(build: Callable[[str], Figure], name: str, out: str | Path) -> list[Path]:
-    """Build the figure at both sizes and save paper PDF + slide PNG. Returns the paths."""
+def render(build: Callable[[str], Figure], name: str, out: str | Path, tag: str = ""
+           ) -> list[Path]:
+    """Build the figure at both sizes and save paper PDF + slide PNG. Returns the paths.
+    `tag` (e.g. the run id) is appended to every filename so runs never overwrite."""
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     paths = []
     for size, ext, dpi in (("paper", "pdf", None), ("slide", "png", 300)):
         style(size)
         fig = build(size)
-        p = out / f"{name}_{size}.{ext}"
+        p = out / f"{name}_{size}{'_' + tag if tag else ''}.{ext}"
         fig.savefig(p, bbox_inches="tight", dpi=dpi if dpi is not None else "figure")
         plt.close(fig)
         paths.append(p)
@@ -399,14 +401,14 @@ SWEEP_FIGURES = {
 }
 
 
-def render_sweep(sweep_path: str | Path, out: str | Path) -> list[Path]:
+def render_sweep(sweep_path: str | Path, out: str | Path, tag: str = "") -> list[Path]:
     sweep_path = Path(sweep_path)
     sweep = json.loads(sweep_path.read_text())
     lg = dict(np.load(sweep_path.parent / sweep_path.name.replace("sweep_", "sweep_logits_")
                       .replace(".json", ".npz")))
     paths = []
     for name, make in SWEEP_FIGURES.items():
-        paths += render(make(sweep, lg), name, out)
+        paths += render(make(sweep, lg), name, out, tag)
     return paths
 
 
@@ -417,13 +419,14 @@ def main() -> None:
     ap.add_argument("--leaf", help="grid: filename of the leaf to show")
     ap.add_argument("--sweep", help="sweep: path to sweep_<run_id>.json")
     ap.add_argument("--out", default="figures")
+    ap.add_argument("--tag", default="", help="appended to every filename, e.g. the run id")
     a = ap.parse_args()
     if a.figure == "grid":
         assert a.data_root, "--data-root is required for the grid"
-        paths = render(corruption_grid(a.data_root, a.leaf), "corruption_grid", a.out)
+        paths = render(corruption_grid(a.data_root, a.leaf), "corruption_grid", a.out, a.tag)
     else:
         assert a.sweep, "--sweep is required"
-        paths = render_sweep(a.sweep, a.out)
+        paths = render_sweep(a.sweep, a.out, a.tag)
     for p in paths:
         print("wrote", p)
 

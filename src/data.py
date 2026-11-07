@@ -32,6 +32,18 @@ IMG_EXT = {".jpg", ".jpeg", ".png", ".bmp"}
 MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 PARTS = ("train", "val", "test")
 
+# The supplied dataset, verified on disk (BRIEF.md Stage 1): images per folder.
+SUPPLIED_COUNTS = {
+    ("train", "Grape___Black_rot"): 1888,
+    ("train", "Grape___Esca_(Black_Measles)"): 1920,
+    ("train", "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)"): 1722,
+    ("train", "Grape___healthy"): 1692,
+    ("test", "Grape___Black_rot"): 472,
+    ("test", "Grape___Esca_(Black_Measles)"): 480,
+    ("test", "Grape___Leaf_blight_(Isariopsis_Leaf_Spot)"): 430,
+    ("test", "Grape___healthy"): 423,
+}
+
 
 @dataclass(frozen=True)
 class Record:
@@ -255,3 +267,17 @@ def make_loader(rows: list[Record], tf: transforms.Compose, cls2idx: dict[str, i
                       pin_memory=device.type == "cuda",
                       persistent_workers=cfg.num_workers > 0, drop_last=False,
                       generator=g, worker_init_fn=_seed_worker)
+
+
+def check_supplied_dataset(root: str | Path) -> None:
+    """Fail early: the full dataset must have exactly the verified per-folder counts.
+    Run this before training, not after 26 minutes of it."""
+    root = Path(root)
+    got = {}
+    for (part, cls_dir) in SUPPLIED_COUNTS:
+        d = root / part / cls_dir
+        assert d.is_dir(), f"missing folder: {d}"
+        got[(part, cls_dir)] = sum(1 for f in d.iterdir() if f.suffix.lower() in IMG_EXT)
+    bad = {k: (v, SUPPLIED_COUNTS[k]) for k, v in got.items() if v != SUPPLIED_COUNTS[k]}
+    assert not bad, f"dataset counts differ (found, expected): {bad}"
+    print(f"dataset OK: {sum(got.values()):,} images in 8 folders, counts as verified")
