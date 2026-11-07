@@ -141,20 +141,27 @@ every image. It is the author's own statement, which is the best available evide
 
 **Found 2026-11-07 by scanning every commit.** The repo is public (D5), and the student ID
 appears in two places, both in **every** commit:
-1. **The commit author email.** All commits are authored the owner's student-number email address, the git
-   `user.email` set on this machine. A push publishes it in the metadata of every commit.
+1. **The commit author.** Every commit is authored with the owner's university
+   student-number email address (the global git `user.email` on this machine) and the name
+   `brycebryce`. A push publishes both in the metadata of every commit.
 2. **`notebooks/archive/01_baseline_calibration_september2026.ipynb`**. Its header reads
-   the owner's name followed by the student ID and names both supervisors. It has been in the tree since
-   the first commit, `e08ce7e`.
+   the owner's name followed by the student ID, and names both supervisors. It has been in
+   the tree since the first commit, `e08ce7e`.
+3. **An earlier version of this entry** quoted the ID itself (commit `54904c8`). The text
+   is fixed now, but that commit still holds it.
 
 Nothing has been pushed, so both can still be removed completely.
 
 **Recommendation.** Before the first push:
-- (a) Set this repo's commit email to the GitHub no-reply address
-  (`brycedaniliuc@users.noreply.github.com`) or to an address the owner chooses.
+- (a) Set this repo's commit identity to `Bryce Daniliuc` and the GitHub no-reply address
+  for account `brycedaniliuc` (`210462737+brycedaniliuc@users.noreply.github.com`, the id
+  read from `gh api user`), or to an address the owner chooses. Repo-local config only; the
+  global git config is left alone.
 - (b) Replace the ID line in the archived notebook's first markdown cell with name and course
   only. Leave the code cells untouched, so it stays the notebook that produced `results/`.
-- (c) Rewrite the local history so that no commit contains either. Keep a backup tag of the
-  original history until the push is checked.
+- (c) Rewrite the local history so that no commit contains the ID anywhere: author,
+  committer, the archived notebook, or this file. Keep a backup branch of the original
+  history, check with `git log --all -p | grep`, and delete the backup before pushing (a
+  pushed backup would publish the ID).
 
 This is the owner's identity and history, so it is not done without an explicit yes.
