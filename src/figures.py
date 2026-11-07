@@ -313,11 +313,14 @@ def degeneracy(sweep: dict) -> Callable[[str], Figure]:
         groups: dict[float, list[str]] = {}
         for m, t in ends.items():  # max_iter values that stopped at the same T share a label
             groups.setdefault(round(float(np.log10(t)), 2), []).append(m)  # ~2% apart
-        for ms in groups.values():
+        step = 9 if size == "paper" else 18  # endpoints can sit close together: stagger the
+        for i, ms in enumerate(sorted(groups.values(), key=lambda g: ends[g[0]])):  # labels
             t, y = ends[ms[0]], end_nll[ms[0]]
             ax.plot(t, y, marker="s", color=RED, ms=3 if size == "paper" else 7, ls="none")
-            ax.annotate(", ".join(ms), (t, y), xytext=(3, 4), textcoords="offset points",
-                        fontsize=FONT[size] - 2, color=INK)
+            ax.annotate(", ".join(ms), (t, y), xytext=(0, step * (i + 1)),
+                        textcoords="offset points", ha="center", fontsize=FONT[size] - 2,
+                        color=INK, arrowprops={"arrowstyle": "-", "color": MUTED, "lw": 0.6},
+                        bbox={"fc": "white", "ec": "none", "pad": 0.3})
         ax.plot([], [], marker="s", color=RED, ls="none",
                 label="LBFGS endpoint (label = max_iter)")
         ax.set_xscale("log")

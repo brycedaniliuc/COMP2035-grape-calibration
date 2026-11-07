@@ -39,10 +39,21 @@ Open it from GitHub in Colab (File → Open notebook → GitHub). Run the cells 
 |---|---|---|---|
 | 1–3 | settings, setup, data | as above. Leave `SOURCE_RESULTS` empty to pick the newest source run | about 2 min |
 | 4 | locate | finds `results_resnet50_source_*.json` in `OUT` | instant |
-| 5 | **sweep** | 4 corruptions × severities 0–5 on the 610 test originals; all temperature conditions; bootstrap CIs; threshold | SEE_SMOKE |
+| 5 | **sweep** | 4 corruptions × severities 0–5 on the 610 test originals; all temperature conditions; bootstrap CIs; threshold | **about 5 min** (estimate, not measured on Colab; see the note below) |
 | 6 | figures | 9 figures × (paper PDF + slide PNG) into `OUT/figures_<run_id>/` | about 1 min (not yet measured) |
 | 7 | verify | Tier 1 must pass | about 1 min |
 | 8 | list | prints every file of this run | seconds |
+
+**Sweep timing, measured and estimated.** The sweep was smoke-run locally on the real dataset
+(CPU, Apple M2 Pro, a one-epoch EfficientNet-B0 standing in for ResNet-50). It took
+**92 min**, almost all of it CPU inference: 24 conditions × 610 images, about 0.38 s per
+image. The other parts were timed separately: all 144 bootstrap CIs take about 0.5 min, and
+the corruptions take at most 12 ms per image. On a T4, inference stops being the limit, and
+the limit becomes how fast Colab can load and decode images. In September, Colab fed about
+130 images/s during training (30 epochs of about 6,900 images in 25.9 min). At that rate the
+14,640 sweep images take about 2 min, plus the bootstrap and the validation pass, hence
+"about 5 min". If the cell is still running after 20 min, check that cell 2 printed a CUDA
+device.
 
 ## 3 · Files that must be in Drive afterwards (`MyDrive/COMP2035_runs/`)
 
