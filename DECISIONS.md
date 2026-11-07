@@ -136,3 +136,25 @@ attribution to Hughes & Salathé (PlantVillage) and Mohanty, Hughes & Salathé (
 in `tests/fixture/IMAGES-LICENSE.md` and the README. Share-alike applies to those images
 (and the grid figure), not to the code. Not verified: that the Hugging Face label covers
 every image. It is the author's own statement, which is the best available evidence.
+
+## D9 · Student ID in git history — OPEN (owner decides at Gate 8, before any push)
+
+**Found 2026-11-07 by scanning every commit.** The repo is public (D5), and the student ID
+appears in two places, both in **every** commit:
+1. **The commit author email.** All commits are authored the owner's student-number email address, the git
+   `user.email` set on this machine. A push publishes it in the metadata of every commit.
+2. **`notebooks/archive/01_baseline_calibration_september2026.ipynb`**. Its header reads
+   the owner's name followed by the student ID and names both supervisors. It has been in the tree since
+   the first commit, `e08ce7e`.
+
+Nothing has been pushed, so both can still be removed completely.
+
+**Recommendation.** Before the first push:
+- (a) Set this repo's commit email to the GitHub no-reply address
+  (`brycedaniliuc@users.noreply.github.com`) or to an address the owner chooses.
+- (b) Replace the ID line in the archived notebook's first markdown cell with name and course
+  only. Leave the code cells untouched, so it stays the notebook that produced `results/`.
+- (c) Rewrite the local history so that no commit contains either. Keep a backup tag of the
+  original history until the push is checked.
+
+This is the owner's identity and history, so it is not done without an explicit yes.
