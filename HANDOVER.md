@@ -116,3 +116,8 @@ the figures into `figures/`.
 The checkpoints stay in Drive; `*.pt` is gitignored. Then repeat every check from the copied
 files:
 `.venv/bin/python -m src.verify --run results/colab_<date>/results_<run_id>.json`
+
+To run the prediction + warning tool on the real model, download its `best_<run_id>.pt` from
+Drive into the same folder as its `results_` file (it stays gitignored), then:
+`.venv/bin/python -m src.predict --results results/colab_<date>/results_<run_id>.json
+--sweep results/colab_<date>/sweep_<run_id>.json --images <folder> --out predictions.csv`

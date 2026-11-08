@@ -55,6 +55,9 @@ the Canoski PDF during Stage 2 and correct `CLAUDE.md`'s configuration list eith
 ## D4 · The prototype output promised in the paper — RESOLVED
 
 **RESOLVED 2026-11-07 (owner):** approved. This is Stage 10 in BRIEF.md.
+**Built 2026-11-09 (Stage 10):** `src/predict.py`. The threshold comes from the sweep (chosen
+on validation, checked on held-out test, D10), or is given by hand and labelled as carrying no
+accuracy claim. With no supported threshold, every image is flagged.
 
 **Observation.** The abstract and §1 promise a returned "disease prediction, a confidence
 indicator, an explicit warning for uncertain cases". `BRIEF.md` has no stage that builds

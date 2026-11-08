@@ -22,7 +22,7 @@ threshold can and cannot be trusted.
 | Coverage curves, three confidence scores, threshold derivation | **Built and tested; not yet run on the real model** | `src/evaluate.py` |
 | Figures, independent verification | **Built and tested; not yet run on the real model** | `src/figures.py`, `src/verify.py` |
 | The real degradation run | **Pending**: one Colab session | [`HANDOVER.md`](HANDOVER.md) |
-| Prediction + confidence + warning tool | Not yet built | — |
+| Prediction + confidence + warning tool | **Built and tested on the fixture**; its real threshold comes from the Colab run | `src/predict.py` |
 | MC dropout, deep ensembles | Not done. The submitted plan allowed both to be dropped if the schedule slipped | — |
 | Field images (LDD in the submitted plan) | Not used. This repo runs the plan's §3.4 contingency instead: degraded held-out PlantVillage | `DECISIONS.md` D11 |
 
@@ -189,6 +189,24 @@ These are the grape folders of the Kaggle "New Plant Diseases Dataset". If your 
 a top-level folder differently, rename it to `train` or `test`. The count check then
 confirms you have the same 9,027 images.
 
+### The prediction + confidence + warning tool
+
+For any folder of images, it writes one CSV row per image: the predicted class, the
+confidence (max softmax at T = 1), and `warning = yes` when the confidence is below the
+threshold, meaning "refer this image to a person". The threshold comes from a sweep, where
+it was chosen on validation images and checked on held-out test images:
+
+```bash
+.venv/bin/python -m src.predict --results outputs/fixture/results_<run_id>.json \
+    --sweep outputs/fixture/sweep_<run_id>.json --images tests/fixture --out predictions.csv
+```
+
+Every run prints whether the held-out data support the threshold, what "no warning" does
+and does not mean, and what the threshold does not cover. In particular, the warning cannot
+recognise an image outside the model's scope (not a grape leaf, or another disease). A
+threshold given by hand (`--threshold 0.9`) is accepted but labelled as carrying no accuracy
+claim.
+
 With the full dataset on disk, the leakage audit alone is:
 
 ```bash
@@ -212,7 +230,8 @@ the preinstalled CUDA build of PyTorch is used instead of the CPU pin.
 
 ```
 src/            config, data (indexing, splits), audit, train, calibrate, degrade,
-                evaluate (sweep, coverage, threshold), figures, verify
+                evaluate (sweep, coverage, threshold), figures, verify,
+                predict (prediction + confidence + warning)
 tests/          pytest suite; fixture/ = 80 real images, MANIFEST.md, build_fixture.py
 notebooks/      01 and 02 for Colab; archive/ holds the September 2026 notebook
 tools/          build_notebooks.py (generates and validates the notebooks)
