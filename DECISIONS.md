@@ -117,7 +117,11 @@ under a separate role.
 **Recommendation.** Keep these. Report the two adapted series as our own design in the
 Method section, not as ImageNet-C.
 
-## D8 · Redistributing PlantVillage images in a public repo — RECOMMENDATION READY (owner to confirm at Gate 8)
+## D8 · Redistributing PlantVillage images in a public repo — RESOLVED (owner accepted CC BY-SA 3.0, 2026-11-09)
+
+**Ruling.** The owner accepted the recommendation below: the fixture images and the
+corruption-grid figure are published under CC BY-SA 3.0, with attribution, as stated in
+`tests/fixture/IMAGES-LICENSE.md` and the README.
 
 `tests/fixture/` (80 images) and `figures/corruption_grid_*` contain PlantVillage images.
 
