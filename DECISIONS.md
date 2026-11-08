@@ -137,31 +137,25 @@ in `tests/fixture/IMAGES-LICENSE.md` and the README. Share-alike applies to thos
 (and the grid figure), not to the code. Not verified: that the Hugging Face label covers
 every image. It is the author's own statement, which is the best available evidence.
 
-## D9 · Student ID in git history — OPEN (owner decides at Gate 8, before any push)
+## D9 · Student ID in git history — RESOLVED (owner approved the rewrite, 2026-11-09)
 
-**Found 2026-11-07 by scanning every commit.** The repo is public (D5), and the student ID
-appears in two places, both in **every** commit:
-1. **The commit author.** Every commit is authored with the owner's university
-   student-number email address (the global git `user.email` on this machine) and the name
-   `brycebryce`. A push publishes both in the metadata of every commit.
-2. **`notebooks/archive/01_baseline_calibration_september2026.ipynb`**. Its header reads
-   the owner's name followed by the student ID, and names both supervisors. It has been in
-   the tree since the first commit, `e08ce7e`.
-3. **An earlier version of this entry** quoted the ID itself (commit `54904c8`). The text
-   is fixed now, but that commit still holds it.
+**Found 2026-11-07 by scanning every commit.** The repo is public (D5), and before any push
+the student ID was in every commit, in three places: the commit author and committer email
+(the owner's university student-number address, name `brycebryce`); the header of the
+archived September notebook (name with the ID, plus both supervisors' names); and an
+earlier version of this entry, which quoted the ID while describing the problem.
 
-Nothing has been pushed, so both can still be removed completely.
-
-**Recommendation.** Before the first push:
-- (a) Set this repo's commit identity to `Bryce Daniliuc` and the GitHub no-reply address
-  for account `brycedaniliuc` (`210462737+brycedaniliuc@users.noreply.github.com`, the id
-  read from `gh api user`), or to an address the owner chooses. Repo-local config only; the
-  global git config is left alone.
-- (b) Replace the ID line in the archived notebook's first markdown cell with name and course
-  only. Leave the code cells untouched, so it stays the notebook that produced `results/`.
-- (c) Rewrite the local history so that no commit contains the ID anywhere: author,
-  committer, the archived notebook, or this file. Keep a backup branch of the original
-  history, check with `git log --all -p | grep`, and delete the backup before pushing (a
-  pushed backup would publish the ID).
-
-This is the owner's identity and history, so it is not done without an explicit yes.
+**Done, before the first push:**
+- This repo's commit identity is `Bryce Daniliuc <210462737+brycedaniliuc@users.noreply.github.com>`,
+  the GitHub no-reply address for account `brycedaniliuc` (id from `gh api user`). It is set
+  in the repo-local config; the global git config is unchanged.
+- History rewritten with `git filter-branch`. Every commit now has that author and
+  committer. The archived notebook's header line is reduced to course and name, and the
+  supervisor line is removed. Only that markdown cell changed; every code cell is
+  byte-identical, so it is still the notebook that produced `results/`. Commit messages and
+  dates are unchanged.
+- Checked after the rewrite: no tree, message, author or committer on `main` contains the
+  ID. Each rewritten commit differs from its original only in those lines. 71 tests pass,
+  and the archived notebook passes `nbformat.validate`.
+- A local backup branch, `backup/pre-id-rewrite`, holds the original history. It is never
+  pushed, and is deleted once the pushed repo has been checked.
