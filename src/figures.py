@@ -338,8 +338,9 @@ def degeneracy(sweep: dict) -> Callable[[str], Figure]:
 
 def aurc_by_score(sweep: dict) -> Callable[[str], Figure]:
     from src.degrade import CORRUPTIONS
-    sty = {"max_softmax": (BLUE, "-", "o", "Max softmax"),
-           "neg_entropy": (RED, "--", "s", "Entropy"), "margin": (INK, ":", "^", "Logit margin")}
+    sty = {"max_softmax": (BLUE, "-", "o", "Max softmax, T = 1"),
+           "neg_entropy": (RED, "--", "s", "Entropy, T = 1"),
+           "margin": (INK, ":", "^", "Logit margin")}
 
     def build(size: str) -> Figure:
         fig, axes = _panels(size)
@@ -348,11 +349,15 @@ def aurc_by_score(sweep: dict) -> Callable[[str], Figure]:
             for k, (col, ls, mk, lab) in sty.items():
                 ax.plot([r["severity"] for r in rs], [r["scores"][k]["aurc"] for r in rs],
                         color=col, ls=ls, marker=mk, ms=3 if size == "paper" else 7, label=lab)
+            ax.plot([r["severity"] for r in rs],  # the temperature-scaled method (paper §3.2)
+                    [r["temperature"]["T_lbfgs"]["coverage"]["max_softmax"]["aurc"] for r in rs],
+                    color=BLUE, ls="-.", marker="o", mfc="white",
+                    ms=3 if size == "paper" else 7, label=f"Max softmax, {_t_lbfgs_name(sweep)}")
             ax.set_title(LABEL[c])
             ax.set_xticks(range(6))
             ax.grid(axis="y")
-        _finish(fig, axes, size, "Severity level (0 = clean)", "AURC (lower is better)", 3)
-        fig.suptitle(f"Ranking quality of three confidence scores (n = {sweep['n_test']})")
+        _finish(fig, axes, size, "Severity level (0 = clean)", "AURC (lower is better)", 2)
+        fig.suptitle(f"Ranking quality of the confidence scores (n = {sweep['n_test']})")
         return fig
 
     return build

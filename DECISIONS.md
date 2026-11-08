@@ -163,3 +163,32 @@ earlier version of this entry, which quoted the ID while describing the problem.
   and the archived notebook passes `nbformat.validate`.
 - A local backup branch, `backup/pre-id-rewrite`, holds the original history. It is never
   pushed, and is deleted once the pushed repo has been checked.
+
+## D10 · Where the threshold is chosen — CHANGED IN STAGE 9 (owner to confirm)
+
+**Found in the Stage 9 review.** The threshold was chosen on the 610 test images and its
+accuracy reported on the same 610 images, so "every condition reaches 95%" held by
+construction. On real images (the CPU smoke run, a one-epoch EfficientNet-B0 standing in for
+ResNet-50), I chose the threshold on one random half of the test images and applied it to the
+other half, 20 times. In 9 of the 20 splits at least one condition fell below 95% on the
+held-out half, down to 0.842.
+
+**Now.** The sweep also degrades the validation images (all 24 conditions). The threshold is
+chosen there and applied, unchanged, to the test images. The held-out test numbers are the
+result. The test-chosen threshold is still computed, labelled optimistic, for comparison
+only. Cost: the sweep reads 29,256 images instead of 14,640 (about 4 more minutes on Colab,
+estimated). `src.verify` re-derives both the validation choice and the test numbers.
+
+**Recommendation.** Keep it. Choosing on validation and reporting on test is the standard
+protocol, and the brief asks for a threshold derived "defensibly". The validation images
+were used during training only for early stopping and checkpoint selection, never seen as
+training examples.
+
+## D11 · Field images: LDD not used — RECORDED (the submitted plan's own contingency)
+
+The submitted plan (§3.1) named LDD (Rossi et al. 2022) as the harder evaluation set, and
+§3.4 gave the contingency: "if the LDD does not work", degraded held-out PlantVillage serves
+as the proxy. Per the owner's assessment (in the owner's notes; not re-checked in this
+review), LDD has no public download URL and no licence. This repo implements the
+contingency. PlantSeg (Wei et al. 2026) is the owner's candidate substitute for real field
+images; it is an upgrade after Stage 9 and is not done.

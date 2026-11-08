@@ -29,6 +29,8 @@ SEPTEMBER = REPO / "results" / "source" / "results_resnet50_source.json"
 SEPTEMBER_AUDIT = REPO / "results" / "source" / "audit.json"
 LEAF = re.compile(r"([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})___")
 ECE_TOL, PROB_TOL = 1e-5, 1e-5
+AURC_TOL = 1e-4  # float32 near-ties can swap order between implementations
+THR_TOL = 1e-6   # float64 here vs float32 in src: a score can sit ~1e-7 either side of t
 
 Check = tuple[str, int, str, str]  # (name, tier, PASS / FAIL / PENDING COLAB, detail)
 
@@ -114,9 +116,13 @@ def tier1(run_path: Path, require_sweep: bool = False) -> list[Check]:
             str({k: len(v) for k, v in sp.items()}))
 
     sw_path = d / f"sweep_{res['run_id']}.json"
-    if sw_path.exists():
+    val_path = d / f"sweep_val_logits_{res['run_id']}.npz"
+    if sw_path.exists() and not val_path.exists():
+        out.append(("sweep validation logits present", 1, "FAIL", f"missing {val_path.name}"))
+    elif sw_path.exists():
         out += tier1_sweep(res, json.loads(sw_path.read_text()),
-                           dict(np.load(d / f"sweep_logits_{res['run_id']}.npz")), tl)
+                           dict(np.load(d / f"sweep_logits_{res['run_id']}.npz")), tl,
+                           dict(np.load(val_path)))
     elif require_sweep:
         out.append(("sweep present", 1, "FAIL", f"missing {sw_path.name}"))
     else:  # notebook 01 verifies before notebook 02 has produced the sweep
@@ -125,11 +131,16 @@ def tier1(run_path: Path, require_sweep: bool = False) -> list[Check]:
     return out
 
 
-def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray) -> list[Check]:
+def aurc_v2(score: np.ndarray, correct: np.ndarray) -> float:
+    return float(np.mean(1 - selective_acc(score, correct)))
+
+
+def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
+                val_lg: dict) -> list[Check]:
     out: list[Check] = []
     nb = sw["config"]["n_bins"]
     y = lg["labels"]
-    bad_acc, bad_ece, bad_pred, bad_t = [], [], [], []
+    bad_acc, bad_ece, bad_pred, bad_t, cov_diff = [], [], [], [], 0.0
     for r in sw["rows"]:
         key = f"{r['corruption']}_s{r['severity']}"
         logits = lg[key]
@@ -144,6 +155,10 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray) -> list[
                 bad_ece.append(f"{key}/{name}")
             if cond["T"] != sw["temperatures"][name]:
                 bad_t.append(f"{key}/{name}")
+            ent = -(pt * np.log(np.clip(pt, 1e-12, None))).sum(1)
+            for k, s in (("max_softmax", pt.max(1)), ("neg_entropy", -ent)):
+                cov_diff = max(cov_diff, abs(aurc_v2(s.astype(np.float32), correct)
+                                             - cond["coverage"][k]["aurc"]))
     n = len(sw["rows"])
     out.append(("sweep: accuracy re-derived, every row", 1, "PASS" if not bad_acc else "FAIL",
                 f"{n} rows" + (f"; mismatched {bad_acc}" if bad_acc else "")))
@@ -156,8 +171,53 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray) -> list[
     same = all(np.array_equal(lg[k], test_logits) for k in s0)
     out.append(("severity 0 = clean logits, bit-identical", 1, "PASS" if same else "FAIL",
                 f"{len(s0)} corruptions"))
+    out.append(("sweep: AURC at every T re-derived", 1, "PASS" if cov_diff < AURC_TOL
+                else "FAIL", f"max |diff| {cov_diff:.1e}, {n * len(sw['temperatures']) * 2} "
+                "curves (max softmax, entropy)"))
+    out += threshold_checks(sw, lg, val_lg)
     out += figure_checks(sw, lg)
     return out
+
+
+def threshold_checks(sw: dict, lg: dict, val_lg: dict) -> list[Check]:
+    """The max-softmax threshold, from the raw logits with separate code: on validation it
+    meets every target and the next lower score does not; on test, the accepted counts,
+    accuracies and conditions below target are as reported."""
+    keys = [k for k in lg if k != "labels"]
+    conf = {s: {k: softmax64(st[k]).max(1) for k in keys} for s, st in (("v", val_lg), ("t", lg))}
+    ok = {s: {k: (st[k].argmax(1) == st["labels"]) for k in keys}
+          for s, st in (("v", val_lg), ("t", lg))}
+
+    def meets(split: str, t: float, target: float) -> bool:
+        return all(ok[split][k][conf[split][k] >= t].mean() >= target
+                   for k in keys if (conf[split][k] >= t).any())
+
+    bad_val, bad_test, n = [], [], 0
+    for tgt, r in sw["threshold"]["by_score"]["max_softmax"].items():
+        if not r["validation"]["found"]:
+            continue
+        n += 1
+        t, target = r["validation"]["threshold"], float(tgt)
+        lower = [c for c in np.concatenate(list(conf["v"].values())) if c < t - THR_TOL]
+        if not meets("v", t - THR_TOL, target) or (lower and meets("v", max(lower), target)):
+            bad_val.append(tgt)
+        for k in keys:
+            acc_mask = conf["t"][k] >= t - THR_TOL
+            got = r["test"]["per_condition"][k]
+            want_acc = float(ok["t"][k][acc_mask].mean()) if acc_mask.any() else None
+            if got["n_accepted"] != int(acc_mask.sum()) or (
+                    want_acc is not None and abs(got["acc_accepted"] - want_acc) > 1e-12):
+                bad_test.append(f"{tgt}/{k}")
+        below = [k for k in keys if (conf["t"][k] >= t - THR_TOL).any()
+                 and ok["t"][k][conf["t"][k] >= t - THR_TOL].mean() < target]
+        if sorted(below) != sorted(r["test"]["below_target"]):
+            bad_test.append(f"{tgt}/below_target")
+    return [("threshold: chosen on validation, lowest that meets target", 1,
+             "PASS" if not bad_val else "FAIL", f"{n} targets" + (f"; {bad_val}" if bad_val
+                                                                 else "")),
+            ("threshold: held-out test numbers re-derived", 1,
+             "PASS" if not bad_test else "FAIL", f"{n} targets x {len(keys)} conditions"
+             + (f"; {bad_test[:5]}" if bad_test else ""))]
 
 
 def figure_checks(sw: dict, lg: dict) -> list[Check]:
@@ -196,7 +256,9 @@ def figure_checks(sw: dict, lg: dict) -> list[Check]:
            for c in CORRUPTIONS for k in sw["temperatures"] if k.startswith("T=")])
     check("aurc_by_score", F.aurc_by_score(sw)("paper"),
           [np.array([rows[(c, s)]["scores"][k]["aurc"] for s in sev])
-           for c in CORRUPTIONS for k in ("max_softmax", "neg_entropy", "margin")])
+           for c in CORRUPTIONS for k in ("max_softmax", "neg_entropy", "margin")]
+          + [np.array([rows[(c, s)]["temperature"]["T_lbfgs"]["coverage"]["max_softmax"]
+                       ["aurc"] for s in sev]) for c in CORRUPTIONS])
     check("coverage_curves (vs independent recomputation)", F.coverage_curves(sw, lg)("paper"),
           [selective_acc(softmax64(lg[f"{c}_s{s}"]).max(1).astype(np.float32),
                          (lg[f"{c}_s{s}"].argmax(1) == y).astype(float))
@@ -276,7 +338,9 @@ def determinism(data_root: str) -> list[Check]:
             sweep(Path(f"{tmp}/{tag}/results_{res['run_id']}.json"))
             outs.append({**dict(np.load(f"{tmp}/{tag}/logits_{res['run_id']}.npz")),
                          **{f"sweep/{k}": v for k, v in
-                            np.load(f"{tmp}/{tag}/sweep_logits_{res['run_id']}.npz").items()}})
+                            np.load(f"{tmp}/{tag}/sweep_logits_{res['run_id']}.npz").items()},
+                         **{f"sweep_val/{k}": v for k, v in np.load(
+                             f"{tmp}/{tag}/sweep_val_logits_{res['run_id']}.npz").items()}})
         same = outs[0].keys() == outs[1].keys() and all(
             np.array_equal(outs[0][k], outs[1][k]) for k in outs[0])
     return [("same config twice: bit-identical logits (train + sweep)", 1,

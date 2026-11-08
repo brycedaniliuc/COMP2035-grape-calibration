@@ -4,7 +4,9 @@ threshold (Stage 5).
     python -m src.evaluate --results outputs/<run>/results_<run_id>.json
 
 Reads the run's config, checkpoint and split from its results JSON. Applies every
-corruption at every severity to the `source` test set (originals only), at inference only.
+corruption at every severity to the `source` test set (originals only), at inference only,
+and to the validation set: the threshold is chosen on degraded validation images and checked
+on the degraded test images, which it never saw.
 
 Temperature protocol (BRIEF.md Stage 4, AMENDED; DECISIONS.md D1):
   1. degeneracy: validation NLL over a T grid, and the LBFGS endpoint for several max_iter
@@ -144,6 +146,10 @@ def evaluate_logits(logits: np.ndarray, labels: np.ndarray, classes: list[str],
             "reliability_bins": bins,
             "per_class_mean_confidence": {c: float(conf_t[labels == i].mean())
                                           for i, c in enumerate(classes)},
+            # T can reorder images by max softmax or entropy, so each T has its own coverage
+            # curve. Margin / T ranks exactly as margin, so its T = 1 curve (in "scores") holds.
+            "coverage": {k: risk_coverage(s, correct_t)
+                         for k, s in scores(logits, t).items() if k != "margin"},
         }
     for name, s in scores(logits).items():
         out["scores"][name] = risk_coverage(s, correct)
@@ -244,6 +250,18 @@ def sweep(results_path: str | Path, data_root: str | None = None,
                   f"conf {t1['mean_confidence']:.4f}  ECE(T=1) {t1['ece']:.4f}  "
                   f"ECE(T_lbfgs) {row['temperature']['T_lbfgs']['ece']:.4f}")
 
+    # The same 24 conditions on the validation images: the threshold is chosen there, so the
+    # test images stay held out for checking it.
+    val_store: dict[str, np.ndarray] = {"labels": val_y}
+    for corruption in CORRUPTIONS:
+        for severity in SEVERITIES:
+            lg, y = logits_for(splits.val, corruption, severity)
+            assert np.array_equal(y, val_y), "validation label order drifted"
+            val_store[f"{corruption}_s{severity}"] = lg
+        print(f"  validation images, {corruption}: severities 0-5 done")
+    assert all(np.array_equal(val_store[f"{c}_s0"], val_logits) for c in CORRUPTIONS), \
+        "validation severity 0 differs from the clean validation logits"
+
     # Held fixed: every row used exactly the same temperatures.
     for r in rows:
         assert {k: v["T"] for k, v in r["temperature"].items()} == temps
@@ -267,7 +285,7 @@ def sweep(results_path: str | Path, data_root: str | None = None,
 
     sweep_res = {
         "run_id": run_id, "config": cfg.to_dict(), "classes": classes,
-        "n_test": int(logits_store["labels"].size),
+        "n_test": int(logits_store["labels"].size), "n_val": int(val_y.size),
         "temperatures": temps, "t_lbfgs": t_fit, "t_lbfgs_label": lbfgs_label,
         "degeneracy": degeneracy(val_logits, val_y, cfg),
         "clean_check": {"max_abs_logit_diff_test": clean_diff,
@@ -278,14 +296,16 @@ def sweep(results_path: str | Path, data_root: str | None = None,
                      "n_bootstrap": N_BOOT, "ci": "Wilson 95% (accuracy), "
                      "percentile bootstrap 95% (ECE)"},
         "rows": rows,
-        "threshold": threshold_analysis(logits_store),
+        "threshold": threshold_analysis(logits_store, val_store),
     }
     sweep_path = out_dir / f"sweep_{run_id}.json"
     sweep_path.write_text(json.dumps(_json_safe(sweep_res), indent=1, allow_nan=False))
     logits_path = out_dir / f"sweep_logits_{run_id}.npz"
     # numpy stubs type **kwds against the allow_pickle: bool keyword; the call is correct
     np.savez(logits_path, **logits_store)  # type: ignore[arg-type]
-    print(f"written -> {sweep_path}\nwritten -> {logits_path}")
+    val_path = out_dir / f"sweep_val_logits_{run_id}.npz"
+    np.savez(val_path, **val_store)  # type: ignore[arg-type]
+    print(f"written -> {sweep_path}\nwritten -> {logits_path}\nwritten -> {val_path}")
     return sweep_res
 
 
@@ -315,7 +335,13 @@ def derive_threshold(conditions: dict[str, tuple[np.ndarray, np.ndarray]],
         ok &= acc >= target
     if not ok.any():
         return {"target": target, "threshold": None, "found": False}
-    t = float(cand[np.argmax(ok)])
+    return {"found": True, **apply_threshold(conditions, float(cand[np.argmax(ok)]), target)}
+
+
+def apply_threshold(conditions: dict[str, tuple[np.ndarray, np.ndarray]], t: float,
+                    target: float) -> dict:
+    """Accept score >= t in every condition: coverage, accuracy on the accepted predictions
+    (Wilson 95%), the conditions below the target, and those where t accepts nothing."""
     per: dict[str, dict] = {}
     for name, (s, c) in conditions.items():
         a = s >= t
@@ -326,44 +352,93 @@ def derive_threshold(conditions: dict[str, tuple[np.ndarray, np.ndarray]],
                      if n_acc else None}
     covs = [float(v["coverage"]) for v in per.values()]
     vacuous = [n for n, v in per.items() if v["n_accepted"] == 0]
-    return {"target": target, "threshold": t, "found": True,
+    below = [n for n, v in per.items() if v["n_accepted"] and v["acc_accepted"] < target]
+    return {"target": target, "threshold": t,
             "coverage_min": min(covs), "coverage_mean": float(np.mean(covs)),
-            "referred_mean": 1 - float(np.mean(covs)),
+            "referred_mean": 1 - float(np.mean(covs)), "below_target": below,
             "vacuous_conditions": vacuous, "accepts_nothing_anywhere": len(vacuous) == len(per),
             "per_condition": per}
 
 
-def threshold_analysis(logits_store: dict[str, np.ndarray]) -> dict:
-    """Thresholds for each score at each target, across every (corruption, severity)."""
-    y = logits_store["labels"]
-    keys = [k for k in logits_store if k != "labels"]
-    out: dict = {"primary_target": PRIMARY_TARGET, "score_units": {
-        "max_softmax": "probability, T = 1", "neg_entropy": "minus entropy in nats, T = 1",
-        "margin": "top logit minus second logit"}, "by_score": {}}
+# Stage 5: state what the threshold does not cover. Printed with every threshold.
+THRESHOLD_LIMITS = (
+    "PlantVillage laboratory images: one detached leaf on a plain background, not field "
+    "photographs",
+    "four classes (black rot, esca, leaf blight, healthy); any other disease or crop is out "
+    "of scope",
+    "only the four synthetic corruptions (Gaussian blur, brightening, darkening, square "
+    "occlusion) at severities 1-5; background clutter, other cameras, motion blur and "
+    "several leaves in one image are untested",
+    "one trained model (one seed); another training run can move the threshold",
+    "a condition where the threshold accepts nothing meets the target only vacuously: "
+    "everything there is referred to a human",
+)
+
+
+def _conditions(store: dict[str, np.ndarray], score: str) -> dict:
+    y = store["labels"]
+    return {k: (scores(lg)[score], (lg.argmax(1) == y).astype(float))
+            for k, lg in store.items() if k != "labels"}
+
+
+def threshold_analysis(test_store: dict[str, np.ndarray],
+                       val_store: dict[str, np.ndarray]) -> dict:
+    """Thresholds for each score at each target, across every (corruption, severity).
+
+    The threshold is CHOSEN on the degraded validation images and then APPLIED, unchanged,
+    to the degraded test images, so the test numbers are held out. The threshold chosen on
+    the test images themselves is kept for comparison only ("in_sample_test"): there every
+    condition meets the target by construction, which overstates what new images get."""
+    assert set(test_store) == set(val_store), "validation and test conditions differ"
+    out: dict = {"primary_target": PRIMARY_TARGET,
+                 "chosen_on": "degraded validation images (every corruption x severity)",
+                 "evaluated_on": "degraded test images (held out)",
+                 "score_units": {"max_softmax": "probability, T = 1",
+                                 "neg_entropy": "minus entropy in nats, T = 1",
+                                 "margin": "top logit minus second logit"},
+                 "limits": list(THRESHOLD_LIMITS), "by_score": {}}
     for score in ("max_softmax", "neg_entropy", "margin"):
-        conds = {}
-        for k in keys:
-            lg = logits_store[k]
-            correct = (lg.argmax(1) == y).astype(float)
-            conds[k] = (scores(lg)[score], correct)
-        out["by_score"][score] = {f"{t:.2f}": derive_threshold(conds, t) for t in TARGETS}
+        cv, ct = _conditions(val_store, score), _conditions(test_store, score)
+        by: dict[str, dict] = {}
+        for tgt in TARGETS:
+            chosen = derive_threshold(cv, tgt)
+            by[f"{tgt:.2f}"] = {
+                "validation": chosen,
+                "test": apply_threshold(ct, chosen["threshold"], tgt) if chosen["found"]
+                else None,
+                "in_sample_test": derive_threshold(ct, tgt)}
+        out["by_score"][score] = by
     return out
+
+
+def _referral_note(r: dict) -> str:
+    if r["accepts_nothing_anywhere"]:
+        return " -- accepts NOTHING anywhere: not usable"
+    n = len(r["vacuous_conditions"])
+    return f", {n} condition(s) fully referred" if n else ""
 
 
 def print_threshold(th: dict) -> None:
     """Plain-language summary of the threshold analysis."""
+    print(f"threshold chosen on {th['chosen_on']}; checked on {th['evaluated_on']}")
     for score, by_t in th["by_score"].items():
         print(f"threshold on {score} ({th['score_units'][score]}):")
         for tgt, r in by_t.items():
-            if not r["found"]:
-                print(f"  target {tgt}: NO threshold reaches it in every condition")
+            v, te, ins = r["validation"], r["test"], r["in_sample_test"]
+            if not v["found"]:
+                print(f"  target {tgt}: NO threshold reaches it in every validation condition")
                 continue
-            note = (" -- accepts NOTHING anywhere: not usable" if r["accepts_nothing_anywhere"]
-                    else f", {len(r['vacuous_conditions'])} condition(s) fully referred"
-                    if r["vacuous_conditions"] else "")
-            print(f"  target {tgt}: t = {r['threshold']:.6g}; coverage min "
-                  f"{r['coverage_min']:.3f}, mean {r['coverage_mean']:.3f} "
-                  f"(referred to a human: {r['referred_mean']:.1%} on average){note}")
+            print(f"  target {tgt}: t = {v['threshold']:.6g}")
+            print(f"    held-out test: {len(te['below_target'])} of {len(te['per_condition'])}"
+                  f" conditions below {tgt}; coverage min {te['coverage_min']:.3f}, mean "
+                  f"{te['coverage_mean']:.3f} (referred to a human: {te['referred_mean']:.1%}"
+                  f" on average){_referral_note(te)}")
+            if ins["found"]:
+                print(f"    for comparison, chosen on the test images themselves (optimistic):"
+                      f" t = {ins['threshold']:.6g}")
+    print("what the threshold does not cover:")
+    for s in th["limits"]:
+        print("  -", s)
 
 
 def main() -> None:

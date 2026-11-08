@@ -175,7 +175,8 @@ Run notebook 01 first. Runtime → Run all."""),
     assert runs, f"no results_resnet50_source_*.json in {OUT}: run notebook 01 first"
     SOURCE_RESULTS = str(runs[-1])
 print("using", SOURCE_RESULTS)'''),
-    md("## Sweep: 4 corruptions × severities 0–5 on the 610 clean test originals"),
+    md("## Sweep: 4 corruptions × severities 0–5 on the 610 test originals, and on the 609 "
+       "validation images that the threshold is chosen on"),
     code('''from src.evaluate import print_threshold, sweep
 sw = sweep(SOURCE_RESULTS, data_root=DATA_ROOT)
 print_threshold(sw["threshold"])

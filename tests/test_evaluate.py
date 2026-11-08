@@ -7,6 +7,7 @@ import pytest
 
 from src.evaluate import (
     Z95,
+    apply_threshold,
     bootstrap_ece_ci,
     derive_threshold,
     risk_coverage,
@@ -83,6 +84,18 @@ def test_derive_threshold_known_answer():
     assert r["per_condition"]["shifted"]["coverage"] == 0.5
     assert r["per_condition"]["clean"]["coverage"] == 1.0
     assert r["vacuous_conditions"] == []
+
+
+def test_apply_threshold_reports_held_out_failures():
+    """t = 0.8 chosen elsewhere. Here: 'a' scores 0.9 0.85 0.7 correct 1 0 1 -> accepts 2,
+    1/2 right, below 0.95; 'b' scores 0.5 0.4 -> accepts nothing (vacuous)."""
+    conds = {"a": (np.array([0.9, 0.85, 0.7]), np.array([1.0, 0.0, 1.0])),
+             "b": (np.array([0.5, 0.4]), np.array([1.0, 1.0]))}
+    r = apply_threshold(conds, 0.8, 0.95)
+    assert r["below_target"] == ["a"] and r["vacuous_conditions"] == ["b"]
+    assert r["per_condition"]["a"]["n_accepted"] == 2
+    assert r["per_condition"]["a"]["acc_accepted"] == 0.5
+    assert r["coverage_mean"] == (2 / 3 + 0) / 2
 
 
 def test_derive_threshold_vacuous_when_only_rejecting_everything_works():

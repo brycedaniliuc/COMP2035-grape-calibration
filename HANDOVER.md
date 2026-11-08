@@ -6,21 +6,24 @@ run-tagged filenames, so nothing depends on downloading from the Colab session.
 
 ## 0 · Before you start
 
-1. **The repo must be on GitHub.** The notebooks clone
-   `https://github.com/brycedaniliuc/COMP2035-grape-calibration` (public). Until it is pushed,
-   the first code cell fails at `git clone`.
+1. **The code comes from GitHub.** The notebooks clone
+   `https://github.com/brycedaniliuc/COMP2035-grape-calibration` (public) at `REPO_REF`, which
+   is `main` by default. Leave it at `main`: the `v1.0` tag predates the Stage 9 review and
+   chooses the threshold on the test images (DECISIONS.md D10).
 2. **The dataset zip must be in Drive.** Upload
    `~/Downloads/Literature Review paper/Grape/grape_dataset_for_colab.zip` (160.6 MB) to the
    **top level of My Drive**, with exactly that name. The September runs used this same zip,
-   extracted to `/content/grape_dataset`. The notebooks then check the exact per-folder counts
-   (7,222 train and 1,805 test, per class) **before any training**. A wrong or partial zip
-   fails in the first minute, not at minute 26.
+   extracted to `/content/grape_dataset`. The notebooks then check the exact count in each of
+   the 8 class folders (7,222 train and 1,805 test images in total) **before any training**.
+   A wrong or partial zip fails in the first minute, not at minute 26. Without this zip, build
+   the same layout from the table in the README ("The dataset").
 3. In Colab: **Runtime → Change runtime type → T4 GPU**.
 
 ## 1 · Notebook 01 — `notebooks/01_baseline_calibration.ipynb`
 
 Open it from GitHub in Colab (File → Open notebook → GitHub). Run the cells in order
-(Runtime → Run all works). Wall times are labelled with their basis; none is a guess.
+(Runtime → Run all works). Each wall time says what it rests on: a September measurement,
+or an estimate marked as one.
 
 | # | Cell | What it does | Expected wall time |
 |---|---|---|---|
@@ -39,21 +42,22 @@ Open it from GitHub in Colab (File → Open notebook → GitHub). Run the cells 
 |---|---|---|---|
 | 1–3 | settings, setup, data | as above. Leave `SOURCE_RESULTS` empty to pick the newest source run | about 2 min |
 | 4 | locate | finds `results_resnet50_source_*.json` in `OUT` | instant |
-| 5 | **sweep** | 4 corruptions × severities 0–5 on the 610 test originals; all temperature conditions; bootstrap CIs; threshold | **about 5 min** (estimate, not measured on Colab; see the note below) |
+| 5 | **sweep** | 4 corruptions × severities 0–5 on the 610 test originals and the 609 validation images; all temperature conditions; bootstrap CIs; threshold chosen on validation, checked on test | **about 6 min** (estimate, not measured on Colab; see the note below) |
 | 6 | figures | 9 figures × (paper PDF + slide PNG) into `OUT/figures_<run_id>/` | about 1 min (not yet measured) |
 | 7 | verify | Tier 1 must pass | about 1 min |
 | 8 | list | prints every file of this run | seconds |
 
 **Sweep timing, measured and estimated.** The sweep was smoke-run locally on the real dataset
-(CPU, Apple M2 Pro, a one-epoch EfficientNet-B0 standing in for ResNet-50). It took
-**92 min**, almost all of it CPU inference: 24 conditions × 610 images, about 0.38 s per
-image. The other parts were timed separately: all 144 bootstrap CIs take about 0.5 min, and
-the corruptions take at most 12 ms per image. On a T4, inference stops being the limit, and
-the limit becomes how fast Colab can load and decode images. In September, Colab fed about
-130 images/s during training (30 epochs of about 6,900 images in 25.9 min). At that rate the
-14,640 sweep images take about 2 min, plus the bootstrap and the validation pass, hence
-"about 5 min". If the cell is still running after 20 min, check that cell 2 printed a CUDA
-device.
+(CPU, Apple M2 Pro, a one-epoch EfficientNet-B0 standing in for ResNet-50), before the
+validation images were added to it. It took **92 min**, almost all of it CPU inference:
+24 conditions × 610 images, about 0.38 s per image. The other parts were timed separately:
+all 144 bootstrap CIs take about 0.5 min, and the corruptions take at most 12 ms per image.
+On a T4, inference stops being the limit, and the limit becomes how fast Colab can load and
+decode images. In September, Colab fed about 130 images/s during training (30 epochs of
+about 6,900 images in 25.9 min). The sweep now degrades the validation images too, for
+choosing the threshold: 24 × (610 + 609) = 29,256 images. At that rate they take about
+4 min, plus the bootstrap, hence "about 6 min". If the cell is still running after 20 min,
+check that cell 2 printed a CUDA device.
 
 ## 3 · Files that must be in Drive afterwards (`MyDrive/COMP2035_runs/`)
 
@@ -72,7 +76,9 @@ From notebook 01:
 From notebook 02 (for the source run):
 - `sweep_<run_id>.json` (every row, every temperature condition, the CIs, the threshold
   analysis and the degeneracy demonstration)
-- `sweep_logits_<run_id>.npz` (logits for all 24 conditions plus labels)
+- `sweep_logits_<run_id>.npz` (test logits for all 24 conditions plus labels)
+- `sweep_val_logits_<run_id>.npz` (validation logits for all 24 conditions plus labels; the
+  threshold is chosen on these)
 - `figures_<run_id>/`: 18 files. The figures are `accuracy_vs_severity`,
   `ece_vs_severity`, `ece_by_fixed_t`, `coverage_curves`, `confidence_hist`,
   `reliability_clean`, `temperature_degeneracy`, `aurc_by_score` and `corruption_grid`,
@@ -104,8 +110,9 @@ And `src.verify` must print **Tier 1: N passed, 0 failed**. The notebooks stop i
 ## 6 · After the run
 
 Copy into `results/colab_<date>/` in the repo, for each run, **every file except the `.pt`
-checkpoint**: `results_`, `logits_`, `splits_`, `sweep_` and `sweep_logits_` (`verify`
-reads them side by side). Also copy `audit_<stamp>.json`. Copy the figures into `figures/`.
+checkpoint**: `results_`, `logits_`, `splits_`, `sweep_`, `sweep_logits_` and
+`sweep_val_logits_` (`verify` reads them side by side). Also copy `audit_<stamp>.json`. Copy
+the figures into `figures/`.
 The checkpoints stay in Drive; `*.pt` is gitignored. Then repeat every check from the copied
 files:
 `.venv/bin/python -m src.verify --run results/colab_<date>/results_<run_id>.json`

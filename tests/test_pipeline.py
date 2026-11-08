@@ -50,7 +50,19 @@ def test_sweep_on_fixture_checkpoint(fixture_root, tmp_path):
     assert len(sw["rows"]) == len(CORRUPTIONS) * len(SEVERITIES)
     clean = [r for r in sw["rows"] if r["severity"] == 0]
     assert all(r["accuracy"] == res["test_accuracy"] for r in clean)
-    assert set(sw["threshold"]["by_score"]) == {"max_softmax", "neg_entropy", "margin"}
+    th = sw["threshold"]
+    assert set(th["by_score"]) == {"max_softmax", "neg_entropy", "margin"}
+    assert th["limits"]
+    for by_t in th["by_score"].values():
+        for r in by_t.values():
+            assert set(r) == {"validation", "test", "in_sample_test"}
+            if r["validation"]["found"]:  # applied unchanged to the held-out test images
+                assert r["test"]["threshold"] == r["validation"]["threshold"]
+    for row in sw["rows"]:
+        for cond in row["temperature"].values():
+            assert set(cond["coverage"]) == {"max_softmax", "neg_entropy"}
     assert sw["clean_check"]["max_abs_logit_diff_test"] == 0.0
     npz = np.load(tmp_path / f"sweep_logits_{res['run_id']}.npz")
     assert len(npz.files) == 1 + len(CORRUPTIONS) * len(SEVERITIES)
+    val = np.load(tmp_path / f"sweep_val_logits_{res['run_id']}.npz")
+    assert set(val.files) == set(npz.files) and val["labels"].size == sw["n_val"]

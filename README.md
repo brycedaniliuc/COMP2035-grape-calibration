@@ -24,6 +24,7 @@ threshold can and cannot be trusted.
 | The real degradation run | **Pending**: one Colab session | [`HANDOVER.md`](HANDOVER.md) |
 | Prediction + confidence + warning tool | Not yet built | — |
 | MC dropout, deep ensembles | Not done. The submitted plan allowed both to be dropped if the schedule slipped | — |
+| Field images (LDD in the submitted plan) | Not used. This repo runs the plan's §3.4 contingency instead: degraded held-out PlantVillage | `DECISIONS.md` D11 |
 
 No result of the degradation study appears in this README, because none exists yet.
 
@@ -121,11 +122,18 @@ why the degradation study, where errors occur, is the real experiment.
 - **Confidence scores.** Max softmax, predictive entropy, and logit margin (top logit minus
   second).
 - **Selective classification** (Geifman & El-Yaniv 2017). Coverage curves and the area
-  under the risk–coverage curve.
-- **Threshold.** The lowest score at which **every** (corruption, severity) condition reaches
-  the target accuracy on accepted predictions (primary target 95%), reported with its
-  referral cost. A threshold that only works by referring everything is flagged as such, not
-  reported as a success.
+  under the risk–coverage curve (AURC) for each score at T = 1, and for max softmax and
+  entropy at every temperature condition, because a temperature can reorder images. Margin
+  divided by T ranks images exactly as margin does.
+- **Threshold.** Chosen on the **validation** images under every (corruption, severity)
+  condition: the lowest score at which every condition reaches the target accuracy on the
+  accepted predictions (primary target 95%). It is then applied, unchanged, to the **test**
+  images under the same conditions. They played no part in choosing it, so the reported
+  accuracy, coverage and referral cost are held out. A threshold chosen on the test images
+  themselves meets the target in every condition by construction; that version is kept for
+  comparison only, labelled optimistic. A threshold that only works by referring everything
+  is flagged as such, not reported as a success. Every threshold is printed with a list of
+  what it does not cover (`THRESHOLD_LIMITS` in `src/evaluate.py`).
 
 ---
 
@@ -159,6 +167,27 @@ first command):
 any mismatch. The fixture numbers are meaningless as results (n = 9 test images); the
 fixture exists to exercise filename parsing, leaf grouping, the leakage audit and every code
 path on real images.
+
+### The dataset
+
+The dataset is not in this repository (see the licence section). The code expects this
+layout under `--data-root`, and `check_supplied_dataset` (`src/data.py`) refuses to run on
+anything else:
+
+| Folder | Images |
+|---|---|
+| `train/Grape___Black_rot/` | 1,888 |
+| `train/Grape___Esca_(Black_Measles)/` | 1,920 |
+| `train/Grape___Leaf_blight_(Isariopsis_Leaf_Spot)/` | 1,722 |
+| `train/Grape___healthy/` | 1,692 |
+| `test/Grape___Black_rot/` | 472 |
+| `test/Grape___Esca_(Black_Measles)/` | 480 |
+| `test/Grape___Leaf_blight_(Isariopsis_Leaf_Spot)/` | 430 |
+| `test/Grape___healthy/` | 423 |
+
+These are the grape folders of the Kaggle "New Plant Diseases Dataset". If your copy names
+a top-level folder differently, rename it to `train` or `test`. The count check then
+confirms you have the same 9,027 images.
 
 With the full dataset on disk, the leakage audit alone is:
 
