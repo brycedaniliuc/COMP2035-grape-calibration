@@ -24,3 +24,4 @@ CLAUDE.md
 
 # Run outputs (checkpoints, logits, results) from local runs
 outputs/
+PROGRESS.md
