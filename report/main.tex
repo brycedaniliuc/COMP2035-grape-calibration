@@ -1,0 +1,165 @@
+% COMP2035 final report: ACM sigconf skeleton.
+% Built from the course's LaTeX template (acmart v1.48). Build: latexmk -pdf main.tex
+%
+% This file holds STRUCTURE ONLY. Every section is empty: the prose is the owner's own.
+% Each heading has a % note with its page budget and what belongs there, drawn from the
+% submitted Introduction and Literature Review paper and from BRIEF.md.
+%
+% Page budget: 8 pages in all, references included, so the total is a safe upper bound.
+% Check the course's rules on whether references count, and rebalance if they do not.
+%   Title + abstract 0.35 | 1 Intro 0.9 | 2 Related 1.0 | 3 Method 1.5 | 4 Results 1.85
+%   5 Discussion 1.0 | 6 Limitations 0.4 | 7 Conclusion 0.25 | References 0.75
+%
+% Numbers: never type a result. Use the macros in generated/numbers.tex and the tables in
+% generated/ (written by tools/make_tables.py from the results JSON; src.verify fails if
+% they are stale). Marking criteria (CLAUDE.md): Initiative and Independence, Work Produced,
+% Project Scope and Motivation, Method and Results, Discussion and Analysis.
+
+\documentclass[sigconf]{acmart}
+
+\usepackage{booktabs} % for formal tables (the generated tables use it)
+
+% No ACM rights block, no ACM reference block: this is a course report.
+\setcopyright{none}
+\settopmatter{printacmref=false}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\acmConference[COMP2035]{COMP2035 Topics in Computer Science}{2026}{Adelaide, Australia}
+\acmYear{2026}
+\copyrightyear{2026}
+\acmDOI{}
+\acmISBN{}
+\acmPrice{}
+
+% Every number in the text comes from here (tools/make_tables.py). Missing = not built yet.
+\InputIfFileExists{generated/numbers.tex}{}{}
+
+% PLACEHOLDER ONLY: blank space the size of a section's page budget, so the PDF shows the
+% layout. #1 = budget in eighths of a page. Delete each \budget as that section is written.
+\newcount\budgetcount
+\newcommand{\budget}[1]{%
+  \par\noindent{\color{gray}\scriptsize[budget: #1/8 page]}\par
+  \budgetcount=0
+  \loop\ifnum\budgetcount<#1
+    \noindent\rule{0pt}{0.2385\textheight}\par
+    \advance\budgetcount by 1
+  \repeat}
+
+\begin{document}
+
+% Title: the submitted paper's title. Owner to confirm.
+\title{Confidence-Aware Grape Leaf Disease Recognition Using Computer Vision}
+
+% Author block: name and school as in the submitted paper. No student ID or email, because
+% the repository is public (DECISIONS.md D5, D9). Supervisors appeared as co-listed authors
+% in the submitted paper; adding them here is the owner's decision.
+\author{Bryce Daniliuc}
+\affiliation{%
+  \institution{School of Computer Science and Mathematical Sciences, Adelaide University}
+  \city{Adelaide}
+  \state{SA}
+  \country{Australia}}
+
+\begin{abstract}
+% ABSTRACT (part of the 0.35-page title block, about 150-200 words).
+% Belongs here: the problem (near-100% accuracy on PlantVillage says nothing about whether a
+% single prediction can be trusted); what was done (leak-free re-split, ResNet-50 baseline,
+% calibration, controlled degradation, coverage curves, threshold); the main findings with
+% numbers from generated/numbers.tex (leakage of the supplied split, saturation, the
+% temperature degeneracy, the held-out threshold result); and the prototype output promised
+% in the submitted abstract: prediction, confidence indicator, warning.
+\end{abstract}
+
+% CCS concepts and keywords as in the submitted paper.
+\ccsdesc[500]{Computing methodologies~Neural networks}
+\ccsdesc[300]{Computing methodologies~Object recognition}
+\ccsdesc[300]{Computing methodologies~Supervised learning by classification}
+\ccsdesc[300]{Applied computing~Agriculture}
+% \keywords{} -- owner to choose
+
+\maketitle
+
+\section{Introduction}
+% BUDGET: 0.9 page. Criterion: Project Scope and Motivation.
+% Belongs here: the motivation carried over (and shortened) from the submitted paper §1:
+% the cost of grapevine disease, manual inspection, near-saturated benchmark accuracy versus
+% the field gap (Gui et al.), overconfidence (Guo et al.), and confidence already being acted
+% on (Liang et al.). The research question: when the model is wrong, does its confidence say
+% so, and where can a threshold be trusted? The contributions as a short list, each labelled
+% completed / preliminary / planned (CLAUDE.md rule 3).
+\budget{7}
+
+\section{Related Work}
+% BUDGET: 1.0 page. Criterion: Project Scope and Motivation.
+% Belongs here: a condensed version of the submitted literature review §2.1-2.4: grape leaf
+% classification on PlantVillage (Mohanty, Ji, Kunduracioglu & Pacal, Canoski [preprint]);
+% dataset bias and the laboratory-to-field gap (Gui, Noyan [preprint], PlantDoc, LDD);
+% calibration, ECE, temperature scaling, MC dropout, deep ensembles, dataset shift (Guo, Gal &
+% Ghahramani, Lakshminarayanan, Ovadia); uncertainty in plant disease (Hernandez & Lopez,
+% Ergun et al.); selective classification (Geifman & El-Yaniv). End with the gap this project
+% fills. Reference [19] Wei et al. (PlantSeg) is uncited: cite it or drop it (DECISIONS.md).
+\budget{8}
+
+\section{Method}
+% BUDGET: 1.5 pages. Criterion: Method and Results ("sound and easily replicable").
+% Belongs here:
+%  - Data: the PlantVillage grape subset via the Kaggle copy; the audit of the supplied split
+%    (augmented copies of one leaf on both sides; how leaves are identified from filenames).
+%  - The leak-free source-level split: 70/15/15 by leaf, stratified, seed 42; augmented copies
+%    of validation/test leaves discarded, never moved to train.
+%  - Training: ResNet-50 following Canoski et al. §5.2 [preprint]; the one deviation (budget:
+%    5 + 25 epochs, patience 5, against 100 / patience 20).
+%  - Calibration measures: ECE (15 bins), reliability diagrams, Wilson and bootstrap intervals.
+%  - The temperature protocol (D1): why the LBFGS endpoint is not a fitted temperature when
+%    validation has no errors; T = 1 primary; fixed T grid. Never call T = 0.237 fitted.
+%  - Degradations: blur and brightening from ImageNet-C; darkening and occlusion are this
+%    project's own adaptations (D7), applied at inference only.
+%  - Three confidence scores, coverage curves and AURC (Geifman & El-Yaniv).
+%  - The threshold: chosen on degraded validation images, checked on held-out degraded test
+%    images (D10); the warning tool (src/predict.py).
+%  - Reproducibility: the public repository, fixture tests, independent verification.
+\budget{12}
+
+\section{Results}
+% BUDGET: 1.85 pages. Criterion: Method and Results.
+% Belongs here, every number from generated/ (tables: \input{generated/table_...}):
+%  - Leakage of the supplied split (generated/table_audit.tex).
+%  - Clean results, source versus supplied split (generated/table_results.tex): saturation,
+%    underconfidence from label smoothing, the three-bin confidence spread.
+%  - The temperature degeneracy (temperature_degeneracy figure).
+%  - The degradation sweep: accuracy, confidence and ECE by corruption and severity
+%    (generated/table_sweep.tex; accuracy_vs_severity, ece_vs_severity figures).
+%  - Coverage curves and AURC by score (coverage_curves, aurc_by_score figures).
+%  - The threshold: value, held-out conditions met, referral cost (generated/table_threshold.tex).
+%  - Label preliminary or pending results as such. September numbers vs the re-run: say which.
+\budget{15}
+
+\section{Discussion}
+% BUDGET: 1.0 page. Criterion: Discussion and Analysis.
+% Belongs here: what the findings mean for the research question: whether confidence still
+% separates correct from incorrect predictions as quality degrades; why post-hoc calibration
+% needs errors to fit against; what a threshold buys and what it costs in referrals; how
+% this compares with Ovadia et al. and Ergun et al.; what this means for a system like the
+% one in Liang et al.
+\budget{8}
+
+\section{Limitations and Future Work}
+% BUDGET: 0.4 page. Criterion: Discussion and Analysis.
+% Belongs here: laboratory images only (LDD not used: the submitted plan's §3.4 contingency,
+% D11); synthetic corruptions; one model and one seed; small test set (610 leaves); MC dropout
+% and deep ensembles not done (allowed by the plan's §3.3-3.4); field data (PlantSeg) as
+% future work. The warning cannot recognise out-of-scope images.
+\budget{3}
+
+\section{Conclusion}
+% BUDGET: 0.25 page.
+% Belongs here: the answer to the research question in a few sentences, and the threshold
+% result with its limits.
+\budget{2}
+
+% REFERENCES: about 0.75 page for 20 entries. \nocite{*} lists every entry in refs.bib until
+% the text cites them; remove it once the sections are written, so only cited works appear.
+\nocite{*}
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{refs}
+
+\end{document}

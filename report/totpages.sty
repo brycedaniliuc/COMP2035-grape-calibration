@@ -1,0 +1,155 @@
+%%
+%% This is file `totpages.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% totpages.dtx  (with options: `package')
+%% 
+%% Copyright (c) [1999] by Wilhelm M^^fcller. All rights reserved.
+%% 
+%% This file is part of the Totpages package
+%% 
+%% This program may be redistributed and/or modified under the terms
+%% of the LaTeX Project Public License, either version 1.0 of this
+%% license, or (at your option) any later version.
+%% The latest version of this license is in
+%%    CTAN:macros/latex/base/lppl.txt.
+%% 
+%% The Totpages package contains these files:
+%% 
+%%       totpages.dtx
+%%       totpages.ins
+%% 
+%% Error Reports in case of UNCHANGED versions to
+%% 
+%%                         Wilhelm M^^fcller
+%%                         Am Wall 139
+%%                         D-28195 Bremen
+%%                         muewi@ACM.org
+%% 
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+%% \CharacterTable
+%% {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%  Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%  Digits        \0\1\2\3\4\5\6\7\8\9
+%%  Exclamation   \!     Double quote  \"     Hash (number) \#
+%%  Dollar        \$     Percent       \%     Ampersand     \&
+%%  Acute accent  \'     Left paren    \(     Right paren   \)
+%%  Asterisk      \*     Plus          \+     Comma         \,
+%%  Minus         \-     Point         \.     Solidus       \/
+%%  Colon         \:     Semicolon     \;     Less than     \<
+%%  Equals        \=     Greater than  \>     Question mark \?
+%%  Commercial at \@     Left bracket  \[     Backslash     \\
+%%  Right bracket \]     Circumflex    \^     Underscore    \_
+%%  Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%  Right brace   \}     Tilde         \~}
+%%
+%% \iffalse meta-comment
+%% ===================================================================
+%%  @LaTeX-style-file{
+%%     author          = {Wilhelm M\"uller},
+%%     version         = "1.00",
+%%     date            = "14 July 1999",
+%%     filename        = "totpages.sty",
+%%     address         = {Wilhelm M\"uller
+%%                        Am Wall 139
+%%                        D-28195 Bremen
+%%     telephone       = "+49-421-1692525",
+%%     email           = "muewi@acm.org",
+%%     docstring       = "LaTeX package which sets count1 to the total
+%%                        number of pages in the document.
+%%                        Uses the everyshi package."
+%%  }
+%% ===================================================================
+%% \fi
+\ProvidesPackage{totpages}
+        [1999/07/13 v1.00 Totpages Package (muewi)]
+\NeedsTeXFormat{LaTeX2e}[1995/12/01]
+\RequirePackage{everyshi}[1994/12/09]
+\newif\ifTotPagesToDvi\TotPagesToDvitrue
+\DeclareOption{dvi}{\TotPagesToDvitrue}
+\DeclareOption{nodvi}{\TotPagesToDvifalse}
+\ProcessOptions*\relax
+\ifTotPagesToDvi
+  \countdef\c@TotPages=1 \c@TotPages=0
+  \let\cl@TotPages\@empty
+  \newcommand\theTotPages{\arabic{TotPages}}
+\else
+  \newcounter{TotPages}
+\fi
+\let\ifTotPagesToDvi\undefined
+\let\TotPagesToDvitrue\undefined
+\let\TotPagesToDvifalse\undefined
+\EveryShipout{\stepcounter{TotPages}}
+\AtBeginDocument{%
+  \@ifpackageloaded{count1to}{%
+    \PackageError{totpages}{%
+      Can't use both, count1to and totpages}{%
+      You should read the documentation of these packages and\MessageBreak
+      decide which one is more appropriate for your intentions.}
+  }{}%
+  \@ifpackageloaded{lastpage}{%
+    \PackageError{totpages}{%
+      Can't use both, lastpage and totpages}{%
+      You should read the documentation of these packages and\MessageBreak
+      decide which one is more appropriate for your intentions.}
+  }{}%
+  \ifx\undefined\TotPages@putlabel
+    \@ifpackageloaded{hyperref}{%
+      \ifx\undefined\Hy@WarningNoLine
+        \let\Hy@WarningNoLine\hyper@warn
+      \fi
+      \ifHy@pageanchor
+      \else
+        \Hy@WarningNoLine{%
+          The \string\ref{TotPages} link doesn't work\MessageBreak
+          with disabled option `pageanchor'%
+      }%
+      \fi
+      \def\TotPages@putlabel{%
+        \addtocounter{page}{-1}%
+        \if@filesw
+          \begingroup
+            \let\@number\@firstofone
+            \ifHy@pageanchor
+              \ifHy@hypertexnames
+                \ifHy@plainpages
+                  \def\Hy@temp{\arabic{page}}%
+                \else
+                  \let\textlatin\@firstofone
+                  \edef\Hy@temp{\thepage}%
+                \fi
+              \else
+                \def\Hy@temp{\the\Hy@pagecounter}%
+              \fi
+            \fi
+            \immediate\write\@mainaux{%
+              \string\newlabel
+                {TotPages}{{\theTotPages}{\thepage}{}{%
+                  \ifHy@pageanchor page.\Hy@temp\fi}{}}%
+            }%
+          \endgroup
+        \fi
+        \addtocounter{page}{1}%
+      }%
+    }{%
+      \def\TotPages@putlabel{%
+        \addtocounter{page}{-1}%
+        \immediate\write\@mainaux{%
+          \string\newlabel{TotPages}{{\theTotPages}{\thepage}}%
+        }%
+        \addtocounter{page}{1}%
+      }%
+    }%
+  \fi
+}
+\AtBeginDocument{%
+  \AtEndDocument{%
+     \clearpage
+     \TotPages@putlabel
+  }%
+}
+\endinput
+%%
+%% End of file `totpages.sty'.
