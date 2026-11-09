@@ -324,3 +324,37 @@ the coding work, not by the owner. The owner's spot-check is the second pair of 
 
 **Conservative by design.** When unsure, the tag is "other", never "leaf". The leaf subset
 is meant to be clean, not large.
+
+**Result (2026-11-10).** All 564 images were tagged against the rule above, one sheet at a
+time, in the order of `results/plantseg/leaf_filter.csv`. Every "other" and every judgement
+call has its reason in the CSV.
+
+| PlantSeg class | leaf | berry | other | total |
+|---|---|---|---|---|
+| grape black rot (BR) | **25** | 91 | 6 | 122 |
+| grape downy mildew (DM) | 187 | 36 | 57 | 280 |
+| grape leaf spot (LS) | 81 | 0 | 10 | 91 |
+| grapevine leafroll disease (LR) | 61 | 0 | 10 | 71 |
+| **all** | **354** | **127** | **83** | **564** |
+
+- **Black rot leaves: 25**, which meets the brief's threshold of 20 for phase B2. That
+  is above it, not far above it: any accuracy on 25 images has a wide interval.
+- **The 25 black rot leaves were re-checked** on one review sheet (`review_BR_leaf_01.jpg`).
+  All 25 are grape leaves with lesions. Four are close-ups of lesions (BR-068, 073, 077,
+  113), two are wide canopy views (BR-061, 100) and one is a shoot (BR-054). All fit the
+  rule; B2 could report a sensitivity check without them.
+- **Why images were "other":** composites, slides and posters (rule 1); flower clusters,
+  shoots and distant vineyard views; images where leaves and berries are both prominent
+  (rule 4); and, in leaf spot, images that do not look like grape at all (LS-057, 079, 085,
+  087; LS-088 has an unclear species). PlantSeg was collected from the web, and its "grape"
+  label is not always right.
+- **Apparent duplicates**, noted in the CSV: BR-041 ≈ BR-021 and DM-141 ≈ DM-138
+  (berries); LS-047 and LS-050 ≈ LS-037 (leaves). B2's leaf-spot confidence analysis should
+  count LS-037/047/050 once.
+- **One tag changed while tagging, for consistency:** DM-188 (a bunch with a magnifier
+  inset) went from berry to other when LR-016 showed that an inset should count as a
+  composite under rule 1. No leaf tag changed.
+- **Spot-check:** the per-sheet and per-tag review sheets are in
+  `~/code/external_data/plantseg_zenodo_16665770/contact_sheets/` (outside the repo, because
+  they are PlantSeg images). `tools/plantseg_contact_sheets.py` regenerates them from the
+  zip.

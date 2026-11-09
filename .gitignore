@@ -36,3 +36,8 @@ report/*.fls
 report/*.fdb_latexmk
 report/*.synctex.gz
 report/main.pdf
+
+# PlantSeg images must never be committed (D14, D15)
+results/plantseg/*.jpg
+results/plantseg/*.png
+results/plantseg/*.jpeg
