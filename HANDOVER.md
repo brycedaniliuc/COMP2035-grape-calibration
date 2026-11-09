@@ -117,6 +117,11 @@ The checkpoints stay in Drive; `*.pt` is gitignored. Then repeat every check fro
 files:
 `.venv/bin/python -m src.verify --run results/colab_<date>/results_<run_id>.json`
 
+Then regenerate every number in the report from the new files, and check them:
+`.venv/bin/python tools/make_tables.py` (it picks the newest `results/colab_*` runs) and
+`.venv/bin/python -m src.verify --generated report/generated`. Until the sweep is copied in,
+its tables and macros print `[pending: sweep]`.
+
 To run the prediction + warning tool on the real model, download its `best_<run_id>.pt` from
 Drive into the same folder as its `results_` file (it stays gitignored), then:
 `.venv/bin/python -m src.predict --results results/colab_<date>/results_<run_id>.json

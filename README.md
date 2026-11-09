@@ -61,7 +61,7 @@ during training), ResNet-50 classifies **every test image correctly**:
 | Test images | 610 | 1,805 |
 | Test accuracy | **1.0000** | 1.0000 |
 | Mean confidence | 0.9222 | 0.9255 |
-| ECE (15 bins) | 0.0778 | 0.0744 |
+| ECE (15 bins) | 0.0778 | 0.0745 |
 
 Sources: `results/source/results_resnet50_source.json`,
 `results/supplied/results_resnet50_supplied.json`.
@@ -213,6 +213,24 @@ With the full dataset on disk, the leakage audit alone is:
 .venv/bin/python -m src.audit --data-root /path/to/grape_dataset
 ```
 
+### The report: numbers come from the data
+
+`report/main.tex` is the final report (ACM sigconf, 8 pages), with the bibliography in
+`report/refs.bib`. No result is typed into it. `tools/make_tables.py` reads the results JSON
+and writes `report/generated/`: `numbers.tex` (macros such as `\testacc` and `\leakPct`)
+and the results, audit, sweep and threshold tables. Anything not run yet appears as
+`[pending: ...]`. `src.verify` fails if a generated file is stale: its source JSON or the
+generator changed, it was edited by hand, or a pending source now exists.
+
+```bash
+.venv/bin/python tools/make_tables.py
+.venv/bin/python -m src.verify --generated report/generated
+cd report && latexmk -pdf main.tex
+```
+
+On this machine, `latexmk` needs TeX Live first on the PATH (`PATH=/Library/TeX/texbin:$PATH`),
+because the MiKTeX `pdflatex` in `/usr/local/bin` cannot build its format file.
+
 ### The real experiment (Colab T4)
 
 `notebooks/01_baseline_calibration.ipynb` (training) and
@@ -234,7 +252,9 @@ src/            config, data (indexing, splits), audit, train, calibrate, degrad
                 predict (prediction + confidence + warning)
 tests/          pytest suite; fixture/ = 80 real images, MANIFEST.md, build_fixture.py
 notebooks/      01 and 02 for Colab; archive/ holds the September 2026 notebook
-tools/          build_notebooks.py (generates and validates the notebooks)
+tools/          build_notebooks.py (generates and validates the notebooks),
+                make_tables.py (report tables and number macros from the results JSON)
+report/         the final report: main.tex (ACM sigconf skeleton), refs.bib, generated/
 results/        the September 2026 runs: results JSON, audit, reliability diagrams
 figures/        the corruption protocol figure (sweep figures follow the Colab run)
 DECISIONS.md    every design choice not fixed by the submitted plan, with the reasoning

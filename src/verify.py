@@ -1,6 +1,7 @@
 """Independent re-derivation of every published number, from saved logits and filenames.
 
     python -m src.verify --run <run_dir>/results_<run_id>.json [--determinism]
+    python -m src.verify --generated report/generated   # report numbers not stale
 
 Deliberately does NOT import src.calibrate, src.evaluate's statistics or src.data's filename
 parsing: softmax, accuracy, ECE binning, coverage and leaf identity are written again here,
@@ -16,6 +17,7 @@ within 0.01 absolute; T is information only.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -347,20 +349,85 @@ def determinism(data_root: str) -> list[Check]:
              "PASS" if same else "FAIL", f"{len(outs[0])} arrays")]
 
 
+GENERATOR = REPO / "tools" / "make_tables.py"
+HEADER = re.compile(r"% (generator-sha256|source|pending|body-sha256): (.*)")
+
+
+def _sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def generated_checks(gen_dir: Path) -> list[Check]:
+    """Each file tools/make_tables.py wrote must still match what it was built from: every
+    source JSON unchanged, the generator unchanged, the body not edited by hand, and no
+    pending source (the Colab sweep) that now exists."""
+    files = sorted(Path(gen_dir).glob("*.tex"))
+    if not files:
+        return [("generated report files present", 1, "FAIL", f"none in {gen_dir}")]
+    out: list[Check] = []
+    for f in files:
+        lines = f.read_text().splitlines(keepends=True)
+        head = {}
+        sources, pending, n_head = [], [], 0
+        for line in lines:
+            m = HEADER.match(line)
+            if not (line.startswith("% ") and (m or n_head == 0)):
+                break
+            n_head += 1
+            if m and m.group(1) == "source":
+                path, _, h = m.group(2).rpartition(" sha256=")
+                sources.append((path, h.strip()))
+            elif m and m.group(1) == "pending":
+                pending.append(m.group(2).partition(" glob=")[2].strip())
+            elif m:
+                head[m.group(1)] = m.group(2).strip()
+        problems = []
+        if "body-sha256" not in head or "generator-sha256" not in head:
+            problems.append("no generator header: not written by tools/make_tables.py")
+        else:
+            if _sha("".join(lines[n_head:]).encode()) != head["body-sha256"]:
+                problems.append("edited by hand")
+            if _sha(GENERATOR.read_bytes()) != head["generator-sha256"]:
+                problems.append("tools/make_tables.py changed since")
+        for path, h in sources:
+            p = Path(path) if Path(path).is_absolute() else REPO / path
+            if not p.exists():
+                problems.append(f"source missing: {path}")
+            elif _sha(p.read_bytes()) != h:
+                problems.append(f"source changed: {path}")
+        for g in pending:
+            if sorted(REPO.glob(g)):
+                problems.append(f"pending source now exists: {g}")
+        out.append((f"generated {f.name} is current", 1, "FAIL" if problems else "PASS",
+                    "; ".join(problems) if problems else
+                    f"{len(sources)} source(s)" + (f", {len(pending)} pending" if pending
+                                                    else "")))
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--run", required=True, help="results_<run_id>.json")
+    ap.add_argument("--run", help="results_<run_id>.json")
+    ap.add_argument("--generated", metavar="DIR",
+                    help="check that the report's generated numbers and tables are current "
+                         "(re-run tools/make_tables.py if not)")
     ap.add_argument("--require-sweep", action="store_true",
                     help="fail if the run has no sweep yet (notebook 02 sets this)")
     ap.add_argument("--determinism", metavar="DATA_ROOT",
                     help="also train + sweep twice on DATA_ROOT (the fixture) and compare")
     a = ap.parse_args()
-    run_path = Path(a.run)
-    checks = tier1(run_path, a.require_sweep)
-    if a.determinism:
-        checks += determinism(a.determinism)
-    checks += tier2(run_path)
+    if not (a.run or a.generated):
+        ap.error("give --run, --generated, or both")
+    checks: list[Check] = []
+    if a.run:
+        run_path = Path(a.run)
+        checks += tier1(run_path, a.require_sweep)
+        if a.determinism:
+            checks += determinism(a.determinism)
+        checks += tier2(run_path)
+    if a.generated:
+        checks += generated_checks(Path(a.generated))
     w = max(len(c[0]) for c in checks)
     print(f"\n{'check':<{w}}  tier  status         detail")
     for name, tier, status, detail in checks:

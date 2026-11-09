@@ -66,3 +66,13 @@ def test_sweep_on_fixture_checkpoint(fixture_root, tmp_path):
     assert len(npz.files) == 1 + len(CORRUPTIONS) * len(SEVERITIES)
     val = np.load(tmp_path / f"sweep_val_logits_{res['run_id']}.npz")
     assert set(val.files) == set(npz.files) and val["labels"].size == sw["n_val"]
+
+    # report tables and macros from this run, with the supplied run absent
+    from src.verify import generated_checks
+    from tools.make_tables import build
+    gen = tmp_path / "generated"
+    build(tmp_path / f"results_{res['run_id']}.json", None,
+          tmp_path / f"sweep_{res['run_id']}.json", gen)
+    assert all(c[2] == "PASS" for c in generated_checks(gen))
+    assert "of 24" in (gen / "table_threshold.tex").read_text()
+    assert "\\pending{run}" in (gen / "table_results.tex").read_text()  # supplied absent
