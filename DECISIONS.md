@@ -239,3 +239,56 @@ noted above each entry in `report/refs.bib`:
   information as the disagreement score is a design choice: owner to confirm.
 - **Reuse after a disconnect:** notebook 03 reuses any finished member or sweep in Drive. A
   member whose results JSON is missing (a disconnect mid-training) is trained again. Tested.
+
+## D14 · PlantSeg (upgrade 2): version, licence, and what its grape classes are — phase A done, phase B OPEN (owner decides)
+
+**Exact source.** Zenodo record 16665770, DOI 10.5281/zenodo.16665770: version 6 of 7 of
+concept 13293890 (published 2025-07-31). "A Large-Scale In-the-wild Dataset for Plant
+Disease Segmentation", by Wei, Chen, Yu, Chapman, Melloy and Huang (the authors of
+reference [19], `wei2026plantseg`). The file is `Plantseg.zip`, 1,691,076,634 bytes; its MD5
+`23385d877bc84bab51b54630055c75b8` matches the record. Downloaded 2026-11-09 to
+`~/code/external_data/plantseg_zenodo_16665770/`, **outside the repository**. No PlantSeg
+image is, or will be, committed.
+
+**Licence: CC BY 4.0, not CC BY-NC-ND 4.0.** The Zenodo record lists **CC BY 4.0** for
+version 6. The brief said CC BY-NC-ND 4.0; that is the licence of versions 1–4 (2024),
+and the newer version 7 (2025-11-25, `plantseg.zip`, 1.06 GB) is CC BY-NC 4.0. Each image
+also has its own licence in the metadata: of the 564 grape images, 459 are CC0 and 105 are
+CC-BY. Attribution is required either way.
+
+**Metadata file name.** Version 6 has no `PlantSeg-Meta.csv`. Its one metadata file is
+`Plantseg/Metadata.csv` (11,458 rows; columns Name, Index, Plant, Disease, Resolution, Label
+file, Mask ratio, URL, License, Split). Images are in `Plantseg/images/{train,val,test}/`.
+
+**The grape images (`Plant == "Grape"`): 564, in four classes.**
+
+| PlantSeg disease | Images | train / val / test (PlantSeg's split) | Matches our classes? |
+|---|---|---|---|
+| grape downy mildew | 280 | 194 / 30 / 56 | no |
+| grape black rot | 122 | 85 / 13 / 24 | **by name**: Black_rot |
+| grape leaf spot | 91 | 63 / 10 / 18 | **unverified**: possibly Leaf_blight (Isariopsis Leaf Spot) |
+| grapevine leafroll disease | 71 | 49 / 8 / 14 | no (a virus) |
+
+There is no esca and no healthy class. 20 other rows contain "grape" only in their URL, and
+are other plants.
+
+**A visual look (thumbnails of every image in the two possibly matching classes, not a
+count for the report):**
+- Most of the 122 black rot images show **berries or clusters**; roughly a fifth show
+  leaves. Our model was trained only on PlantVillage leaves.
+- All 91 leaf spot images show leaves in the field, with a mix of spot types. Nothing in
+  the metadata says that "leaf spot" is Isariopsis leaf spot.
+
+**So neither branch of the brief applies cleanly.** One class matches by name but is mostly
+another organ, one may match, and two do not match at all.
+
+**Recommendation for phase B (owner decides before anything is built):**
+- Run the classifier over all 564 grape images and report the **confidence distribution**
+  for each PlantSeg class: out-of-distribution confidence, never accuracy.
+- Also report **which of our four classes it predicts** for each PlantSeg class. For black
+  rot this one number is checkable ("of PlantSeg's 122 black rot images, mostly berries, the
+  model called x% Black_rot"). Label it as agreement on a mostly non-leaf subset, not
+  field accuracy.
+- Leave leaf spot out of any agreement number unless its identity is confirmed.
+
+Inference only: nothing is trained on PlantSeg, and PlantSeg's own split is not used.

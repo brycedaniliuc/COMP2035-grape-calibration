@@ -17,7 +17,7 @@ without them.
 | 01 | `01_baseline_calibration` | **essential** | the dataset zip | about 45 min (September: 25.9 + 17.8 min of training) |
 | 02 | `02_degradation_study` | **essential** | 01's seed 42 source run | about 10 min (estimate: sweep about 6 min, see §2) |
 | 03 | `03_deep_ensemble` | upgrade | 01's seed 42 source run (02 optional) | about 70 min (estimate: 2 × 26 min training + 3 sweeps) |
-| 04 | PlantSeg field images | upgrade, **not built yet** | waits on the owner's decision after phase A (PROGRESS.md) | — |
+| 04 | PlantSeg field images | upgrade, **not built yet** | phase A done (DECISIONS.md D14); phase B waits on the owner's decision | — |
 | 05 | MC dropout | upgrade, **not built yet** | built after 03 and 04 | — |
 
 If a session dies in an upgrade notebook, re-run that notebook: anything it already finished
