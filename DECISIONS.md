@@ -292,3 +292,35 @@ another organ, one may match, and two do not match at all.
 - Leave leaf spot out of any agreement number unless its identity is confirmed.
 
 Inference only: nothing is trained on PlantSeg, and PlantSeg's own split is not used.
+
+## D15 · PlantSeg leaf filter (phase B1): the rule, fixed before any image was tagged
+
+**Why filter.** The classifier was trained only on PlantVillage photographs of single grape
+leaves. A PlantSeg image of berries tests nothing about it, so phase B uses only the images
+whose subject is a leaf. PlantSeg's own metadata says nothing about organ, so every one of
+the 564 grape images (`Plant == "Grape"`, D14) is tagged by looking at it.
+
+**How.** `tools/plantseg_contact_sheets.py` lays the images out in contact sheets of 25
+(5 × 5, each image about 280 px), class by class, in filename order. Every image gets a
+stable id: BR (black rot), DM (downy mildew), LS (leaf spot) or LR (leafroll), plus a
+number. Each image is tagged from the sheet against the rule below, never from its filename
+or metadata. The tags go to `results/plantseg/leaf_filter.csv`, with a reason wherever the
+rule needed a judgement. The sheets are kept outside the repository (they are PlantSeg
+images) so the owner can spot-check every tag. Tagging was done by visual inspection during
+the coding work, not by the owner. The owner's spot-check is the second pair of eyes.
+
+**The rule.** Applied in this order; the first that fits decides.
+1. **other**: a collage or multi-panel composite, a drawing, diagram or text graphic, or an
+   image with no identifiable grape organ.
+2. **leaf**: the main subject is grape leaf blade(s). Leaf tissue is most of the plant
+   material in focus, and the symptoms shown are on leaves. A leaf held in a hand, on a
+   table or on the vine all count. A wide view counts only if leaves fill most of the frame
+   and single leaves can be made out.
+3. **berry**: the main subject is berries or bunches. Fruit is most of the plant material in
+   focus, and the symptoms shown are on the fruit.
+4. **other**: everything else. That includes shoots, stems, tendrils, trunks and flowers;
+   distant whole-vine or row views where no organ dominates; and images where leaves and
+   berries are both prominent, or where it is unclear which carries the symptoms.
+
+**Conservative by design.** When unsure, the tag is "other", never "leaf". The leaf subset
+is meant to be clean, not large.
