@@ -46,7 +46,7 @@ def notebook(cells: list[dict]) -> dict:
 
 SETTINGS = f'''# ---- settings: the only cell you normally edit ---------------------------------
 REPO_URL = "{REPO_URL}"
-REPO_REF = "main"                       # a branch or tag, e.g. "v1.0"
+REPO_REF = "main"                       # a branch, tag or commit hash
 ZIP_PATH = "/content/drive/MyDrive/grape_dataset_for_colab.zip"   # must match Drive
 DATA_ROOT = "/content/grape_dataset"    # the zip extracts to this folder
 OUT = "/content/drive/MyDrive/COMP2035_runs"   # every output is written here, as it goes
