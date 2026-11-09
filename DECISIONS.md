@@ -332,29 +332,51 @@ call has its reason in the CSV.
 | PlantSeg class | leaf | berry | other | total |
 |---|---|---|---|---|
 | grape black rot (BR) | **25** | 91 | 6 | 122 |
-| grape downy mildew (DM) | 187 | 36 | 57 | 280 |
+| grape downy mildew (DM) | 187 | 35 | 58 | 280 |
 | grape leaf spot (LS) | 81 | 0 | 10 | 91 |
 | grapevine leafroll disease (LR) | 61 | 0 | 10 | 71 |
-| **all** | **354** | **127** | **83** | **564** |
+| **all** | **354** | **126** | **84** | **564** |
 
 - **Black rot leaves: 25**, which meets the brief's threshold of 20 for phase B2. That
   is above it, not far above it: any accuracy on 25 images has a wide interval.
 - **The 25 black rot leaves were re-checked** on one review sheet (`review_BR_leaf_01.jpg`).
-  All 25 are grape leaves with lesions. Four are close-ups of lesions (BR-068, 073, 077,
-  113), two are wide canopy views (BR-061, 100) and one is a shoot (BR-054). All fit the
-  rule; B2 could report a sensitivity check without them.
+  All 25 are grape leaves with lesions. Five are close-ups of lesions (BR-068, 073, 077,
+  106, 113; the first report to the owner said four and missed BR-106), two are wide canopy
+  views (BR-061, 100) and one is a shoot (BR-054). All fit the rule; B2 reports a
+  sensitivity check without these eight.
 - **Why images were "other":** composites, slides and posters (rule 1); flower clusters,
   shoots and distant vineyard views; images where leaves and berries are both prominent
   (rule 4); and, in leaf spot, images that do not look like grape at all (LS-057, 079, 085,
   087; LS-088 has an unclear species). PlantSeg was collected from the web, and its "grape"
   label is not always right.
-- **Apparent duplicates**, noted in the CSV: BR-041 ≈ BR-021 and DM-141 ≈ DM-138
-  (berries); LS-047 and LS-050 ≈ LS-037 (leaves). B2's leaf-spot confidence analysis should
-  count LS-037/047/050 once.
-- **One tag changed while tagging, for consistency:** DM-188 (a bunch with a magnifier
-  inset) went from berry to other when LR-016 showed that an inset should count as a
-  composite under rule 1. No leaf tag changed.
+- **Duplicates: found by a hash scan, each pair confirmed by eye** (addendum below).
+- **Two tags changed, both for consistency, neither a leaf:**
+  - DM-188 (a bunch with a magnifier inset) went from berry to other while tagging, when
+    LR-016 showed that an inset should count as a composite under rule 1.
+  - DM-082 went from berry to other in B2, when the duplicate scan showed it is the same
+    photograph as DM-245, tagged other for its arrows labelling two diseases.
+  - The table above includes both changes.
 - **Spot-check:** the per-sheet and per-tag review sheets are in
   `~/code/external_data/plantseg_zenodo_16665770/contact_sheets/` (outside the repo, because
   they are PlantSeg images). `tools/plantseg_contact_sheets.py` regenerates them from the
   zip.
+
+**Addendum (B2, 2026-11-10): duplicates and label conflicts.** PlantSeg was collected from
+the web, so the same photograph can appear more than once.
+- **How they were found.** A 16 × 16 difference hash (dHash, 256 bits) was computed for
+  every one of the 564 images. Every pair at hash distance up to 90 was viewed side by side
+  (51 pairs). Above 90 there are 35,449 pairs, the noise floor between unrelated images.
+  The largest distance at which a true duplicate was found was 87.
+- **Result.** 24 groups of the same photograph, 28 confirmed pairs, listed in
+  `results/plantseg/leaf_filter.csv`:
+  - `duplicate_of`: within one class, every later copy points to the first.
+  - `label_conflict_with`: two photographs carry two different PlantSeg labels.
+    DM-038 = LS-001, and DM-179 = LS-044, are each labelled both downy mildew and leaf
+    spot. Their true disease is unknown, so they are left out of both classes.
+- **Effect on the analysis.** Phase B2 uses each photograph once: leaf, no `duplicate_of`,
+  no `label_conflict_with`.
+  - That is black rot 25, downy mildew 174, leaf spot 74, leafroll 61, which is 334 in all.
+  - No black rot leaf has a duplicate. Down to the noise floor, the nearest other image to
+    any of the 25 is at distance 88 or more, and those are different photographs.
+- **Limit.** A copy cropped or edited heavily enough to move past distance 90 would not be
+  caught.

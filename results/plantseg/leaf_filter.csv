@@ -1,565 +1,565 @@
-id,image,disease,tag,reason,plantseg_split,image_licence,sheet
-BR-001,grape_black_rot_1.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-002,grape_black_rot_2.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-003,grape_black_rot_3.jpg,grape black rot,berry,bunch is the subject; surrounding leaves look unaffected,Test,CC0,BR_01
-BR-004,grape_black_rot_4.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-005,grape_black_rot_5.jpg,grape black rot,berry,,Training,CC-BY,BR_01
-BR-006,grape_black_rot_6.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-007,grape_black_rot_7.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-008,grape_black_rot_8.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-009,grape_black_rot_9.jpg,grape black rot,berry,,Training,CC-BY,BR_01
-BR-010,grape_black_rot_10.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-011,grape_black_rot_12.jpg,grape black rot,berry,,Test,CC-BY,BR_01
-BR-012,grape_black_rot_13.jpg,grape black rot,berry,,Training,CC-BY,BR_01
-BR-013,grape_black_rot_15.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-014,grape_black_rot_18.jpg,grape black rot,berry,,Training,CC-BY,BR_01
-BR-015,grape_black_rot_21.jpg,grape black rot,berry,,Validation,CC0,BR_01
-BR-016,grape_black_rot_23.jpg,grape black rot,berry,,Test,CC-BY,BR_01
-BR-017,grape_black_rot_25.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-018,grape_black_rot_29.jpg,grape black rot,berry,,Training,CC-BY,BR_01
-BR-019,grape_black_rot_33.jpg,grape black rot,berry,,Test,CC-BY,BR_01
-BR-020,grape_black_rot_37.jpg,grape black rot,other,leaf with spots (top left) and spotted berries both prominent and both symptomatic (rule 4),Training,CC-BY,BR_01
-BR-021,grape_black_rot_40.jpg,grape black rot,berry,,Training,CC-BY,BR_01
-BR-022,grape_black_rot_42.jpg,grape black rot,berry,,Training,CC-BY,BR_01
-BR-023,grape_black_rot_45.jpg,grape black rot,berry,,Training,CC-BY,BR_01
-BR-024,grape_black_rot_49.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-025,grape_black_rot_50.jpg,grape black rot,berry,,Training,CC0,BR_01
-BR-026,grape_black_rot_68.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-027,grape_black_rot_141.jpg,grape black rot,berry,,Validation,CC0,BR_02
-BR-028,grape_black_rot_149.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-029,grape_black_rot_152.jpg,grape black rot,berry,,Training,CC-BY,BR_02
-BR-030,grape_black_rot_170.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-031,grape_black_rot_171.jpg,grape black rot,berry,red circles drawn on a single photo of berries,Validation,CC0,BR_02
-BR-032,grape_black_rot_176.jpg,grape black rot,berry,,Training,CC-BY,BR_02
-BR-033,grape_black_rot_191.jpg,grape black rot,berry,bunch held in hand is the subject; leaf at left shows no clear lesions,Training,CC-BY,BR_02
-BR-034,grape_black_rot_216.jpg,grape black rot,berry,"wider view, but the bunch is the subject; leaves unaffected",Test,CC0,BR_02
-BR-035,grape_black_rot_google_0000.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-036,grape_black_rot_google_0001.jpg,grape black rot,other,three spotted leaves and a small spotted cluster in one specimen photo: both organs symptomatic (rule 4),Training,CC0,BR_02
-BR-037,grape_black_rot_google_0003.jpg,grape black rot,berry,,Test,CC0,BR_02
-BR-038,grape_black_rot_google_0005.jpg,grape black rot,berry,,Validation,CC0,BR_02
-BR-039,grape_black_rot_google_0007.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-040,grape_black_rot_google_0009.jpg,grape black rot,berry,,Validation,CC0,BR_02
-BR-041,grape_black_rot_google_0010.jpg,grape black rot,berry,appears to be the same photograph as BR-021,Training,CC0,BR_02
-BR-042,grape_black_rot_google_0011.jpg,grape black rot,berry,,Test,CC0,BR_02
-BR-043,grape_black_rot_google_0013.jpg,grape black rot,berry,,Test,CC0,BR_02
-BR-044,grape_black_rot_google_0014.jpg,grape black rot,berry,,Validation,CC0,BR_02
-BR-045,grape_black_rot_google_0018.jpg,grape black rot,berry,,Test,CC0,BR_02
-BR-046,grape_black_rot_google_0019.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-047,grape_black_rot_google_0021.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-048,grape_black_rot_google_0024.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-049,grape_black_rot_google_0027.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-050,grape_black_rot_google_0028.jpg,grape black rot,berry,,Training,CC0,BR_02
-BR-051,grape_black_rot_google_0029.jpg,grape black rot,leaf,,Training,CC0,BR_03
-BR-052,grape_black_rot_google_0036.jpg,grape black rot,leaf,,Test,CC0,BR_03
-BR-053,grape_black_rot_google_0039.jpg,grape black rot,leaf,,Training,CC0,BR_03
-BR-054,grape_black_rot_google_0040.jpg,grape black rot,leaf,shoot on a white background: two leaves are most of the tissue and carry the symptoms; small flower cluster unaffected,Test,CC0,BR_03
-BR-055,grape_black_rot_google_0041.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-056,grape_black_rot_google_0043.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-057,grape_black_rot_google_0046.jpg,grape black rot,leaf,,Training,CC0,BR_03
-BR-058,grape_black_rot_google_0049.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-059,grape_black_rot_google_0050.jpg,grape black rot,berry,,Test,CC0,BR_03
-BR-060,grape_black_rot_google_0051.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-061,grape_black_rot_google_0052.jpg,grape black rot,leaf,"wide view, but spotted leaves fill the frame and single leaves can be made out",Test,CC0,BR_03
-BR-062,grape_black_rot_google_0053.jpg,grape black rot,leaf,,Training,CC0,BR_03
-BR-063,grape_black_rot_google_0064.jpg,grape black rot,berry,,Validation,CC0,BR_03
-BR-064,grape_black_rot_google_0066.jpg,grape black rot,other,spotted leaf and mummified berries side by side: both symptomatic (rule 4),Test,CC0,BR_03
-BR-065,grape_black_rot_google_0067.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-066,grape_black_rot_google_0068.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-067,grape_black_rot_google_0071.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-068,grape_black_rot_google_0072.jpg,grape black rot,leaf,close-up of lesions on a leaf blade,Training,CC0,BR_03
-BR-069,grape_black_rot_google_0075.jpg,grape black rot,other,leaf and young berry cluster both prominent; unclear which carries the symptoms (rule 4),Validation,CC0,BR_03
-BR-070,grape_black_rot_google_0077.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-071,grape_black_rot_google_0080.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-072,grape_black_rot_google_0081.jpg,grape black rot,other,shrivelled berries in front of leaves that fill much of the frame; unclear whether the leaves carry lesions (rule 4),Test,CC0,BR_03
-BR-073,grape_black_rot_google_0084.jpg,grape black rot,leaf,extreme close-up of one leaf lesion with pycnidia; leaf tissue only,Training,CC0,BR_03
-BR-074,grape_black_rot_google_0085.jpg,grape black rot,berry,,Training,CC0,BR_03
-BR-075,grape_black_rot_google_0087.jpg,grape black rot,berry,,Validation,CC0,BR_03
-BR-076,grape_black_rot_google_0088.jpg,grape black rot,berry,,Test,CC0,BR_04
-BR-077,grape_black_rot_google_0089.jpg,grape black rot,leaf,close-up of lesions on a leaf blade,Training,CC0,BR_04
-BR-078,grape_black_rot_google_0090.jpg,grape black rot,berry,,Training,CC0,BR_04
-BR-079,grape_black_rot_google_0095.jpg,grape black rot,leaf,,Training,CC0,BR_04
-BR-080,grape_black_rot_google_0096.jpg,grape black rot,leaf,,Test,CC0,BR_04
-BR-081,grape_black_rot_google_0097.jpg,grape black rot,berry,,Test,CC0,BR_04
-BR-082,grape_black_rot_google_0101.jpg,grape black rot,berry,,Validation,CC0,BR_04
-BR-083,grape_black_rot_google_0108.jpg,grape black rot,berry,,Test,CC0,BR_04
-BR-084,grape_black_rot_google_0110.jpg,grape black rot,leaf,,Training,CC0,BR_04
-BR-085,grape_black_rot_google_0111.jpg,grape black rot,leaf,,Validation,CC0,BR_04
-BR-086,grape_black_rot_google_0118.jpg,grape black rot,berry,single photo of a bunch with a text caption,Training,CC0,BR_04
-BR-087,grape_black_rot_google_0119.jpg,grape black rot,berry,,Validation,CC0,BR_04
-BR-088,grape_black_rot_google_0123.jpg,grape black rot,berry,,Training,CC0,BR_04
-BR-089,grape_black_rot_google_0124.jpg,grape black rot,leaf,,Training,CC0,BR_04
-BR-090,grape_black_rot_google_0130.jpg,grape black rot,berry,,Training,CC0,BR_04
-BR-091,grape_black_rot_google_0132.jpg,grape black rot,berry,,Training,CC0,BR_04
-BR-092,grape_black_rot_google_0133.jpg,grape black rot,leaf,,Training,CC0,BR_04
-BR-093,grape_black_rot_google_0147.jpg,grape black rot,berry,,Training,CC0,BR_04
-BR-094,grape_black_rot_google_0149.jpg,grape black rot,leaf,,Training,CC0,BR_04
-BR-095,grape_black_rot_google_0156.jpg,grape black rot,berry,,Training,CC0,BR_04
-BR-096,grape_black_rot_google_0158.jpg,grape black rot,berry,,Training,CC0,BR_04
-BR-097,grape_black_rot_google_0161.jpg,grape black rot,berry,,Training,CC0,BR_04
-BR-098,grape_black_rot_google_0162.jpg,grape black rot,berry,,Training,CC0,BR_04
-BR-099,grape_black_rot_google_0166.jpg,grape black rot,berry,,Test,CC0,BR_04
-BR-100,grape_black_rot_google_0188.jpg,grape black rot,leaf,"wide view, but spotted leaves fill the frame and single leaves can be made out",Test,CC0,BR_04
-BR-101,grape_black_rot_google_0204.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-102,grape_black_rot_google_0209.jpg,grape black rot,leaf,,Training,CC0,BR_05
-BR-103,grape_black_rot_google_0219.jpg,grape black rot,leaf,"single leaf photo with a caption strip (""Grape Black Rot on Leaf""); not a composite",Training,CC0,BR_05
-BR-104,grape_black_rot_google_0220.jpg,grape black rot,leaf,"single leaf photo with a caption (""Black Rot"") under it; not a composite",Training,CC0,BR_05
-BR-105,grape_black_rot_google_0223.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-106,grape_black_rot_google_0230.jpg,grape black rot,leaf,close-up of lesions on a leaf blade,Validation,CC0,BR_05
-BR-107,grape_black_rot_google_0233.jpg,grape black rot,berry,,Test,CC0,BR_05
-BR-108,grape_black_rot_google_0234.jpg,grape black rot,berry,very small image of berries,Training,CC0,BR_05
-BR-109,grape_black_rot_google_0237.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-110,grape_black_rot_google_0239.jpg,grape black rot,other,"mummified bunch between prominent leaves, the left one possibly symptomatic: unclear which carries the symptoms (rule 4)",Test,CC0,BR_05
-BR-111,grape_black_rot_google_0260.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-112,grape_black_rot_google_0262.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-113,grape_black_rot_google_0278.jpg,grape black rot,leaf,close-up of lesions on a leaf blade,Training,CC0,BR_05
-BR-114,grape_black_rot_google_0286.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-115,grape_black_rot_google_0291.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-116,grape_black_rot_google_0307.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-117,grape_black_rot_google_0320.jpg,grape black rot,berry,,Test,CC0,BR_05
-BR-118,grape_black_rot_google_0325.jpg,grape black rot,leaf,leaves fill the frame; small spots,Training,CC0,BR_05
-BR-119,grape_black_rot_google_0330.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-120,grape_black_rot_google_0332.jpg,grape black rot,berry,,Training,CC0,BR_05
-BR-121,grape_black_rot_google_0341.jpg,grape black rot,leaf,,Training,CC0,BR_05
-BR-122,grape_black_rot_google_0356.jpg,grape black rot,berry,single photo of berries with a text caption,Training,CC0,BR_05
-DM-001,grape_downy_mildew_1.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_01
-DM-002,grape_downy_mildew_2.jpg,grape downy mildew,leaf,,Training,CC0,DM_01
-DM-003,grape_downy_mildew_6.jpg,grape downy mildew,leaf,,Training,CC0,DM_01
-DM-004,grape_downy_mildew_8.jpg,grape downy mildew,leaf,,Training,CC0,DM_01
-DM-005,grape_downy_mildew_11.jpg,grape downy mildew,leaf,shoot: leaves are most of the tissue and carry the symptoms,Training,CC0,DM_01
-DM-006,grape_downy_mildew_12.jpg,grape downy mildew,leaf,,Training,CC0,DM_01
-DM-007,grape_downy_mildew_17.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_01
-DM-008,grape_downy_mildew_18.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",Training,CC-BY,DM_01
-DM-009,grape_downy_mildew_20.jpg,grape downy mildew,leaf,single leaf photo with a text caption; not a composite,Training,CC0,DM_01
-DM-010,grape_downy_mildew_21.jpg,grape downy mildew,leaf,,Training,CC0,DM_01
-DM-011,grape_downy_mildew_25.jpg,grape downy mildew,berry,young berry clusters with white sporulation,Training,CC-BY,DM_01
-DM-012,grape_downy_mildew_27.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_01
-DM-013,grape_downy_mildew_28.jpg,grape downy mildew,leaf,,Validation,CC-BY,DM_01
-DM-014,grape_downy_mildew_29.jpg,grape downy mildew,leaf,single leaf photo with a text caption; not a composite,Test,CC0,DM_01
-DM-015,grape_downy_mildew_36.jpg,grape downy mildew,leaf,,Training,CC0,DM_01
-DM-016,grape_downy_mildew_37.jpg,grape downy mildew,leaf,,Training,CC0,DM_01
-DM-017,grape_downy_mildew_40.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_01
-DM-018,grape_downy_mildew_42.jpg,grape downy mildew,leaf,,Test,CC0,DM_01
-DM-019,grape_downy_mildew_44.jpg,grape downy mildew,leaf,,Training,CC0,DM_01
-DM-020,grape_downy_mildew_49.jpg,grape downy mildew,leaf,dead brown leaf on the shoot,Test,CC0,DM_01
-DM-021,grape_downy_mildew_50.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_01
-DM-022,grape_downy_mildew_55.jpg,grape downy mildew,berry,young green berry cluster,Training,CC-BY,DM_01
-DM-023,grape_downy_mildew_56.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_01
-DM-024,grape_downy_mildew_57.jpg,grape downy mildew,other,"infected flower cluster (inflorescence), not leaf or berry",Training,CC-BY,DM_01
-DM-025,grape_downy_mildew_61.jpg,grape downy mildew,leaf,single leaf photo padded with black bars and a caption,Training,CC0,DM_01
-DM-026,grape_downy_mildew_62.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-027,grape_downy_mildew_63.jpg,grape downy mildew,leaf,single leaf photo with a text caption or timestamp; not a composite,Training,CC-BY,DM_02
-DM-028,grape_downy_mildew_64.jpg,grape downy mildew,other,flower cluster (inflorescence) held in hand,Test,CC-BY,DM_02
-DM-029,grape_downy_mildew_65.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_02
-DM-030,grape_downy_mildew_68.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-031,grape_downy_mildew_69.jpg,grape downy mildew,berry,,Training,CC-BY,DM_02
-DM-032,grape_downy_mildew_71.jpg,grape downy mildew,leaf,leaf underside with sporulation fills the frame; young clusters at the top edge look unaffected,Test,CC-BY,DM_02
-DM-033,grape_downy_mildew_72.jpg,grape downy mildew,leaf,single leaf photo with a text caption or timestamp; not a composite,Training,CC-BY,DM_02
-DM-034,grape_downy_mildew_73.jpg,grape downy mildew,leaf,single leaf photo with a text caption or timestamp; not a composite,Training,CC0,DM_02
-DM-035,grape_downy_mildew_74.jpg,grape downy mildew,berry,single photo of berries; text and a QR code in the background,Training,CC0,DM_02
-DM-036,grape_downy_mildew_75.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-037,grape_downy_mildew_76.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_02
-DM-038,grape_downy_mildew_79.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-039,grape_downy_mildew_80.jpg,grape downy mildew,berry,,Training,CC-BY,DM_02
-DM-040,grape_downy_mildew_82.jpg,grape downy mildew,leaf,single leaf photo with a text caption or timestamp; not a composite,Test,CC0,DM_02
-DM-041,grape_downy_mildew_83.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-042,grape_downy_mildew_85.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-043,grape_downy_mildew_86.jpg,grape downy mildew,berry,,Training,CC-BY,DM_02
-DM-044,grape_downy_mildew_87.jpg,grape downy mildew,other,shoot tips with withered flower clusters; no leaf or berry subject,Training,CC0,DM_02
-DM-045,grape_downy_mildew_88.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_02
-DM-046,grape_downy_mildew_90.jpg,grape downy mildew,leaf,"greenhouse view, but spotted leaves fill the frame and single leaves can be made out",Test,CC0,DM_02
-DM-047,grape_downy_mildew_91.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-048,grape_downy_mildew_92.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-049,grape_downy_mildew_93.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-050,grape_downy_mildew_95.jpg,grape downy mildew,leaf,,Training,CC0,DM_02
-DM-051,grape_downy_mildew_96.jpg,grape downy mildew,other,flower cluster (inflorescence),Training,CC-BY,DM_03
-DM-052,grape_downy_mildew_97.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_03
-DM-053,grape_downy_mildew_100.jpg,grape downy mildew,berry,bunch is the subject; surrounding leaves look unaffected,Validation,CC0,DM_03
-DM-054,grape_downy_mildew_101.jpg,grape downy mildew,leaf,,Training,CC0,DM_03
-DM-055,grape_downy_mildew_102.jpg,grape downy mildew,other,withered flower cluster hanging in a vineyard row,Training,CC-BY,DM_03
-DM-056,grape_downy_mildew_103.jpg,grape downy mildew,leaf,,Training,CC0,DM_03
-DM-057,grape_downy_mildew_105.jpg,grape downy mildew,leaf,,Training,CC0,DM_03
-DM-058,grape_downy_mildew_106.jpg,grape downy mildew,berry,,Training,CC-BY,DM_03
-DM-059,grape_downy_mildew_107.jpg,grape downy mildew,leaf,,Training,CC0,DM_03
-DM-060,grape_downy_mildew_108.jpg,grape downy mildew,other,distant greenhouse view: leaves small and symptoms not clear,Training,CC0,DM_03
-DM-061,grape_downy_mildew_109.jpg,grape downy mildew,berry,,Training,CC0,DM_03
-DM-062,grape_downy_mildew_112.jpg,grape downy mildew,leaf,,Training,CC0,DM_03
-DM-063,grape_downy_mildew_114.jpg,grape downy mildew,leaf,folded leaf held in hand; the leaf is the only plant subject,Training,CC0,DM_03
-DM-064,grape_downy_mildew_115.jpg,grape downy mildew,leaf,,Test,CC-BY,DM_03
-DM-065,grape_downy_mildew_116.jpg,grape downy mildew,other,sporulating bunch beside a leaf with dark spots: both prominent and symptomatic (rule 4),Training,CC-BY,DM_03
-DM-066,grape_downy_mildew_120.jpg,grape downy mildew,leaf,,Training,CC0,DM_03
-DM-067,grape_downy_mildew_121.jpg,grape downy mildew,berry,,Validation,CC0,DM_03
-DM-068,grape_downy_mildew_122.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_03
-DM-069,grape_downy_mildew_126.jpg,grape downy mildew,leaf,,Training,CC0,DM_03
-DM-070,grape_downy_mildew_127.jpg,grape downy mildew,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,DM_03
-DM-071,grape_downy_mildew_131.jpg,grape downy mildew,berry,,Test,CC-BY,DM_03
-DM-072,grape_downy_mildew_144.jpg,grape downy mildew,berry,,Test,CC-BY,DM_03
-DM-073,grape_downy_mildew_145.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_03
-DM-074,grape_downy_mildew_146.jpg,grape downy mildew,other,"infected shoot held in hand, with a caption",Test,CC-BY,DM_03
-DM-075,grape_downy_mildew_148.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_03
-DM-076,grape_downy_mildew_150.jpg,grape downy mildew,berry,berries with a watermark or figure caption,Validation,CC-BY,DM_04
-DM-077,grape_downy_mildew_151.jpg,grape downy mildew,other,extreme close-up of a sporulating fruit or bud: organ unclear at that magnification,Training,CC0,DM_04
-DM-078,grape_downy_mildew_152.jpg,grape downy mildew,berry,single photo of berries with a caption,Test,CC0,DM_04
-DM-079,grape_downy_mildew_155.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,Training,CC0,DM_04
-DM-080,grape_downy_mildew_156.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_04
-DM-081,grape_downy_mildew_160.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_04
-DM-082,grape_downy_mildew_161.jpg,grape downy mildew,berry,single photo of berries with annotation arrows and labels,Validation,CC-BY,DM_04
-DM-083,grape_downy_mildew_162.jpg,grape downy mildew,other,"shoot with an inflorescence and leaves, both prominent; no single organ dominates",Validation,CC0,DM_04
-DM-084,grape_downy_mildew_163.jpg,grape downy mildew,berry,,Training,CC0,DM_04
-DM-085,grape_downy_mildew_164.jpg,grape downy mildew,berry,berries with a watermark or figure caption,Test,CC-BY,DM_04
-DM-086,grape_downy_mildew_165.jpg,grape downy mildew,leaf,,Training,CC0,DM_04
-DM-087,grape_downy_mildew_168.jpg,grape downy mildew,other,leaf close-up largely covered by a big text box and arrow,Training,CC0,DM_04
-DM-088,grape_downy_mildew_171.jpg,grape downy mildew,berry,,Training,CC0,DM_04
-DM-089,grape_downy_mildew_173.jpg,grape downy mildew,other,"wide vine view with leaves, shoots and inflorescences; no single organ dominates",Training,CC0,DM_04
-DM-090,grape_downy_mildew_174.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,Training,CC0,DM_04
-DM-091,grape_downy_mildew_175.jpg,grape downy mildew,berry,,Training,CC-BY,DM_04
-DM-092,grape_downy_mildew_178.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,Validation,CC-BY,DM_04
-DM-093,grape_downy_mildew_181.jpg,grape downy mildew,other,distant view of a vine row,Training,CC0,DM_04
-DM-094,grape_downy_mildew_182.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,Training,CC-BY,DM_04
-DM-095,grape_downy_mildew_183.jpg,grape downy mildew,other,withered flower clusters,Training,CC-BY,DM_04
-DM-096,grape_downy_mildew_188.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,Training,CC-BY,DM_04
-DM-097,grape_downy_mildew_189.jpg,grape downy mildew,leaf,,Training,CC0,DM_04
-DM-098,grape_downy_mildew_190.jpg,grape downy mildew,other,"shoot with leaves and sporulating young clusters, both prominent (rule 4)",Test,CC-BY,DM_04
-DM-099,grape_downy_mildew_191.jpg,grape downy mildew,leaf,,Training,CC0,DM_04
-DM-100,grape_downy_mildew_192.jpg,grape downy mildew,other,sporulating young clusters among prominent leaves (rule 4),Training,CC0,DM_04
-DM-101,grape_downy_mildew_193.jpg,grape downy mildew,other,flower cluster (inflorescence),Training,CC-BY,DM_05
-DM-102,grape_downy_mildew_194.jpg,grape downy mildew,berry,young berries with a watermark,Validation,CC-BY,DM_05
-DM-103,grape_downy_mildew_199.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_05
-DM-104,grape_downy_mildew_201.jpg,grape downy mildew,berry,,Training,CC0,DM_05
-DM-105,grape_downy_mildew_202.jpg,grape downy mildew,other,withered flower clusters,Test,CC-BY,DM_05
-DM-106,grape_downy_mildew_203.jpg,grape downy mildew,leaf,single leaf photo with a large watermark across it,Test,CC-BY,DM_05
-DM-107,grape_downy_mildew_204.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_05
-DM-108,grape_downy_mildew_206.jpg,grape downy mildew,leaf,"wide view, but spotted leaves fill the frame and single leaves can be made out",Training,CC0,DM_05
-DM-109,grape_downy_mildew_208.jpg,grape downy mildew,other,inflorescence in front of a leaf: the flowers are the subject,Training,CC0,DM_05
-DM-110,grape_downy_mildew_211.jpg,grape downy mildew,other,flower cluster (inflorescence),Training,CC-BY,DM_05
-DM-111,grape_downy_mildew_212.jpg,grape downy mildew,other,young shoot tip held in hand,Training,CC0,DM_05
-DM-112,grape_downy_mildew_214.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_05
-DM-113,grape_downy_mildew_215.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_05
-DM-114,grape_downy_mildew_216.jpg,grape downy mildew,other,withered flower clusters,Training,CC-BY,DM_05
-DM-115,grape_downy_mildew_218.jpg,grape downy mildew,leaf,,Training,CC0,DM_05
-DM-116,grape_downy_mildew_220.jpg,grape downy mildew,leaf,,Validation,CC-BY,DM_05
-DM-117,grape_downy_mildew_221.jpg,grape downy mildew,berry,young berries with a watermark,Training,CC0,DM_05
-DM-118,grape_downy_mildew_223.jpg,grape downy mildew,leaf,,Test,CC0,DM_05
-DM-119,grape_downy_mildew_225.jpg,grape downy mildew,leaf,,Training,CC0,DM_05
-DM-120,grape_downy_mildew_228.jpg,grape downy mildew,leaf,,Training,CC0,DM_05
-DM-121,grape_downy_mildew_230.jpg,grape downy mildew,other,flower cluster (inflorescence),Validation,CC0,DM_05
-DM-122,grape_downy_mildew_231.jpg,grape downy mildew,berry,,Validation,CC0,DM_05
-DM-123,grape_downy_mildew_232.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_05
-DM-124,grape_downy_mildew_238.jpg,grape downy mildew,leaf,close-up of sporulation on a leaf blade,Test,CC0,DM_05
-DM-125,grape_downy_mildew_241.jpg,grape downy mildew,leaf,,Test,CC-BY,DM_05
-DM-126,grape_downy_mildew_242.jpg,grape downy mildew,leaf,single leaf photo with a watermark or caption,Training,CC-BY,DM_06
-DM-127,grape_downy_mildew_243.jpg,grape downy mildew,berry,,Training,CC0,DM_06
-DM-128,grape_downy_mildew_244.jpg,grape downy mildew,leaf,sporulating leaf fills the frame; young clusters at the top look unaffected,Training,CC-BY,DM_06
-DM-129,grape_downy_mildew_247.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_06
-DM-130,grape_downy_mildew_248.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_06
-DM-131,grape_downy_mildew_251.jpg,grape downy mildew,leaf,,Test,CC-BY,DM_06
-DM-132,grape_downy_mildew_255.jpg,grape downy mildew,leaf,,Test,CC0,DM_06
-DM-133,grape_downy_mildew_256.jpg,grape downy mildew,leaf,single leaf photo with a watermark or caption,Training,CC-BY,DM_06
-DM-134,grape_downy_mildew_258.jpg,grape downy mildew,other,symptomatic leaf and a bunch each take about half the frame (rule 4),Training,CC-BY,DM_06
-DM-135,grape_downy_mildew_260.jpg,grape downy mildew,leaf,,Validation,CC0,DM_06
-DM-136,grape_downy_mildew_261.jpg,grape downy mildew,leaf,,Training,CC0,DM_06
-DM-137,grape_downy_mildew_266.jpg,grape downy mildew,berry,,Validation,CC-BY,DM_06
-DM-138,grape_downy_mildew_269.jpg,grape downy mildew,berry,,Training,CC-BY,DM_06
-DM-139,grape_downy_mildew_272.jpg,grape downy mildew,leaf,,Test,CC0,DM_06
-DM-140,grape_downy_mildew_274.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_06
-DM-141,grape_downy_mildew_275.jpg,grape downy mildew,berry,looks like a near-duplicate of DM-138,Test,CC-BY,DM_06
-DM-142,grape_downy_mildew_277.jpg,grape downy mildew,leaf,,Training,CC-BY,DM_06
-DM-143,grape_downy_mildew_google_0000.jpg,grape downy mildew,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,DM_06
-DM-144,grape_downy_mildew_google_0001.jpg,grape downy mildew,leaf,,Test,CC0,DM_06
-DM-145,grape_downy_mildew_google_0003.jpg,grape downy mildew,leaf,,Training,CC0,DM_06
-DM-146,grape_downy_mildew_google_0004.jpg,grape downy mildew,leaf,,Training,CC0,DM_06
-DM-147,grape_downy_mildew_google_0006.jpg,grape downy mildew,berry,,Test,CC0,DM_06
-DM-148,grape_downy_mildew_google_0010.jpg,grape downy mildew,berry,single photo of a bunch with a figure caption,Training,CC0,DM_06
-DM-149,grape_downy_mildew_google_0012.jpg,grape downy mildew,other,leaf overlaid with text boxes and arrows labelling downy and powdery mildew,Training,CC0,DM_06
-DM-150,grape_downy_mildew_google_0013.jpg,grape downy mildew,leaf,,Test,CC0,DM_06
-DM-151,grape_downy_mildew_google_0016.jpg,grape downy mildew,leaf,,Training,CC0,DM_07
-DM-152,grape_downy_mildew_google_0019.jpg,grape downy mildew,leaf,,Training,CC0,DM_07
-DM-153,grape_downy_mildew_google_0023.jpg,grape downy mildew,other,document page: text with a small leaf photo (rule 1),Training,CC0,DM_07
-DM-154,grape_downy_mildew_google_0025.jpg,grape downy mildew,leaf,,Training,CC0,DM_07
-DM-155,grape_downy_mildew_google_0026.jpg,grape downy mildew,leaf,"wide view, but spotted leaves fill the frame and single leaves can be made out",Test,CC0,DM_07
-DM-156,grape_downy_mildew_google_0027.jpg,grape downy mildew,leaf,,Training,CC0,DM_07
-DM-157,grape_downy_mildew_google_0030.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,Training,CC0,DM_07
-DM-158,grape_downy_mildew_google_0032.jpg,grape downy mildew,leaf,,Test,CC0,DM_07
-DM-159,grape_downy_mildew_google_0033.jpg,grape downy mildew,other,publication cover with title text (rule 1),Test,CC0,DM_07
-DM-160,grape_downy_mildew_google_0034.jpg,grape downy mildew,leaf,,Validation,CC0,DM_07
-DM-161,grape_downy_mildew_google_0036.jpg,grape downy mildew,leaf,close-up of a leaf blade,Training,CC0,DM_07
-DM-162,grape_downy_mildew_google_0038.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,Training,CC0,DM_07
-DM-163,grape_downy_mildew_google_0044.jpg,grape downy mildew,leaf,close-up of a leaf blade,Training,CC0,DM_07
-DM-164,grape_downy_mildew_google_0046.jpg,grape downy mildew,leaf,,Training,CC0,DM_07
-DM-165,grape_downy_mildew_google_0048.jpg,grape downy mildew,other,"leaf with arrows labelling both downy and powdery mildew, as DM-149",Training,CC0,DM_07
-DM-166,grape_downy_mildew_google_0052.jpg,grape downy mildew,other,four-panel composite A-D (rule 1),Test,CC0,DM_07
-DM-167,grape_downy_mildew_google_0054.jpg,grape downy mildew,other,tendril and withered flower cluster,Training,CC0,DM_07
-DM-168,grape_downy_mildew_google_0057.jpg,grape downy mildew,other,sporulating young clusters among prominent leaves (rule 4),Validation,CC0,DM_07
-DM-169,grape_downy_mildew_google_0059.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,Training,CC0,DM_07
-DM-170,grape_downy_mildew_google_0060.jpg,grape downy mildew,other,symptomatic leaf and a berry cluster both prominent (rule 4),Training,CC0,DM_07
-DM-171,grape_downy_mildew_google_0061.jpg,grape downy mildew,leaf,"single leaf photo with a small ""Downy Mildew"" label",Training,CC0,DM_07
-DM-172,grape_downy_mildew_google_0067.jpg,grape downy mildew,leaf,,Test,CC0,DM_07
-DM-173,grape_downy_mildew_google_0068.jpg,grape downy mildew,leaf,shoot with leaves; leaves are most of the tissue; stock watermark,Training,CC0,DM_07
-DM-174,grape_downy_mildew_google_0071.jpg,grape downy mildew,other,title graphic with two photos and text (rule 1),Training,CC0,DM_07
-DM-175,grape_downy_mildew_google_0072.jpg,grape downy mildew,other,symptomatic leaf and a berry cluster both prominent (rule 4),Training,CC0,DM_07
-DM-176,grape_downy_mildew_google_0074.jpg,grape downy mildew,other,two-panel composite (rule 1),Training,CC0,DM_08
-DM-177,grape_downy_mildew_google_0077.jpg,grape downy mildew,leaf,,Training,CC0,DM_08
-DM-178,grape_downy_mildew_google_0078.jpg,grape downy mildew,leaf,,Training,CC0,DM_08
-DM-179,grape_downy_mildew_google_0079.jpg,grape downy mildew,leaf,,Training,CC0,DM_08
-DM-180,grape_downy_mildew_google_0080.jpg,grape downy mildew,leaf,young shoot held in hand; leaves are most of the tissue,Test,CC0,DM_08
-DM-181,grape_downy_mildew_google_0081.jpg,grape downy mildew,leaf,,Test,CC0,DM_08
-DM-182,grape_downy_mildew_google_0083.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",Training,CC0,DM_08
-DM-183,grape_downy_mildew_google_0086.jpg,grape downy mildew,leaf,close-up of sporulation on a leaf underside,Training,CC0,DM_08
-DM-184,grape_downy_mildew_google_0087.jpg,grape downy mildew,leaf,,Training,CC0,DM_08
-DM-185,grape_downy_mildew_google_0090.jpg,grape downy mildew,leaf,,Test,CC0,DM_08
-DM-186,grape_downy_mildew_google_0093.jpg,grape downy mildew,leaf,single leaf photo with a watermark or photo credit,Training,CC0,DM_08
-DM-187,grape_downy_mildew_google_0094.jpg,grape downy mildew,leaf,,Test,CC0,DM_08
-DM-188,grape_downy_mildew_google_0095.jpg,grape downy mildew,other,"bunch with a magnifier inset: an inset makes it a composite (rule 1), as LR-016",Test,CC0,DM_08
-DM-189,grape_downy_mildew_google_0096.jpg,grape downy mildew,leaf,,Test,CC0,DM_08
-DM-190,grape_downy_mildew_google_0097.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",Test,CC0,DM_08
-DM-191,grape_downy_mildew_google_0098.jpg,grape downy mildew,leaf,"single leaf, out of focus",Training,CC0,DM_08
-DM-192,grape_downy_mildew_google_0100.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",Training,CC0,DM_08
-DM-193,grape_downy_mildew_google_0102.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",Training,CC0,DM_08
-DM-194,grape_downy_mildew_google_0104.jpg,grape downy mildew,leaf,,Training,CC0,DM_08
-DM-195,grape_downy_mildew_google_0106.jpg,grape downy mildew,leaf,single leaf photo with a watermark or photo credit,Training,CC0,DM_08
-DM-196,grape_downy_mildew_google_0108.jpg,grape downy mildew,leaf,single leaf photo with a watermark or photo credit,Training,CC0,DM_08
-DM-197,grape_downy_mildew_google_0109.jpg,grape downy mildew,leaf,single leaf photo with a watermark or photo credit,Training,CC0,DM_08
-DM-198,grape_downy_mildew_google_0110.jpg,grape downy mildew,other,presentation slide with title text and a photo (rule 1),Test,CC0,DM_08
-DM-199,grape_downy_mildew_google_0111.jpg,grape downy mildew,other,sporulating flower cluster (inflorescence),Training,CC0,DM_08
-DM-200,grape_downy_mildew_google_0113.jpg,grape downy mildew,leaf,,Training,CC0,DM_08
-DM-201,grape_downy_mildew_google_0115.jpg,grape downy mildew,leaf,,Validation,CC0,DM_09
-DM-202,grape_downy_mildew_google_0117.jpg,grape downy mildew,other,two-panel composite (rule 1),Training,CC0,DM_09
-DM-203,grape_downy_mildew_google_0120.jpg,grape downy mildew,other,three-panel composite (rule 1),Training,CC0,DM_09
-DM-204,grape_downy_mildew_google_0122.jpg,grape downy mildew,leaf,,Validation,CC0,DM_09
-DM-205,grape_downy_mildew_google_0125.jpg,grape downy mildew,leaf,close-up of a leaf blade,Training,CC0,DM_09
-DM-206,grape_downy_mildew_google_0127.jpg,grape downy mildew,leaf,,Training,CC0,DM_09
-DM-207,grape_downy_mildew_google_0128.jpg,grape downy mildew,other,two-panel composite (rule 1),Training,CC0,DM_09
-DM-208,grape_downy_mildew_google_0130.jpg,grape downy mildew,other,"spotted leaves around a berry cluster, both prominent (rule 4)",Test,CC0,DM_09
-DM-209,grape_downy_mildew_google_0132.jpg,grape downy mildew,berry,,Training,CC0,DM_09
-DM-210,grape_downy_mildew_google_0133.jpg,grape downy mildew,berry,,Test,CC0,DM_09
-DM-211,grape_downy_mildew_google_0135.jpg,grape downy mildew,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Test,CC0,DM_09
-DM-212,grape_downy_mildew_google_0136.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,Training,CC0,DM_09
-DM-213,grape_downy_mildew_google_0137.jpg,grape downy mildew,leaf,,Training,CC0,DM_09
-DM-214,grape_downy_mildew_google_0140.jpg,grape downy mildew,leaf,,Training,CC0,DM_09
-DM-215,grape_downy_mildew_google_0143.jpg,grape downy mildew,leaf,,Test,CC0,DM_09
-DM-216,grape_downy_mildew_google_0147.jpg,grape downy mildew,leaf,,Training,CC0,DM_09
-DM-217,grape_downy_mildew_google_0149.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,Training,CC0,DM_09
-DM-218,grape_downy_mildew_google_0153.jpg,grape downy mildew,leaf,shoot: leaves are most of the tissue; small flower cluster at the edge; watermark,Validation,CC0,DM_09
-DM-219,grape_downy_mildew_google_0157.jpg,grape downy mildew,other,two-panel composite (rule 1),Validation,CC0,DM_09
-DM-220,grape_downy_mildew_google_0158.jpg,grape downy mildew,other,two-panel composite (rule 1),Training,CC0,DM_09
-DM-221,grape_downy_mildew_google_0161.jpg,grape downy mildew,other,poster graphic with title text over a leaf photo (rule 1),Training,CC0,DM_09
-DM-222,grape_downy_mildew_google_0163.jpg,grape downy mildew,leaf,,Training,CC0,DM_09
-DM-223,grape_downy_mildew_google_0166.jpg,grape downy mildew,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,DM_09
-DM-224,grape_downy_mildew_google_0170.jpg,grape downy mildew,other,sporulating flower clusters (inflorescence),Training,CC0,DM_09
-DM-225,grape_downy_mildew_google_0171.jpg,grape downy mildew,leaf,leaf close-up padded with black bars,Training,CC0,DM_09
-DM-226,grape_downy_mildew_google_0173.jpg,grape downy mildew,other,scientific figure: leaf-disc panels and a bar chart (rule 1),Test,CC0,DM_10
-DM-227,grape_downy_mildew_google_0177.jpg,grape downy mildew,leaf,,Training,CC0,DM_10
-DM-228,grape_downy_mildew_google_0178.jpg,grape downy mildew,other,title slide with text and three photos (rule 1),Training,CC0,DM_10
-DM-229,grape_downy_mildew_google_0180.jpg,grape downy mildew,other,black-and-white scan of a printed leaf photo,Training,CC0,DM_10
-DM-230,grape_downy_mildew_google_0184.jpg,grape downy mildew,leaf,,Validation,CC0,DM_10
-DM-231,grape_downy_mildew_google_0187.jpg,grape downy mildew,berry,sporulating bunch is the subject,Training,CC0,DM_10
-DM-232,grape_downy_mildew_google_0192.jpg,grape downy mildew,other,four-panel composite a-d (rule 1),Training,CC0,DM_10
-DM-233,grape_downy_mildew_google_0193.jpg,grape downy mildew,leaf,leaf on a perforated metal sheet,Test,CC0,DM_10
-DM-234,grape_downy_mildew_google_0194.jpg,grape downy mildew,leaf,canopy view with one symptomatic leaf in the centre,Test,CC0,DM_10
-DM-235,grape_downy_mildew_google_0196.jpg,grape downy mildew,other,multi-panel composite (rule 1),Training,CC0,DM_10
-DM-236,grape_downy_mildew_google_0199.jpg,grape downy mildew,berry,,Training,CC0,DM_10
-DM-237,grape_downy_mildew_google_0200.jpg,grape downy mildew,berry,,Training,CC0,DM_10
-DM-238,grape_downy_mildew_google_0202.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,Validation,CC0,DM_10
-DM-239,grape_downy_mildew_google_0203.jpg,grape downy mildew,other,"spotted leaves around a berry cluster, both prominent (rule 4)",Test,CC0,DM_10
-DM-240,grape_downy_mildew_google_0206.jpg,grape downy mildew,leaf,close-up of a leaf underside,Test,CC0,DM_10
-DM-241,grape_downy_mildew_google_0212.jpg,grape downy mildew,leaf,,Validation,CC0,DM_10
-DM-242,grape_downy_mildew_google_0218.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,Validation,CC0,DM_10
-DM-243,grape_downy_mildew_google_0219.jpg,grape downy mildew,leaf,,Training,CC0,DM_10
-DM-244,grape_downy_mildew_google_0225.jpg,grape downy mildew,leaf,,Training,CC0,DM_10
-DM-245,grape_downy_mildew_google_0228.jpg,grape downy mildew,other,berries with arrows labelling both downy and powdery mildew,Validation,CC0,DM_10
-DM-246,grape_downy_mildew_google_0231.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,Validation,CC0,DM_10
-DM-247,grape_downy_mildew_google_0232.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,Training,CC0,DM_10
-DM-248,grape_downy_mildew_google_0235.jpg,grape downy mildew,leaf,,Validation,CC0,DM_10
-DM-249,grape_downy_mildew_google_0238.jpg,grape downy mildew,leaf,"leaves held in hands, with red arrows but no covering text",Validation,CC0,DM_10
-DM-250,grape_downy_mildew_google_0242.jpg,grape downy mildew,other,two-panel composite with a credit (rule 1),Validation,CC0,DM_10
-DM-251,grape_downy_mildew_google_0246.jpg,grape downy mildew,leaf,small image of a leaf,Validation,CC0,DM_11
-DM-252,grape_downy_mildew_google_0249.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,Training,CC0,DM_11
-DM-253,grape_downy_mildew_google_0254.jpg,grape downy mildew,other,sporulating flower clusters (inflorescence),Training,CC0,DM_11
-DM-254,grape_downy_mildew_google_0255.jpg,grape downy mildew,leaf,leaf on a perforated metal sheet,Training,CC0,DM_11
-DM-255,grape_downy_mildew_google_0256.jpg,grape downy mildew,berry,,Test,CC0,DM_11
-DM-256,grape_downy_mildew_google_0261.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,Training,CC0,DM_11
-DM-257,grape_downy_mildew_google_0264.jpg,grape downy mildew,berry,,Training,CC0,DM_11
-DM-258,grape_downy_mildew_google_0267.jpg,grape downy mildew,leaf,close-up of a leaf blade,Training,CC0,DM_11
-DM-259,grape_downy_mildew_google_0274.jpg,grape downy mildew,leaf,close-up of a leaf blade,Test,CC0,DM_11
-DM-260,grape_downy_mildew_google_0280.jpg,grape downy mildew,leaf,,Test,CC0,DM_11
-DM-261,grape_downy_mildew_google_0286.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,Training,CC0,DM_11
-DM-262,grape_downy_mildew_google_0290.jpg,grape downy mildew,other,sporulating flower clusters (inflorescence),Test,CC0,DM_11
-DM-263,grape_downy_mildew_google_0294.jpg,grape downy mildew,leaf,,Test,CC0,DM_11
-DM-264,grape_downy_mildew_google_0313.jpg,grape downy mildew,leaf,,Training,CC0,DM_11
-DM-265,grape_downy_mildew_google_0316.jpg,grape downy mildew,leaf,,Training,CC0,DM_11
-DM-266,grape_downy_mildew_google_0319.jpg,grape downy mildew,leaf,,Training,CC0,DM_11
-DM-267,grape_downy_mildew_google_0334.jpg,grape downy mildew,leaf,,Training,CC0,DM_11
-DM-268,grape_downy_mildew_google_0350.jpg,grape downy mildew,other,magnified sporulation: organ unclear,Training,CC0,DM_11
-DM-269,grape_downy_mildew_google_0355.jpg,grape downy mildew,leaf,,Training,CC0,DM_11
-DM-270,grape_downy_mildew_google_0360.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,Training,CC0,DM_11
-DM-271,grape_downy_mildew_google_0363.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,Training,CC0,DM_11
-DM-272,grape_downy_mildew_google_0365.jpg,grape downy mildew,leaf,,Validation,CC0,DM_11
-DM-273,grape_downy_mildew_google_0379.jpg,grape downy mildew,leaf,leaf photo inside a frame graphic with a caption,Training,CC0,DM_11
-DM-274,grape_downy_mildew_google_0406.jpg,grape downy mildew,leaf,,Training,CC0,DM_11
-DM-275,grape_downy_mildew_google_0415.jpg,grape downy mildew,leaf,,Test,CC0,DM_11
-DM-276,grape_downy_mildew_google_0426.jpg,grape downy mildew,leaf,leaf photo in a print frame with a watermark,Test,CC0,DM_12
-DM-277,grape_downy_mildew_google_0443.jpg,grape downy mildew,leaf,leaf photo in a print frame with a watermark,Training,CC0,DM_12
-DM-278,grape_downy_mildew_google_0449.jpg,grape downy mildew,leaf,leaf photo in a print frame with a watermark,Training,CC0,DM_12
-DM-279,grape_downy_mildew_google_0457.jpg,grape downy mildew,leaf,single leaf photo with a caption across the bottom,Test,CC0,DM_12
-DM-280,grape_downy_mildew_google_0466.jpg,grape downy mildew,leaf,,Training,CC0,DM_12
-LS-001,grape_leaf_spot_1.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-002,grape_leaf_spot_2.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-003,grape_leaf_spot_4.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-004,grape_leaf_spot_5.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-005,grape_leaf_spot_7.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-006,grape_leaf_spot_8.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-007,grape_leaf_spot_9.jpg,grape leaf spot,leaf,,Test,CC-BY,LS_01
-LS-008,grape_leaf_spot_11.jpg,grape leaf spot,leaf,leaf photo with a watermark,Test,CC0,LS_01
-LS-009,grape_leaf_spot_13.jpg,grape leaf spot,leaf,close-up of a leaf blade,Training,CC0,LS_01
-LS-010,grape_leaf_spot_14.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-011,grape_leaf_spot_16.jpg,grape leaf spot,leaf,,Training,CC-BY,LS_01
-LS-012,grape_leaf_spot_17.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-013,grape_leaf_spot_20.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-014,grape_leaf_spot_21.jpg,grape leaf spot,leaf,leaf photo with a watermark,Validation,CC-BY,LS_01
-LS-015,grape_leaf_spot_22.jpg,grape leaf spot,leaf,single leaf photo with a caption label,Test,CC0,LS_01
-LS-016,grape_leaf_spot_24.jpg,grape leaf spot,leaf,leaf photo with a watermark,Training,CC0,LS_01
-LS-017,grape_leaf_spot_26.jpg,grape leaf spot,leaf,close-up of a leaf blade,Training,CC-BY,LS_01
-LS-018,grape_leaf_spot_27.jpg,grape leaf spot,leaf,,Training,CC-BY,LS_01
-LS-019,grape_leaf_spot_33.jpg,grape leaf spot,leaf,leaf photo with a watermark,Training,CC0,LS_01
-LS-020,grape_leaf_spot_36.jpg,grape leaf spot,leaf,leaf photo with a watermark,Training,CC-BY,LS_01
-LS-021,grape_leaf_spot_38.jpg,grape leaf spot,leaf,,Validation,CC-BY,LS_01
-LS-022,grape_leaf_spot_40.jpg,grape leaf spot,leaf,leaf photo with a watermark,Training,CC0,LS_01
-LS-023,grape_leaf_spot_41.jpg,grape leaf spot,leaf,leaf photo with a watermark,Training,CC0,LS_01
-LS-024,grape_leaf_spot_42.jpg,grape leaf spot,leaf,,Training,CC0,LS_01
-LS-025,grape_leaf_spot_43.jpg,grape leaf spot,leaf,,Training,CC-BY,LS_01
-LS-026,grape_leaf_spot_47.jpg,grape leaf spot,leaf,leaf photo with a watermark,Test,CC0,LS_02
-LS-027,grape_leaf_spot_51.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LS_02
-LS-028,grape_leaf_spot_53.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Test,CC-BY,LS_02
-LS-029,grape_leaf_spot_75.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC-BY,LS_02
-LS-030,grape_leaf_spot_97.jpg,grape leaf spot,leaf,potted vine by a railing; leaves are the only organ and single leaves can be made out,Training,CC0,LS_02
-LS-031,grape_leaf_spot_101.jpg,grape leaf spot,leaf,necrotic leaf is the subject; a flower of another plant at the left edge,Test,CC-BY,LS_02
-LS-032,grape_leaf_spot_138.jpg,grape leaf spot,leaf,,Training,CC0,LS_02
-LS-033,grape_leaf_spot_140.jpg,grape leaf spot,leaf,,Test,CC0,LS_02
-LS-034,grape_leaf_spot_141.jpg,grape leaf spot,leaf,leaf against the sky; a few small berries at the top edge,Training,CC0,LS_02
-LS-035,grape_leaf_spot_142.jpg,grape leaf spot,leaf,,Test,CC-BY,LS_02
-LS-036,grape_leaf_spot_143.jpg,grape leaf spot,leaf,small image of a leaf,Training,CC0,LS_02
-LS-037,grape_leaf_spot_144.jpg,grape leaf spot,leaf,,Training,CC0,LS_02
-LS-038,grape_leaf_spot_145.jpg,grape leaf spot,leaf,,Test,CC0,LS_02
-LS-039,grape_leaf_spot_146.jpg,grape leaf spot,leaf,,Training,CC0,LS_02
-LS-040,grape_leaf_spot_151.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Validation,CC0,LS_02
-LS-041,grape_leaf_spot_154.jpg,grape leaf spot,leaf,leaf photo with a watermark,Training,CC0,LS_02
-LS-042,grape_leaf_spot_155.jpg,grape leaf spot,leaf,,Validation,CC0,LS_02
-LS-043,grape_leaf_spot_156.jpg,grape leaf spot,other,shoot with lesions on the stem; stem is the subject,Training,CC0,LS_02
-LS-044,grape_leaf_spot_157.jpg,grape leaf spot,leaf,,Test,CC0,LS_02
-LS-045,grape_leaf_spot_161.jpg,grape leaf spot,leaf,,Training,CC0,LS_02
-LS-046,grape_leaf_spot_167.jpg,grape leaf spot,leaf,,Validation,CC0,LS_02
-LS-047,grape_leaf_spot_168.jpg,grape leaf spot,leaf,"appears to be the same photograph as LS-037, cropped differently",Test,CC0,LS_02
-LS-048,grape_leaf_spot_170.jpg,grape leaf spot,leaf,,Test,CC0,LS_02
-LS-049,grape_leaf_spot_171.jpg,grape leaf spot,leaf,,Training,CC-BY,LS_02
-LS-050,grape_leaf_spot_198.jpg,grape leaf spot,leaf,"appears to be the same photograph as LS-037, cropped differently",Training,CC0,LS_02
-LS-051,grape_leaf_spot_205.jpg,grape leaf spot,leaf,,Training,CC0,LS_03
-LS-052,grape_leaf_spot_207.jpg,grape leaf spot,other,shoot and cane with leaves; no single organ dominates,Training,CC-BY,LS_03
-LS-053,grape_leaf_spot_226.jpg,grape leaf spot,leaf,,Training,CC-BY,LS_03
-LS-054,grape_leaf_spot_227.jpg,grape leaf spot,leaf,close-up of a leaf blade,Training,CC0,LS_03
-LS-055,grape_leaf_spot_228.jpg,grape leaf spot,leaf,close-up of a leaf blade,Training,CC0,LS_03
-LS-056,grape_leaf_spot_233.jpg,grape leaf spot,leaf,young shoot held over a pot; leaves are most of the tissue,Training,CC-BY,LS_03
-LS-057,grape_leaf_spot_281.jpg,grape leaf spot,other,"rounded, unlobed leaves that do not look like grape leaves: no identifiable grape organ (rule 1), though the metadata says grape",Training,CC-BY,LS_03
-LS-058,grape_leaf_spot_google_0000.jpg,grape leaf spot,leaf,leaf photo with a watermark,Training,CC0,LS_03
-LS-059,grape_leaf_spot_google_0001.jpg,grape leaf spot,leaf,,Training,CC0,LS_03
-LS-060,grape_leaf_spot_google_0002.jpg,grape leaf spot,leaf,,Training,CC0,LS_03
-LS-061,grape_leaf_spot_google_0003.jpg,grape leaf spot,leaf,,Training,CC0,LS_03
-LS-062,grape_leaf_spot_google_0004.jpg,grape leaf spot,leaf,"single leaf photo from a figure, with a panel letter and coloured boxes",Test,CC0,LS_03
-LS-063,grape_leaf_spot_google_0007.jpg,grape leaf spot,leaf,,Training,CC0,LS_03
-LS-064,grape_leaf_spot_google_0008.jpg,grape leaf spot,leaf,,Training,CC0,LS_03
-LS-065,grape_leaf_spot_google_0013.jpg,grape leaf spot,other,strip of four panels (rule 1),Training,CC0,LS_03
-LS-066,grape_leaf_spot_google_0016.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LS_03
-LS-067,grape_leaf_spot_google_0018.jpg,grape leaf spot,leaf,symptomatic leaves are most of the tissue; a small unaffected berry cluster at the left,Training,CC0,LS_03
-LS-068,grape_leaf_spot_google_0025.jpg,grape leaf spot,leaf,leaf photo with a watermark,Training,CC0,LS_03
-LS-069,grape_leaf_spot_google_0028.jpg,grape leaf spot,leaf,,Test,CC0,LS_03
-LS-070,grape_leaf_spot_google_0030.jpg,grape leaf spot,other,"young shoot among weeds; leaves small, no single organ dominates",Validation,CC0,LS_03
-LS-071,grape_leaf_spot_google_0031.jpg,grape leaf spot,leaf,small image of a leaf,Training,CC0,LS_03
-LS-072,grape_leaf_spot_google_0034.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LS_03
-LS-073,grape_leaf_spot_google_0036.jpg,grape leaf spot,leaf,close-up of a leaf blade,Validation,CC0,LS_03
-LS-074,grape_leaf_spot_google_0038.jpg,grape leaf spot,leaf,,Training,CC0,LS_03
-LS-075,grape_leaf_spot_google_0041.jpg,grape leaf spot,leaf,,Training,CC0,LS_03
-LS-076,grape_leaf_spot_google_0046.jpg,grape leaf spot,leaf,,Test,CC0,LS_04
-LS-077,grape_leaf_spot_google_0047.jpg,grape leaf spot,leaf,"single leaf, out of focus",Training,CC0,LS_04
-LS-078,grape_leaf_spot_google_0049.jpg,grape leaf spot,leaf,close-up of a leaf blade,Validation,CC0,LS_04
-LS-079,grape_leaf_spot_google_0060.jpg,grape leaf spot,other,"oval leaf with a smooth margin, not grape-like: no identifiable grape organ (rule 1)",Training,CC0,LS_04
-LS-080,grape_leaf_spot_google_0063.jpg,grape leaf spot,leaf,,Validation,CC0,LS_04
-LS-081,grape_leaf_spot_google_0070.jpg,grape leaf spot,leaf,leaf photo with a stock-image watermark,Training,CC0,LS_04
-LS-082,grape_leaf_spot_google_0076.jpg,grape leaf spot,leaf,,Training,CC0,LS_04
-LS-083,grape_leaf_spot_google_0077.jpg,grape leaf spot,leaf,small image of a leaf,Training,CC0,LS_04
-LS-084,grape_leaf_spot_google_0078.jpg,grape leaf spot,other,composite of 14 panels (rule 1),Training,CC0,LS_04
-LS-085,grape_leaf_spot_google_0090.jpg,grape leaf spot,other,leaf beside a gourd-like fruit; does not look like grape (rule 1),Validation,CC0,LS_04
-LS-086,grape_leaf_spot_google_0098.jpg,grape leaf spot,leaf,,Test,CC0,LS_04
-LS-087,grape_leaf_spot_google_0124.jpg,grape leaf spot,other,"small heart-shaped leaf, not grape-like, on a padded black background (rule 1)",Test,CC0,LS_04
-LS-088,grape_leaf_spot_google_0154.jpg,grape leaf spot,other,trailing vines on the ground; the species cannot be told,Training,CC0,LS_04
-LS-089,grape_leaf_spot_google_0156.jpg,grape leaf spot,leaf,pale lobed leaves fill the frame,Training,CC0,LS_04
-LS-090,grape_leaf_spot_google_0161.jpg,grape leaf spot,leaf,close-up of a leaf blade,Training,CC0,LS_04
-LS-091,grape_leaf_spot_google_0173.jpg,grape leaf spot,leaf,close-up of a leaf blade,Test,CC0,LS_04
-LR-001,grapevine_leafroll_disease_2.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Validation,CC-BY,LR_01
-LR-002,grapevine_leafroll_disease_6.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_01
-LR-003,grapevine_leafroll_disease_8.jpg,grapevine leafroll disease,leaf,,Training,CC-BY,LR_01
-LR-004,grapevine_leafroll_disease_12.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_01
-LR-005,grapevine_leafroll_disease_17.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_01
-LR-006,grapevine_leafroll_disease_20.jpg,grapevine leafroll disease,leaf,,Test,CC0,LR_01
-LR-007,grapevine_leafroll_disease_28.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_01
-LR-008,grapevine_leafroll_disease_41.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Validation,CC0,LR_01
-LR-009,grapevine_leafroll_disease_49.jpg,grapevine leafroll disease,leaf,,Validation,CC-BY,LR_01
-LR-010,grapevine_leafroll_disease_59.jpg,grapevine leafroll disease,leaf,,Training,CC-BY,LR_01
-LR-011,grapevine_leafroll_disease_69.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_01
-LR-012,grapevine_leafroll_disease_86.jpg,grapevine leafroll disease,other,vineyard row with trunks; no single organ dominates,Validation,CC0,LR_01
-LR-013,grapevine_leafroll_disease_126.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_01
-LR-014,grapevine_leafroll_disease_156.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_01
-LR-015,grapevine_leafroll_disease_google_0001.jpg,grapevine leafroll disease,other,row view of red foliage with black bunches; no single organ dominates,Test,CC0,LR_01
-LR-016,grapevine_leafroll_disease_google_0002.jpg,grapevine leafroll disease,other,canopy with a magnifier inset of one leaf: an inset makes it a composite (rule 1),Training,CC0,LR_01
-LR-017,grapevine_leafroll_disease_google_0003.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_01
-LR-018,grapevine_leafroll_disease_google_0006.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_01
-LR-019,grapevine_leafroll_disease_google_0007.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_01
-LR-020,grapevine_leafroll_disease_google_0008.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_01
-LR-021,grapevine_leafroll_disease_google_0012.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_01
-LR-022,grapevine_leafroll_disease_google_0015.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Test,CC0,LR_01
-LR-023,grapevine_leafroll_disease_google_0016.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_01
-LR-024,grapevine_leafroll_disease_google_0018.jpg,grapevine leafroll disease,leaf,single leaf on a white background,Test,CC0,LR_01
-LR-025,grapevine_leafroll_disease_google_0020.jpg,grapevine leafroll disease,leaf,leaf photo with a stock-image watermark,Training,CC0,LR_01
-LR-026,grapevine_leafroll_disease_google_0022.jpg,grapevine leafroll disease,other,whole vine in a field; foliage does not fill the frame,Training,CC0,LR_02
-LR-027,grapevine_leafroll_disease_google_0023.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Test,CC0,LR_02
-LR-028,grapevine_leafroll_disease_google_0024.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_02
-LR-029,grapevine_leafroll_disease_google_0028.jpg,grapevine leafroll disease,leaf,leaf photo with a stock-image watermark,Training,CC0,LR_02
-LR-030,grapevine_leafroll_disease_google_0030.jpg,grapevine leafroll disease,leaf,shoot: leaves are most of the tissue,Test,CC0,LR_02
-LR-031,grapevine_leafroll_disease_google_0033.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_02
-LR-032,grapevine_leafroll_disease_google_0036.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,Test,CC0,LR_02
-LR-033,grapevine_leafroll_disease_google_0037.jpg,grapevine leafroll disease,leaf,leaf photo with a stock-image watermark,Training,CC0,LR_02
-LR-034,grapevine_leafroll_disease_google_0040.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_02
-LR-035,grapevine_leafroll_disease_google_0041.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,Training,CC0,LR_02
-LR-036,grapevine_leafroll_disease_google_0043.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_02
-LR-037,grapevine_leafroll_disease_google_0045.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,Test,CC0,LR_02
-LR-038,grapevine_leafroll_disease_google_0046.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_02
-LR-039,grapevine_leafroll_disease_google_0049.jpg,grapevine leafroll disease,leaf,leaf photo with a stock-image watermark,Validation,CC0,LR_02
-LR-040,grapevine_leafroll_disease_google_0050.jpg,grapevine leafroll disease,leaf,canopy view: leaves fill the frame; a few small bunches,Test,CC0,LR_02
-LR-041,grapevine_leafroll_disease_google_0053.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_02
-LR-042,grapevine_leafroll_disease_google_0057.jpg,grapevine leafroll disease,leaf,shoot on a blue background: leaves are most of the tissue; panel letter; small cluster at the left,Test,CC0,LR_02
-LR-043,grapevine_leafroll_disease_google_0058.jpg,grapevine leafroll disease,leaf,canopy view: leaves fill the frame; a few small bunches,Training,CC0,LR_02
-LR-044,grapevine_leafroll_disease_google_0060.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_02
-LR-045,grapevine_leafroll_disease_google_0061.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_02
-LR-046,grapevine_leafroll_disease_google_0070.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_02
-LR-047,grapevine_leafroll_disease_google_0072.jpg,grapevine leafroll disease,other,symptomatic leaf and a large berry cluster both prominent (rule 4); figure caption,Validation,CC0,LR_02
-LR-048,grapevine_leafroll_disease_google_0077.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_02
-LR-049,grapevine_leafroll_disease_google_0078.jpg,grapevine leafroll disease,other,"red leaves with large black bunches, both prominent (rule 4)",Training,CC0,LR_02
-LR-050,grapevine_leafroll_disease_google_0080.jpg,grapevine leafroll disease,leaf,symptomatic leaf is the subject; a smaller bunch at the right edge,Training,CC0,LR_02
-LR-051,grapevine_leafroll_disease_google_0083.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_03
-LR-052,grapevine_leafroll_disease_google_0086.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Validation,CC0,LR_03
-LR-053,grapevine_leafroll_disease_google_0093.jpg,grapevine leafroll disease,leaf,,Test,CC0,LR_03
-LR-054,grapevine_leafroll_disease_google_0094.jpg,grapevine leafroll disease,leaf,single leaf cut out on a white background,Training,CC0,LR_03
-LR-055,grapevine_leafroll_disease_google_0096.jpg,grapevine leafroll disease,leaf,,Validation,CC0,LR_03
-LR-056,grapevine_leafroll_disease_google_0100.jpg,grapevine leafroll disease,other,"red leaf beside a large black bunch, both prominent (rule 4)",Training,CC0,LR_03
-LR-057,grapevine_leafroll_disease_google_0108.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,Training,CC0,LR_03
-LR-058,grapevine_leafroll_disease_google_0109.jpg,grapevine leafroll disease,other,distant view of a vineyard row,Training,CC0,LR_03
-LR-059,grapevine_leafroll_disease_google_0112.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,Training,CC0,LR_03
-LR-060,grapevine_leafroll_disease_google_0114.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_03
-LR-061,grapevine_leafroll_disease_google_0116.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,Test,CC0,LR_03
-LR-062,grapevine_leafroll_disease_google_0121.jpg,grapevine leafroll disease,other,canopy with prominent bunches; no single organ dominates,Training,CC0,LR_03
-LR-063,grapevine_leafroll_disease_google_0124.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_03
-LR-064,grapevine_leafroll_disease_google_0126.jpg,grapevine leafroll disease,leaf,,Training,CC0,LR_03
-LR-065,grapevine_leafroll_disease_google_0154.jpg,grapevine leafroll disease,leaf,symptomatic leaves fill the frame; a small bunch at the bottom left,Test,CC0,LR_03
-LR-066,grapevine_leafroll_disease_google_0157.jpg,grapevine leafroll disease,leaf,small or narrow image of leaves,Training,CC0,LR_03
-LR-067,grapevine_leafroll_disease_google_0162.jpg,grapevine leafroll disease,leaf,single leaf cut out on a white background,Training,CC0,LR_03
-LR-068,grapevine_leafroll_disease_google_0181.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Test,CC0,LR_03
-LR-069,grapevine_leafroll_disease_google_0184.jpg,grapevine leafroll disease,other,"small image: a bunch among red leaves, both prominent (rule 4)",Training,CC0,LR_03
-LR-070,grapevine_leafroll_disease_google_0211.jpg,grapevine leafroll disease,leaf,small or narrow image of leaves,Training,CC0,LR_03
-LR-071,grapevine_leafroll_disease_google_0216.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",Training,CC0,LR_03
+id,image,disease,tag,reason,duplicate_of,label_conflict_with,plantseg_split,image_licence,sheet
+BR-001,grape_black_rot_1.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-002,grape_black_rot_2.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-003,grape_black_rot_3.jpg,grape black rot,berry,bunch is the subject; surrounding leaves look unaffected,,,Test,CC0,BR_01
+BR-004,grape_black_rot_4.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-005,grape_black_rot_5.jpg,grape black rot,berry,,,,Training,CC-BY,BR_01
+BR-006,grape_black_rot_6.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-007,grape_black_rot_7.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-008,grape_black_rot_8.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-009,grape_black_rot_9.jpg,grape black rot,berry,,,,Training,CC-BY,BR_01
+BR-010,grape_black_rot_10.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-011,grape_black_rot_12.jpg,grape black rot,berry,,,,Test,CC-BY,BR_01
+BR-012,grape_black_rot_13.jpg,grape black rot,berry,,,,Training,CC-BY,BR_01
+BR-013,grape_black_rot_15.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-014,grape_black_rot_18.jpg,grape black rot,berry,,,,Training,CC-BY,BR_01
+BR-015,grape_black_rot_21.jpg,grape black rot,berry,,,,Validation,CC0,BR_01
+BR-016,grape_black_rot_23.jpg,grape black rot,berry,,,,Test,CC-BY,BR_01
+BR-017,grape_black_rot_25.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-018,grape_black_rot_29.jpg,grape black rot,berry,,,,Training,CC-BY,BR_01
+BR-019,grape_black_rot_33.jpg,grape black rot,berry,,,,Test,CC-BY,BR_01
+BR-020,grape_black_rot_37.jpg,grape black rot,other,leaf with spots (top left) and spotted berries both prominent and both symptomatic (rule 4),,,Training,CC-BY,BR_01
+BR-021,grape_black_rot_40.jpg,grape black rot,berry,,,,Training,CC-BY,BR_01
+BR-022,grape_black_rot_42.jpg,grape black rot,berry,,,,Training,CC-BY,BR_01
+BR-023,grape_black_rot_45.jpg,grape black rot,berry,,,,Training,CC-BY,BR_01
+BR-024,grape_black_rot_49.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-025,grape_black_rot_50.jpg,grape black rot,berry,,,,Training,CC0,BR_01
+BR-026,grape_black_rot_68.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-027,grape_black_rot_141.jpg,grape black rot,berry,,,,Validation,CC0,BR_02
+BR-028,grape_black_rot_149.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-029,grape_black_rot_152.jpg,grape black rot,berry,,,,Training,CC-BY,BR_02
+BR-030,grape_black_rot_170.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-031,grape_black_rot_171.jpg,grape black rot,berry,red circles drawn on a single photo of berries,,,Validation,CC0,BR_02
+BR-032,grape_black_rot_176.jpg,grape black rot,berry,,,,Training,CC-BY,BR_02
+BR-033,grape_black_rot_191.jpg,grape black rot,berry,bunch held in hand is the subject; leaf at left shows no clear lesions,,,Training,CC-BY,BR_02
+BR-034,grape_black_rot_216.jpg,grape black rot,berry,"wider view, but the bunch is the subject; leaves unaffected",,,Test,CC0,BR_02
+BR-035,grape_black_rot_google_0000.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-036,grape_black_rot_google_0001.jpg,grape black rot,other,three spotted leaves and a small spotted cluster in one specimen photo: both organs symptomatic (rule 4),,,Training,CC0,BR_02
+BR-037,grape_black_rot_google_0003.jpg,grape black rot,berry,,,,Test,CC0,BR_02
+BR-038,grape_black_rot_google_0005.jpg,grape black rot,berry,,,,Validation,CC0,BR_02
+BR-039,grape_black_rot_google_0007.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-040,grape_black_rot_google_0009.jpg,grape black rot,berry,,,,Validation,CC0,BR_02
+BR-041,grape_black_rot_google_0010.jpg,grape black rot,berry,appears to be the same photograph as BR-021,BR-021,,Training,CC0,BR_02
+BR-042,grape_black_rot_google_0011.jpg,grape black rot,berry,,,,Test,CC0,BR_02
+BR-043,grape_black_rot_google_0013.jpg,grape black rot,berry,,,,Test,CC0,BR_02
+BR-044,grape_black_rot_google_0014.jpg,grape black rot,berry,,,,Validation,CC0,BR_02
+BR-045,grape_black_rot_google_0018.jpg,grape black rot,berry,,,,Test,CC0,BR_02
+BR-046,grape_black_rot_google_0019.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-047,grape_black_rot_google_0021.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-048,grape_black_rot_google_0024.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-049,grape_black_rot_google_0027.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-050,grape_black_rot_google_0028.jpg,grape black rot,berry,,,,Training,CC0,BR_02
+BR-051,grape_black_rot_google_0029.jpg,grape black rot,leaf,,,,Training,CC0,BR_03
+BR-052,grape_black_rot_google_0036.jpg,grape black rot,leaf,,,,Test,CC0,BR_03
+BR-053,grape_black_rot_google_0039.jpg,grape black rot,leaf,,,,Training,CC0,BR_03
+BR-054,grape_black_rot_google_0040.jpg,grape black rot,leaf,shoot on a white background: two leaves are most of the tissue and carry the symptoms; small flower cluster unaffected,,,Test,CC0,BR_03
+BR-055,grape_black_rot_google_0041.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-056,grape_black_rot_google_0043.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-057,grape_black_rot_google_0046.jpg,grape black rot,leaf,,,,Training,CC0,BR_03
+BR-058,grape_black_rot_google_0049.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-059,grape_black_rot_google_0050.jpg,grape black rot,berry,,,,Test,CC0,BR_03
+BR-060,grape_black_rot_google_0051.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-061,grape_black_rot_google_0052.jpg,grape black rot,leaf,"wide view, but spotted leaves fill the frame and single leaves can be made out",,,Test,CC0,BR_03
+BR-062,grape_black_rot_google_0053.jpg,grape black rot,leaf,,,,Training,CC0,BR_03
+BR-063,grape_black_rot_google_0064.jpg,grape black rot,berry,,,,Validation,CC0,BR_03
+BR-064,grape_black_rot_google_0066.jpg,grape black rot,other,spotted leaf and mummified berries side by side: both symptomatic (rule 4),,,Test,CC0,BR_03
+BR-065,grape_black_rot_google_0067.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-066,grape_black_rot_google_0068.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-067,grape_black_rot_google_0071.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-068,grape_black_rot_google_0072.jpg,grape black rot,leaf,close-up of lesions on a leaf blade,,,Training,CC0,BR_03
+BR-069,grape_black_rot_google_0075.jpg,grape black rot,other,leaf and young berry cluster both prominent; unclear which carries the symptoms (rule 4),,,Validation,CC0,BR_03
+BR-070,grape_black_rot_google_0077.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-071,grape_black_rot_google_0080.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-072,grape_black_rot_google_0081.jpg,grape black rot,other,shrivelled berries in front of leaves that fill much of the frame; unclear whether the leaves carry lesions (rule 4),,,Test,CC0,BR_03
+BR-073,grape_black_rot_google_0084.jpg,grape black rot,leaf,extreme close-up of one leaf lesion with pycnidia; leaf tissue only,,,Training,CC0,BR_03
+BR-074,grape_black_rot_google_0085.jpg,grape black rot,berry,,,,Training,CC0,BR_03
+BR-075,grape_black_rot_google_0087.jpg,grape black rot,berry,,,,Validation,CC0,BR_03
+BR-076,grape_black_rot_google_0088.jpg,grape black rot,berry,,,,Test,CC0,BR_04
+BR-077,grape_black_rot_google_0089.jpg,grape black rot,leaf,close-up of lesions on a leaf blade,,,Training,CC0,BR_04
+BR-078,grape_black_rot_google_0090.jpg,grape black rot,berry,,,,Training,CC0,BR_04
+BR-079,grape_black_rot_google_0095.jpg,grape black rot,leaf,,,,Training,CC0,BR_04
+BR-080,grape_black_rot_google_0096.jpg,grape black rot,leaf,,,,Test,CC0,BR_04
+BR-081,grape_black_rot_google_0097.jpg,grape black rot,berry,,,,Test,CC0,BR_04
+BR-082,grape_black_rot_google_0101.jpg,grape black rot,berry,,,,Validation,CC0,BR_04
+BR-083,grape_black_rot_google_0108.jpg,grape black rot,berry,,,,Test,CC0,BR_04
+BR-084,grape_black_rot_google_0110.jpg,grape black rot,leaf,,,,Training,CC0,BR_04
+BR-085,grape_black_rot_google_0111.jpg,grape black rot,leaf,,,,Validation,CC0,BR_04
+BR-086,grape_black_rot_google_0118.jpg,grape black rot,berry,single photo of a bunch with a text caption,,,Training,CC0,BR_04
+BR-087,grape_black_rot_google_0119.jpg,grape black rot,berry,,,,Validation,CC0,BR_04
+BR-088,grape_black_rot_google_0123.jpg,grape black rot,berry,,,,Training,CC0,BR_04
+BR-089,grape_black_rot_google_0124.jpg,grape black rot,leaf,,,,Training,CC0,BR_04
+BR-090,grape_black_rot_google_0130.jpg,grape black rot,berry,,,,Training,CC0,BR_04
+BR-091,grape_black_rot_google_0132.jpg,grape black rot,berry,,,,Training,CC0,BR_04
+BR-092,grape_black_rot_google_0133.jpg,grape black rot,leaf,,,,Training,CC0,BR_04
+BR-093,grape_black_rot_google_0147.jpg,grape black rot,berry,,,,Training,CC0,BR_04
+BR-094,grape_black_rot_google_0149.jpg,grape black rot,leaf,,,,Training,CC0,BR_04
+BR-095,grape_black_rot_google_0156.jpg,grape black rot,berry,,,,Training,CC0,BR_04
+BR-096,grape_black_rot_google_0158.jpg,grape black rot,berry,,,,Training,CC0,BR_04
+BR-097,grape_black_rot_google_0161.jpg,grape black rot,berry,,,,Training,CC0,BR_04
+BR-098,grape_black_rot_google_0162.jpg,grape black rot,berry,,,,Training,CC0,BR_04
+BR-099,grape_black_rot_google_0166.jpg,grape black rot,berry,,,,Test,CC0,BR_04
+BR-100,grape_black_rot_google_0188.jpg,grape black rot,leaf,"wide view, but spotted leaves fill the frame and single leaves can be made out",,,Test,CC0,BR_04
+BR-101,grape_black_rot_google_0204.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-102,grape_black_rot_google_0209.jpg,grape black rot,leaf,,,,Training,CC0,BR_05
+BR-103,grape_black_rot_google_0219.jpg,grape black rot,leaf,"single leaf photo with a caption strip (""Grape Black Rot on Leaf""); not a composite",,,Training,CC0,BR_05
+BR-104,grape_black_rot_google_0220.jpg,grape black rot,leaf,"single leaf photo with a caption (""Black Rot"") under it; not a composite",,,Training,CC0,BR_05
+BR-105,grape_black_rot_google_0223.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-106,grape_black_rot_google_0230.jpg,grape black rot,leaf,close-up of lesions on a leaf blade,,,Validation,CC0,BR_05
+BR-107,grape_black_rot_google_0233.jpg,grape black rot,berry,,,,Test,CC0,BR_05
+BR-108,grape_black_rot_google_0234.jpg,grape black rot,berry,very small image of berries,,,Training,CC0,BR_05
+BR-109,grape_black_rot_google_0237.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-110,grape_black_rot_google_0239.jpg,grape black rot,other,"mummified bunch between prominent leaves, the left one possibly symptomatic: unclear which carries the symptoms (rule 4)",,,Test,CC0,BR_05
+BR-111,grape_black_rot_google_0260.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-112,grape_black_rot_google_0262.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-113,grape_black_rot_google_0278.jpg,grape black rot,leaf,close-up of lesions on a leaf blade,,,Training,CC0,BR_05
+BR-114,grape_black_rot_google_0286.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-115,grape_black_rot_google_0291.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-116,grape_black_rot_google_0307.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-117,grape_black_rot_google_0320.jpg,grape black rot,berry,,BR-009,,Test,CC0,BR_05
+BR-118,grape_black_rot_google_0325.jpg,grape black rot,leaf,leaves fill the frame; small spots,,,Training,CC0,BR_05
+BR-119,grape_black_rot_google_0330.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-120,grape_black_rot_google_0332.jpg,grape black rot,berry,,,,Training,CC0,BR_05
+BR-121,grape_black_rot_google_0341.jpg,grape black rot,leaf,,,,Training,CC0,BR_05
+BR-122,grape_black_rot_google_0356.jpg,grape black rot,berry,single photo of berries with a text caption,,,Training,CC0,BR_05
+DM-001,grape_downy_mildew_1.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_01
+DM-002,grape_downy_mildew_2.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_01
+DM-003,grape_downy_mildew_6.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_01
+DM-004,grape_downy_mildew_8.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_01
+DM-005,grape_downy_mildew_11.jpg,grape downy mildew,leaf,shoot: leaves are most of the tissue and carry the symptoms,,,Training,CC0,DM_01
+DM-006,grape_downy_mildew_12.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_01
+DM-007,grape_downy_mildew_17.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_01
+DM-008,grape_downy_mildew_18.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",,,Training,CC-BY,DM_01
+DM-009,grape_downy_mildew_20.jpg,grape downy mildew,leaf,single leaf photo with a text caption; not a composite,,,Training,CC0,DM_01
+DM-010,grape_downy_mildew_21.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_01
+DM-011,grape_downy_mildew_25.jpg,grape downy mildew,berry,young berry clusters with white sporulation,,,Training,CC-BY,DM_01
+DM-012,grape_downy_mildew_27.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_01
+DM-013,grape_downy_mildew_28.jpg,grape downy mildew,leaf,,,,Validation,CC-BY,DM_01
+DM-014,grape_downy_mildew_29.jpg,grape downy mildew,leaf,single leaf photo with a text caption; not a composite,,,Test,CC0,DM_01
+DM-015,grape_downy_mildew_36.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_01
+DM-016,grape_downy_mildew_37.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_01
+DM-017,grape_downy_mildew_40.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_01
+DM-018,grape_downy_mildew_42.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_01
+DM-019,grape_downy_mildew_44.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_01
+DM-020,grape_downy_mildew_49.jpg,grape downy mildew,leaf,dead brown leaf on the shoot,,,Test,CC0,DM_01
+DM-021,grape_downy_mildew_50.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_01
+DM-022,grape_downy_mildew_55.jpg,grape downy mildew,berry,young green berry cluster,,,Training,CC-BY,DM_01
+DM-023,grape_downy_mildew_56.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_01
+DM-024,grape_downy_mildew_57.jpg,grape downy mildew,other,"infected flower cluster (inflorescence), not leaf or berry",,,Training,CC-BY,DM_01
+DM-025,grape_downy_mildew_61.jpg,grape downy mildew,leaf,single leaf photo padded with black bars and a caption,,,Training,CC0,DM_01
+DM-026,grape_downy_mildew_62.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_02
+DM-027,grape_downy_mildew_63.jpg,grape downy mildew,leaf,single leaf photo with a text caption or timestamp; not a composite,,,Training,CC-BY,DM_02
+DM-028,grape_downy_mildew_64.jpg,grape downy mildew,other,flower cluster (inflorescence) held in hand,,,Test,CC-BY,DM_02
+DM-029,grape_downy_mildew_65.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_02
+DM-030,grape_downy_mildew_68.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_02
+DM-031,grape_downy_mildew_69.jpg,grape downy mildew,berry,,,,Training,CC-BY,DM_02
+DM-032,grape_downy_mildew_71.jpg,grape downy mildew,leaf,leaf underside with sporulation fills the frame; young clusters at the top edge look unaffected,,,Test,CC-BY,DM_02
+DM-033,grape_downy_mildew_72.jpg,grape downy mildew,leaf,single leaf photo with a text caption or timestamp; not a composite,,,Training,CC-BY,DM_02
+DM-034,grape_downy_mildew_73.jpg,grape downy mildew,leaf,single leaf photo with a text caption or timestamp; not a composite,,,Training,CC0,DM_02
+DM-035,grape_downy_mildew_74.jpg,grape downy mildew,berry,single photo of berries; text and a QR code in the background,,,Training,CC0,DM_02
+DM-036,grape_downy_mildew_75.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_02
+DM-037,grape_downy_mildew_76.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_02
+DM-038,grape_downy_mildew_79.jpg,grape downy mildew,leaf,,,LS-001,Training,CC0,DM_02
+DM-039,grape_downy_mildew_80.jpg,grape downy mildew,berry,,,,Training,CC-BY,DM_02
+DM-040,grape_downy_mildew_82.jpg,grape downy mildew,leaf,single leaf photo with a text caption or timestamp; not a composite,,,Test,CC0,DM_02
+DM-041,grape_downy_mildew_83.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_02
+DM-042,grape_downy_mildew_85.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_02
+DM-043,grape_downy_mildew_86.jpg,grape downy mildew,berry,,,,Training,CC-BY,DM_02
+DM-044,grape_downy_mildew_87.jpg,grape downy mildew,other,shoot tips with withered flower clusters; no leaf or berry subject,,,Training,CC0,DM_02
+DM-045,grape_downy_mildew_88.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_02
+DM-046,grape_downy_mildew_90.jpg,grape downy mildew,leaf,"greenhouse view, but spotted leaves fill the frame and single leaves can be made out",,,Test,CC0,DM_02
+DM-047,grape_downy_mildew_91.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_02
+DM-048,grape_downy_mildew_92.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_02
+DM-049,grape_downy_mildew_93.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_02
+DM-050,grape_downy_mildew_95.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_02
+DM-051,grape_downy_mildew_96.jpg,grape downy mildew,other,flower cluster (inflorescence),,,Training,CC-BY,DM_03
+DM-052,grape_downy_mildew_97.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_03
+DM-053,grape_downy_mildew_100.jpg,grape downy mildew,berry,bunch is the subject; surrounding leaves look unaffected,,,Validation,CC0,DM_03
+DM-054,grape_downy_mildew_101.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_03
+DM-055,grape_downy_mildew_102.jpg,grape downy mildew,other,withered flower cluster hanging in a vineyard row,,,Training,CC-BY,DM_03
+DM-056,grape_downy_mildew_103.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_03
+DM-057,grape_downy_mildew_105.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_03
+DM-058,grape_downy_mildew_106.jpg,grape downy mildew,berry,,,,Training,CC-BY,DM_03
+DM-059,grape_downy_mildew_107.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_03
+DM-060,grape_downy_mildew_108.jpg,grape downy mildew,other,distant greenhouse view: leaves small and symptoms not clear,,,Training,CC0,DM_03
+DM-061,grape_downy_mildew_109.jpg,grape downy mildew,berry,,,,Training,CC0,DM_03
+DM-062,grape_downy_mildew_112.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_03
+DM-063,grape_downy_mildew_114.jpg,grape downy mildew,leaf,folded leaf held in hand; the leaf is the only plant subject,,,Training,CC0,DM_03
+DM-064,grape_downy_mildew_115.jpg,grape downy mildew,leaf,,,,Test,CC-BY,DM_03
+DM-065,grape_downy_mildew_116.jpg,grape downy mildew,other,sporulating bunch beside a leaf with dark spots: both prominent and symptomatic (rule 4),,,Training,CC-BY,DM_03
+DM-066,grape_downy_mildew_120.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_03
+DM-067,grape_downy_mildew_121.jpg,grape downy mildew,berry,,,,Validation,CC0,DM_03
+DM-068,grape_downy_mildew_122.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_03
+DM-069,grape_downy_mildew_126.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_03
+DM-070,grape_downy_mildew_127.jpg,grape downy mildew,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,DM_03
+DM-071,grape_downy_mildew_131.jpg,grape downy mildew,berry,,,,Test,CC-BY,DM_03
+DM-072,grape_downy_mildew_144.jpg,grape downy mildew,berry,,,,Test,CC-BY,DM_03
+DM-073,grape_downy_mildew_145.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_03
+DM-074,grape_downy_mildew_146.jpg,grape downy mildew,other,"infected shoot held in hand, with a caption",,,Test,CC-BY,DM_03
+DM-075,grape_downy_mildew_148.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_03
+DM-076,grape_downy_mildew_150.jpg,grape downy mildew,berry,berries with a watermark or figure caption,,,Validation,CC-BY,DM_04
+DM-077,grape_downy_mildew_151.jpg,grape downy mildew,other,extreme close-up of a sporulating fruit or bud: organ unclear at that magnification,,,Training,CC0,DM_04
+DM-078,grape_downy_mildew_152.jpg,grape downy mildew,berry,single photo of berries with a caption,,,Test,CC0,DM_04
+DM-079,grape_downy_mildew_155.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,,,Training,CC0,DM_04
+DM-080,grape_downy_mildew_156.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_04
+DM-081,grape_downy_mildew_160.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_04
+DM-082,grape_downy_mildew_161.jpg,grape downy mildew,other,same photograph as DM-245: berries with arrows labelling both downy and powdery mildew; re-tagged from berry for consistency with DM-149/165/245,,,Validation,CC-BY,DM_04
+DM-083,grape_downy_mildew_162.jpg,grape downy mildew,other,"shoot with an inflorescence and leaves, both prominent; no single organ dominates",,,Validation,CC0,DM_04
+DM-084,grape_downy_mildew_163.jpg,grape downy mildew,berry,,,,Training,CC0,DM_04
+DM-085,grape_downy_mildew_164.jpg,grape downy mildew,berry,berries with a watermark or figure caption,,,Test,CC-BY,DM_04
+DM-086,grape_downy_mildew_165.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_04
+DM-087,grape_downy_mildew_168.jpg,grape downy mildew,other,leaf close-up largely covered by a big text box and arrow,,,Training,CC0,DM_04
+DM-088,grape_downy_mildew_171.jpg,grape downy mildew,berry,,DM-072,,Training,CC0,DM_04
+DM-089,grape_downy_mildew_173.jpg,grape downy mildew,other,"wide vine view with leaves, shoots and inflorescences; no single organ dominates",,,Training,CC0,DM_04
+DM-090,grape_downy_mildew_174.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,,,Training,CC0,DM_04
+DM-091,grape_downy_mildew_175.jpg,grape downy mildew,berry,,,,Training,CC-BY,DM_04
+DM-092,grape_downy_mildew_178.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,,,Validation,CC-BY,DM_04
+DM-093,grape_downy_mildew_181.jpg,grape downy mildew,other,distant view of a vine row,,,Training,CC0,DM_04
+DM-094,grape_downy_mildew_182.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,DM-086,,Training,CC-BY,DM_04
+DM-095,grape_downy_mildew_183.jpg,grape downy mildew,other,withered flower clusters,,,Training,CC-BY,DM_04
+DM-096,grape_downy_mildew_188.jpg,grape downy mildew,leaf,single leaf photo with a caption or URL text; not a composite,,,Training,CC-BY,DM_04
+DM-097,grape_downy_mildew_189.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_04
+DM-098,grape_downy_mildew_190.jpg,grape downy mildew,other,"shoot with leaves and sporulating young clusters, both prominent (rule 4)",,,Test,CC-BY,DM_04
+DM-099,grape_downy_mildew_191.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_04
+DM-100,grape_downy_mildew_192.jpg,grape downy mildew,other,sporulating young clusters among prominent leaves (rule 4),,,Training,CC0,DM_04
+DM-101,grape_downy_mildew_193.jpg,grape downy mildew,other,flower cluster (inflorescence),DM-028,,Training,CC-BY,DM_05
+DM-102,grape_downy_mildew_194.jpg,grape downy mildew,berry,young berries with a watermark,DM-043,,Validation,CC-BY,DM_05
+DM-103,grape_downy_mildew_199.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_05
+DM-104,grape_downy_mildew_201.jpg,grape downy mildew,berry,,,,Training,CC0,DM_05
+DM-105,grape_downy_mildew_202.jpg,grape downy mildew,other,withered flower clusters,DM-095,,Test,CC-BY,DM_05
+DM-106,grape_downy_mildew_203.jpg,grape downy mildew,leaf,single leaf photo with a large watermark across it,,,Test,CC-BY,DM_05
+DM-107,grape_downy_mildew_204.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_05
+DM-108,grape_downy_mildew_206.jpg,grape downy mildew,leaf,"wide view, but spotted leaves fill the frame and single leaves can be made out",,,Training,CC0,DM_05
+DM-109,grape_downy_mildew_208.jpg,grape downy mildew,other,inflorescence in front of a leaf: the flowers are the subject,,,Training,CC0,DM_05
+DM-110,grape_downy_mildew_211.jpg,grape downy mildew,other,flower cluster (inflorescence),,,Training,CC-BY,DM_05
+DM-111,grape_downy_mildew_212.jpg,grape downy mildew,other,young shoot tip held in hand,,,Training,CC0,DM_05
+DM-112,grape_downy_mildew_214.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_05
+DM-113,grape_downy_mildew_215.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_05
+DM-114,grape_downy_mildew_216.jpg,grape downy mildew,other,withered flower clusters,DM-055,,Training,CC-BY,DM_05
+DM-115,grape_downy_mildew_218.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_05
+DM-116,grape_downy_mildew_220.jpg,grape downy mildew,leaf,,DM-007,,Validation,CC-BY,DM_05
+DM-117,grape_downy_mildew_221.jpg,grape downy mildew,berry,young berries with a watermark,,,Training,CC0,DM_05
+DM-118,grape_downy_mildew_223.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_05
+DM-119,grape_downy_mildew_225.jpg,grape downy mildew,leaf,,DM-006,,Training,CC0,DM_05
+DM-120,grape_downy_mildew_228.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_05
+DM-121,grape_downy_mildew_230.jpg,grape downy mildew,other,flower cluster (inflorescence),,,Validation,CC0,DM_05
+DM-122,grape_downy_mildew_231.jpg,grape downy mildew,berry,,,,Validation,CC0,DM_05
+DM-123,grape_downy_mildew_232.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_05
+DM-124,grape_downy_mildew_238.jpg,grape downy mildew,leaf,close-up of sporulation on a leaf blade,,,Test,CC0,DM_05
+DM-125,grape_downy_mildew_241.jpg,grape downy mildew,leaf,,DM-068,,Test,CC-BY,DM_05
+DM-126,grape_downy_mildew_242.jpg,grape downy mildew,leaf,single leaf photo with a watermark or caption,,,Training,CC-BY,DM_06
+DM-127,grape_downy_mildew_243.jpg,grape downy mildew,berry,,,,Training,CC0,DM_06
+DM-128,grape_downy_mildew_244.jpg,grape downy mildew,leaf,sporulating leaf fills the frame; young clusters at the top look unaffected,,,Training,CC-BY,DM_06
+DM-129,grape_downy_mildew_247.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_06
+DM-130,grape_downy_mildew_248.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_06
+DM-131,grape_downy_mildew_251.jpg,grape downy mildew,leaf,,DM-001,,Test,CC-BY,DM_06
+DM-132,grape_downy_mildew_255.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_06
+DM-133,grape_downy_mildew_256.jpg,grape downy mildew,leaf,single leaf photo with a watermark or caption,,,Training,CC-BY,DM_06
+DM-134,grape_downy_mildew_258.jpg,grape downy mildew,other,symptomatic leaf and a bunch each take about half the frame (rule 4),,,Training,CC-BY,DM_06
+DM-135,grape_downy_mildew_260.jpg,grape downy mildew,leaf,,DM-006,,Validation,CC0,DM_06
+DM-136,grape_downy_mildew_261.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_06
+DM-137,grape_downy_mildew_266.jpg,grape downy mildew,berry,,,,Validation,CC-BY,DM_06
+DM-138,grape_downy_mildew_269.jpg,grape downy mildew,berry,,,,Training,CC-BY,DM_06
+DM-139,grape_downy_mildew_272.jpg,grape downy mildew,leaf,,DM-012,,Test,CC0,DM_06
+DM-140,grape_downy_mildew_274.jpg,grape downy mildew,leaf,,DM-001,,Training,CC-BY,DM_06
+DM-141,grape_downy_mildew_275.jpg,grape downy mildew,berry,looks like a near-duplicate of DM-138,DM-138,,Test,CC-BY,DM_06
+DM-142,grape_downy_mildew_277.jpg,grape downy mildew,leaf,,,,Training,CC-BY,DM_06
+DM-143,grape_downy_mildew_google_0000.jpg,grape downy mildew,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,DM_06
+DM-144,grape_downy_mildew_google_0001.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_06
+DM-145,grape_downy_mildew_google_0003.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_06
+DM-146,grape_downy_mildew_google_0004.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_06
+DM-147,grape_downy_mildew_google_0006.jpg,grape downy mildew,berry,,,,Test,CC0,DM_06
+DM-148,grape_downy_mildew_google_0010.jpg,grape downy mildew,berry,single photo of a bunch with a figure caption,,,Training,CC0,DM_06
+DM-149,grape_downy_mildew_google_0012.jpg,grape downy mildew,other,leaf overlaid with text boxes and arrows labelling downy and powdery mildew,,,Training,CC0,DM_06
+DM-150,grape_downy_mildew_google_0013.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_06
+DM-151,grape_downy_mildew_google_0016.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_07
+DM-152,grape_downy_mildew_google_0019.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_07
+DM-153,grape_downy_mildew_google_0023.jpg,grape downy mildew,other,document page: text with a small leaf photo (rule 1),,,Training,CC0,DM_07
+DM-154,grape_downy_mildew_google_0025.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_07
+DM-155,grape_downy_mildew_google_0026.jpg,grape downy mildew,leaf,"wide view, but spotted leaves fill the frame and single leaves can be made out",,,Test,CC0,DM_07
+DM-156,grape_downy_mildew_google_0027.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_07
+DM-157,grape_downy_mildew_google_0030.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,,,Training,CC0,DM_07
+DM-158,grape_downy_mildew_google_0032.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_07
+DM-159,grape_downy_mildew_google_0033.jpg,grape downy mildew,other,publication cover with title text (rule 1),,,Test,CC0,DM_07
+DM-160,grape_downy_mildew_google_0034.jpg,grape downy mildew,leaf,,,,Validation,CC0,DM_07
+DM-161,grape_downy_mildew_google_0036.jpg,grape downy mildew,leaf,close-up of a leaf blade,,,Training,CC0,DM_07
+DM-162,grape_downy_mildew_google_0038.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,,,Training,CC0,DM_07
+DM-163,grape_downy_mildew_google_0044.jpg,grape downy mildew,leaf,close-up of a leaf blade,,,Training,CC0,DM_07
+DM-164,grape_downy_mildew_google_0046.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_07
+DM-165,grape_downy_mildew_google_0048.jpg,grape downy mildew,other,"leaf with arrows labelling both downy and powdery mildew, as DM-149",,,Training,CC0,DM_07
+DM-166,grape_downy_mildew_google_0052.jpg,grape downy mildew,other,four-panel composite A-D (rule 1),,,Test,CC0,DM_07
+DM-167,grape_downy_mildew_google_0054.jpg,grape downy mildew,other,tendril and withered flower cluster,,,Training,CC0,DM_07
+DM-168,grape_downy_mildew_google_0057.jpg,grape downy mildew,other,sporulating young clusters among prominent leaves (rule 4),,,Validation,CC0,DM_07
+DM-169,grape_downy_mildew_google_0059.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,,,Training,CC0,DM_07
+DM-170,grape_downy_mildew_google_0060.jpg,grape downy mildew,other,symptomatic leaf and a berry cluster both prominent (rule 4),,,Training,CC0,DM_07
+DM-171,grape_downy_mildew_google_0061.jpg,grape downy mildew,leaf,"single leaf photo with a small ""Downy Mildew"" label",,,Training,CC0,DM_07
+DM-172,grape_downy_mildew_google_0067.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_07
+DM-173,grape_downy_mildew_google_0068.jpg,grape downy mildew,leaf,shoot with leaves; leaves are most of the tissue; stock watermark,,,Training,CC0,DM_07
+DM-174,grape_downy_mildew_google_0071.jpg,grape downy mildew,other,title graphic with two photos and text (rule 1),,,Training,CC0,DM_07
+DM-175,grape_downy_mildew_google_0072.jpg,grape downy mildew,other,symptomatic leaf and a berry cluster both prominent (rule 4),,,Training,CC0,DM_07
+DM-176,grape_downy_mildew_google_0074.jpg,grape downy mildew,other,two-panel composite (rule 1),,,Training,CC0,DM_08
+DM-177,grape_downy_mildew_google_0077.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_08
+DM-178,grape_downy_mildew_google_0078.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_08
+DM-179,grape_downy_mildew_google_0079.jpg,grape downy mildew,leaf,,,LS-044,Training,CC0,DM_08
+DM-180,grape_downy_mildew_google_0080.jpg,grape downy mildew,leaf,young shoot held in hand; leaves are most of the tissue,,,Test,CC0,DM_08
+DM-181,grape_downy_mildew_google_0081.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_08
+DM-182,grape_downy_mildew_google_0083.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,DM_08
+DM-183,grape_downy_mildew_google_0086.jpg,grape downy mildew,leaf,close-up of sporulation on a leaf underside,,,Training,CC0,DM_08
+DM-184,grape_downy_mildew_google_0087.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_08
+DM-185,grape_downy_mildew_google_0090.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_08
+DM-186,grape_downy_mildew_google_0093.jpg,grape downy mildew,leaf,single leaf photo with a watermark or photo credit,,,Training,CC0,DM_08
+DM-187,grape_downy_mildew_google_0094.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_08
+DM-188,grape_downy_mildew_google_0095.jpg,grape downy mildew,other,"bunch with a magnifier inset: an inset makes it a composite (rule 1), as LR-016",,,Test,CC0,DM_08
+DM-189,grape_downy_mildew_google_0096.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_08
+DM-190,grape_downy_mildew_google_0097.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",,,Test,CC0,DM_08
+DM-191,grape_downy_mildew_google_0098.jpg,grape downy mildew,leaf,"single leaf, out of focus",,,Training,CC0,DM_08
+DM-192,grape_downy_mildew_google_0100.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,DM_08
+DM-193,grape_downy_mildew_google_0102.jpg,grape downy mildew,leaf,"wide canopy view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,DM_08
+DM-194,grape_downy_mildew_google_0104.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_08
+DM-195,grape_downy_mildew_google_0106.jpg,grape downy mildew,leaf,single leaf photo with a watermark or photo credit,,,Training,CC0,DM_08
+DM-196,grape_downy_mildew_google_0108.jpg,grape downy mildew,leaf,single leaf photo with a watermark or photo credit,,,Training,CC0,DM_08
+DM-197,grape_downy_mildew_google_0109.jpg,grape downy mildew,leaf,single leaf photo with a watermark or photo credit,,,Training,CC0,DM_08
+DM-198,grape_downy_mildew_google_0110.jpg,grape downy mildew,other,presentation slide with title text and a photo (rule 1),,,Test,CC0,DM_08
+DM-199,grape_downy_mildew_google_0111.jpg,grape downy mildew,other,sporulating flower cluster (inflorescence),,,Training,CC0,DM_08
+DM-200,grape_downy_mildew_google_0113.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_08
+DM-201,grape_downy_mildew_google_0115.jpg,grape downy mildew,leaf,,,,Validation,CC0,DM_09
+DM-202,grape_downy_mildew_google_0117.jpg,grape downy mildew,other,two-panel composite (rule 1),,,Training,CC0,DM_09
+DM-203,grape_downy_mildew_google_0120.jpg,grape downy mildew,other,three-panel composite (rule 1),,,Training,CC0,DM_09
+DM-204,grape_downy_mildew_google_0122.jpg,grape downy mildew,leaf,,,,Validation,CC0,DM_09
+DM-205,grape_downy_mildew_google_0125.jpg,grape downy mildew,leaf,close-up of a leaf blade,,,Training,CC0,DM_09
+DM-206,grape_downy_mildew_google_0127.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_09
+DM-207,grape_downy_mildew_google_0128.jpg,grape downy mildew,other,two-panel composite (rule 1),,,Training,CC0,DM_09
+DM-208,grape_downy_mildew_google_0130.jpg,grape downy mildew,other,"spotted leaves around a berry cluster, both prominent (rule 4)",,,Test,CC0,DM_09
+DM-209,grape_downy_mildew_google_0132.jpg,grape downy mildew,berry,,,,Training,CC0,DM_09
+DM-210,grape_downy_mildew_google_0133.jpg,grape downy mildew,berry,,,,Test,CC0,DM_09
+DM-211,grape_downy_mildew_google_0135.jpg,grape downy mildew,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Test,CC0,DM_09
+DM-212,grape_downy_mildew_google_0136.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,,,Training,CC0,DM_09
+DM-213,grape_downy_mildew_google_0137.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_09
+DM-214,grape_downy_mildew_google_0140.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_09
+DM-215,grape_downy_mildew_google_0143.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_09
+DM-216,grape_downy_mildew_google_0147.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_09
+DM-217,grape_downy_mildew_google_0149.jpg,grape downy mildew,leaf,leaf photo with a stock-image watermark,,,Training,CC0,DM_09
+DM-218,grape_downy_mildew_google_0153.jpg,grape downy mildew,leaf,shoot: leaves are most of the tissue; small flower cluster at the edge; watermark,,,Validation,CC0,DM_09
+DM-219,grape_downy_mildew_google_0157.jpg,grape downy mildew,other,two-panel composite (rule 1),,,Validation,CC0,DM_09
+DM-220,grape_downy_mildew_google_0158.jpg,grape downy mildew,other,two-panel composite (rule 1),,,Training,CC0,DM_09
+DM-221,grape_downy_mildew_google_0161.jpg,grape downy mildew,other,poster graphic with title text over a leaf photo (rule 1),,,Training,CC0,DM_09
+DM-222,grape_downy_mildew_google_0163.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_09
+DM-223,grape_downy_mildew_google_0166.jpg,grape downy mildew,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,DM_09
+DM-224,grape_downy_mildew_google_0170.jpg,grape downy mildew,other,sporulating flower clusters (inflorescence),,,Training,CC0,DM_09
+DM-225,grape_downy_mildew_google_0171.jpg,grape downy mildew,leaf,leaf close-up padded with black bars,,,Training,CC0,DM_09
+DM-226,grape_downy_mildew_google_0173.jpg,grape downy mildew,other,scientific figure: leaf-disc panels and a bar chart (rule 1),,,Test,CC0,DM_10
+DM-227,grape_downy_mildew_google_0177.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_10
+DM-228,grape_downy_mildew_google_0178.jpg,grape downy mildew,other,title slide with text and three photos (rule 1),,,Training,CC0,DM_10
+DM-229,grape_downy_mildew_google_0180.jpg,grape downy mildew,other,black-and-white scan of a printed leaf photo,,,Training,CC0,DM_10
+DM-230,grape_downy_mildew_google_0184.jpg,grape downy mildew,leaf,,,,Validation,CC0,DM_10
+DM-231,grape_downy_mildew_google_0187.jpg,grape downy mildew,berry,sporulating bunch is the subject,,,Training,CC0,DM_10
+DM-232,grape_downy_mildew_google_0192.jpg,grape downy mildew,other,four-panel composite a-d (rule 1),,,Training,CC0,DM_10
+DM-233,grape_downy_mildew_google_0193.jpg,grape downy mildew,leaf,leaf on a perforated metal sheet,DM-156,,Test,CC0,DM_10
+DM-234,grape_downy_mildew_google_0194.jpg,grape downy mildew,leaf,canopy view with one symptomatic leaf in the centre,,,Test,CC0,DM_10
+DM-235,grape_downy_mildew_google_0196.jpg,grape downy mildew,other,multi-panel composite (rule 1),,,Training,CC0,DM_10
+DM-236,grape_downy_mildew_google_0199.jpg,grape downy mildew,berry,,,,Training,CC0,DM_10
+DM-237,grape_downy_mildew_google_0200.jpg,grape downy mildew,berry,,,,Training,CC0,DM_10
+DM-238,grape_downy_mildew_google_0202.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,,,Validation,CC0,DM_10
+DM-239,grape_downy_mildew_google_0203.jpg,grape downy mildew,other,"spotted leaves around a berry cluster, both prominent (rule 4)",DM-208,,Test,CC0,DM_10
+DM-240,grape_downy_mildew_google_0206.jpg,grape downy mildew,leaf,close-up of a leaf underside,,,Test,CC0,DM_10
+DM-241,grape_downy_mildew_google_0212.jpg,grape downy mildew,leaf,,,,Validation,CC0,DM_10
+DM-242,grape_downy_mildew_google_0218.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,,,Validation,CC0,DM_10
+DM-243,grape_downy_mildew_google_0219.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_10
+DM-244,grape_downy_mildew_google_0225.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_10
+DM-245,grape_downy_mildew_google_0228.jpg,grape downy mildew,other,berries with arrows labelling both downy and powdery mildew,DM-082,,Validation,CC0,DM_10
+DM-246,grape_downy_mildew_google_0231.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,,,Validation,CC0,DM_10
+DM-247,grape_downy_mildew_google_0232.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,,,Training,CC0,DM_10
+DM-248,grape_downy_mildew_google_0235.jpg,grape downy mildew,leaf,,,,Validation,CC0,DM_10
+DM-249,grape_downy_mildew_google_0238.jpg,grape downy mildew,leaf,"leaves held in hands, with red arrows but no covering text",,,Validation,CC0,DM_10
+DM-250,grape_downy_mildew_google_0242.jpg,grape downy mildew,other,two-panel composite with a credit (rule 1),,,Validation,CC0,DM_10
+DM-251,grape_downy_mildew_google_0246.jpg,grape downy mildew,leaf,small image of a leaf,,,Validation,CC0,DM_11
+DM-252,grape_downy_mildew_google_0249.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,,,Training,CC0,DM_11
+DM-253,grape_downy_mildew_google_0254.jpg,grape downy mildew,other,sporulating flower clusters (inflorescence),,,Training,CC0,DM_11
+DM-254,grape_downy_mildew_google_0255.jpg,grape downy mildew,leaf,leaf on a perforated metal sheet,,,Training,CC0,DM_11
+DM-255,grape_downy_mildew_google_0256.jpg,grape downy mildew,berry,,,,Test,CC0,DM_11
+DM-256,grape_downy_mildew_google_0261.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,,,Training,CC0,DM_11
+DM-257,grape_downy_mildew_google_0264.jpg,grape downy mildew,berry,,,,Training,CC0,DM_11
+DM-258,grape_downy_mildew_google_0267.jpg,grape downy mildew,leaf,close-up of a leaf blade,,,Training,CC0,DM_11
+DM-259,grape_downy_mildew_google_0274.jpg,grape downy mildew,leaf,close-up of a leaf blade,,,Test,CC0,DM_11
+DM-260,grape_downy_mildew_google_0280.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_11
+DM-261,grape_downy_mildew_google_0286.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,,,Training,CC0,DM_11
+DM-262,grape_downy_mildew_google_0290.jpg,grape downy mildew,other,sporulating flower clusters (inflorescence),,,Test,CC0,DM_11
+DM-263,grape_downy_mildew_google_0294.jpg,grape downy mildew,leaf,,,,Test,CC0,DM_11
+DM-264,grape_downy_mildew_google_0313.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_11
+DM-265,grape_downy_mildew_google_0316.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_11
+DM-266,grape_downy_mildew_google_0319.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_11
+DM-267,grape_downy_mildew_google_0334.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_11
+DM-268,grape_downy_mildew_google_0350.jpg,grape downy mildew,other,magnified sporulation: organ unclear,,,Training,CC0,DM_11
+DM-269,grape_downy_mildew_google_0355.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_11
+DM-270,grape_downy_mildew_google_0360.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,,,Training,CC0,DM_11
+DM-271,grape_downy_mildew_google_0363.jpg,grape downy mildew,leaf,leaf photo with a stock-image or agency watermark,,,Training,CC0,DM_11
+DM-272,grape_downy_mildew_google_0365.jpg,grape downy mildew,leaf,,,,Validation,CC0,DM_11
+DM-273,grape_downy_mildew_google_0379.jpg,grape downy mildew,leaf,leaf photo inside a frame graphic with a caption,,,Training,CC0,DM_11
+DM-274,grape_downy_mildew_google_0406.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_11
+DM-275,grape_downy_mildew_google_0415.jpg,grape downy mildew,leaf,,DM-146,,Test,CC0,DM_11
+DM-276,grape_downy_mildew_google_0426.jpg,grape downy mildew,leaf,leaf photo in a print frame with a watermark,,,Test,CC0,DM_12
+DM-277,grape_downy_mildew_google_0443.jpg,grape downy mildew,leaf,leaf photo in a print frame with a watermark,,,Training,CC0,DM_12
+DM-278,grape_downy_mildew_google_0449.jpg,grape downy mildew,leaf,leaf photo in a print frame with a watermark,DM-177,,Training,CC0,DM_12
+DM-279,grape_downy_mildew_google_0457.jpg,grape downy mildew,leaf,single leaf photo with a caption across the bottom,,,Test,CC0,DM_12
+DM-280,grape_downy_mildew_google_0466.jpg,grape downy mildew,leaf,,,,Training,CC0,DM_12
+LS-001,grape_leaf_spot_1.jpg,grape leaf spot,leaf,,,DM-038,Training,CC0,LS_01
+LS-002,grape_leaf_spot_2.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_01
+LS-003,grape_leaf_spot_4.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_01
+LS-004,grape_leaf_spot_5.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_01
+LS-005,grape_leaf_spot_7.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_01
+LS-006,grape_leaf_spot_8.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_01
+LS-007,grape_leaf_spot_9.jpg,grape leaf spot,leaf,,,,Test,CC-BY,LS_01
+LS-008,grape_leaf_spot_11.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Test,CC0,LS_01
+LS-009,grape_leaf_spot_13.jpg,grape leaf spot,leaf,close-up of a leaf blade,,,Training,CC0,LS_01
+LS-010,grape_leaf_spot_14.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_01
+LS-011,grape_leaf_spot_16.jpg,grape leaf spot,leaf,,,,Training,CC-BY,LS_01
+LS-012,grape_leaf_spot_17.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_01
+LS-013,grape_leaf_spot_20.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_01
+LS-014,grape_leaf_spot_21.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Validation,CC-BY,LS_01
+LS-015,grape_leaf_spot_22.jpg,grape leaf spot,leaf,single leaf photo with a caption label,,,Test,CC0,LS_01
+LS-016,grape_leaf_spot_24.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Training,CC0,LS_01
+LS-017,grape_leaf_spot_26.jpg,grape leaf spot,leaf,close-up of a leaf blade,,,Training,CC-BY,LS_01
+LS-018,grape_leaf_spot_27.jpg,grape leaf spot,leaf,,,,Training,CC-BY,LS_01
+LS-019,grape_leaf_spot_33.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Training,CC0,LS_01
+LS-020,grape_leaf_spot_36.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Training,CC-BY,LS_01
+LS-021,grape_leaf_spot_38.jpg,grape leaf spot,leaf,,,,Validation,CC-BY,LS_01
+LS-022,grape_leaf_spot_40.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Training,CC0,LS_01
+LS-023,grape_leaf_spot_41.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Training,CC0,LS_01
+LS-024,grape_leaf_spot_42.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_01
+LS-025,grape_leaf_spot_43.jpg,grape leaf spot,leaf,,,,Training,CC-BY,LS_01
+LS-026,grape_leaf_spot_47.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Test,CC0,LS_02
+LS-027,grape_leaf_spot_51.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LS_02
+LS-028,grape_leaf_spot_53.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Test,CC-BY,LS_02
+LS-029,grape_leaf_spot_75.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC-BY,LS_02
+LS-030,grape_leaf_spot_97.jpg,grape leaf spot,leaf,potted vine by a railing; leaves are the only organ and single leaves can be made out,,,Training,CC0,LS_02
+LS-031,grape_leaf_spot_101.jpg,grape leaf spot,leaf,necrotic leaf is the subject; a flower of another plant at the left edge,,,Test,CC-BY,LS_02
+LS-032,grape_leaf_spot_138.jpg,grape leaf spot,leaf,,LS-007,,Training,CC0,LS_02
+LS-033,grape_leaf_spot_140.jpg,grape leaf spot,leaf,,,,Test,CC0,LS_02
+LS-034,grape_leaf_spot_141.jpg,grape leaf spot,leaf,leaf against the sky; a few small berries at the top edge,,,Training,CC0,LS_02
+LS-035,grape_leaf_spot_142.jpg,grape leaf spot,leaf,,,,Test,CC-BY,LS_02
+LS-036,grape_leaf_spot_143.jpg,grape leaf spot,leaf,small image of a leaf,,,Training,CC0,LS_02
+LS-037,grape_leaf_spot_144.jpg,grape leaf spot,leaf,,LS-021,,Training,CC0,LS_02
+LS-038,grape_leaf_spot_145.jpg,grape leaf spot,leaf,,,,Test,CC0,LS_02
+LS-039,grape_leaf_spot_146.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_02
+LS-040,grape_leaf_spot_151.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Validation,CC0,LS_02
+LS-041,grape_leaf_spot_154.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Training,CC0,LS_02
+LS-042,grape_leaf_spot_155.jpg,grape leaf spot,leaf,,,,Validation,CC0,LS_02
+LS-043,grape_leaf_spot_156.jpg,grape leaf spot,other,shoot with lesions on the stem; stem is the subject,,,Training,CC0,LS_02
+LS-044,grape_leaf_spot_157.jpg,grape leaf spot,leaf,,,DM-179,Test,CC0,LS_02
+LS-045,grape_leaf_spot_161.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_02
+LS-046,grape_leaf_spot_167.jpg,grape leaf spot,leaf,,,,Validation,CC0,LS_02
+LS-047,grape_leaf_spot_168.jpg,grape leaf spot,leaf,"appears to be the same photograph as LS-037, cropped differently",LS-021,,Test,CC0,LS_02
+LS-048,grape_leaf_spot_170.jpg,grape leaf spot,leaf,,,,Test,CC0,LS_02
+LS-049,grape_leaf_spot_171.jpg,grape leaf spot,leaf,,,,Training,CC-BY,LS_02
+LS-050,grape_leaf_spot_198.jpg,grape leaf spot,leaf,"appears to be the same photograph as LS-037, cropped differently",LS-021,,Training,CC0,LS_02
+LS-051,grape_leaf_spot_205.jpg,grape leaf spot,leaf,,LS-023,,Training,CC0,LS_03
+LS-052,grape_leaf_spot_207.jpg,grape leaf spot,other,shoot and cane with leaves; no single organ dominates,,,Training,CC-BY,LS_03
+LS-053,grape_leaf_spot_226.jpg,grape leaf spot,leaf,,,,Training,CC-BY,LS_03
+LS-054,grape_leaf_spot_227.jpg,grape leaf spot,leaf,close-up of a leaf blade,,,Training,CC0,LS_03
+LS-055,grape_leaf_spot_228.jpg,grape leaf spot,leaf,close-up of a leaf blade,,,Training,CC0,LS_03
+LS-056,grape_leaf_spot_233.jpg,grape leaf spot,leaf,young shoot held over a pot; leaves are most of the tissue,,,Training,CC-BY,LS_03
+LS-057,grape_leaf_spot_281.jpg,grape leaf spot,other,"rounded, unlobed leaves that do not look like grape leaves: no identifiable grape organ (rule 1), though the metadata says grape",,,Training,CC-BY,LS_03
+LS-058,grape_leaf_spot_google_0000.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Training,CC0,LS_03
+LS-059,grape_leaf_spot_google_0001.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_03
+LS-060,grape_leaf_spot_google_0002.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_03
+LS-061,grape_leaf_spot_google_0003.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_03
+LS-062,grape_leaf_spot_google_0004.jpg,grape leaf spot,leaf,"single leaf photo from a figure, with a panel letter and coloured boxes",,,Test,CC0,LS_03
+LS-063,grape_leaf_spot_google_0007.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_03
+LS-064,grape_leaf_spot_google_0008.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_03
+LS-065,grape_leaf_spot_google_0013.jpg,grape leaf spot,other,strip of four panels (rule 1),,,Training,CC0,LS_03
+LS-066,grape_leaf_spot_google_0016.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LS_03
+LS-067,grape_leaf_spot_google_0018.jpg,grape leaf spot,leaf,symptomatic leaves are most of the tissue; a small unaffected berry cluster at the left,,,Training,CC0,LS_03
+LS-068,grape_leaf_spot_google_0025.jpg,grape leaf spot,leaf,leaf photo with a watermark,,,Training,CC0,LS_03
+LS-069,grape_leaf_spot_google_0028.jpg,grape leaf spot,leaf,,,,Test,CC0,LS_03
+LS-070,grape_leaf_spot_google_0030.jpg,grape leaf spot,other,"young shoot among weeds; leaves small, no single organ dominates",,,Validation,CC0,LS_03
+LS-071,grape_leaf_spot_google_0031.jpg,grape leaf spot,leaf,small image of a leaf,,,Training,CC0,LS_03
+LS-072,grape_leaf_spot_google_0034.jpg,grape leaf spot,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LS_03
+LS-073,grape_leaf_spot_google_0036.jpg,grape leaf spot,leaf,close-up of a leaf blade,,,Validation,CC0,LS_03
+LS-074,grape_leaf_spot_google_0038.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_03
+LS-075,grape_leaf_spot_google_0041.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_03
+LS-076,grape_leaf_spot_google_0046.jpg,grape leaf spot,leaf,,,,Test,CC0,LS_04
+LS-077,grape_leaf_spot_google_0047.jpg,grape leaf spot,leaf,"single leaf, out of focus",,,Training,CC0,LS_04
+LS-078,grape_leaf_spot_google_0049.jpg,grape leaf spot,leaf,close-up of a leaf blade,,,Validation,CC0,LS_04
+LS-079,grape_leaf_spot_google_0060.jpg,grape leaf spot,other,"oval leaf with a smooth margin, not grape-like: no identifiable grape organ (rule 1)",,,Training,CC0,LS_04
+LS-080,grape_leaf_spot_google_0063.jpg,grape leaf spot,leaf,,,,Validation,CC0,LS_04
+LS-081,grape_leaf_spot_google_0070.jpg,grape leaf spot,leaf,leaf photo with a stock-image watermark,,,Training,CC0,LS_04
+LS-082,grape_leaf_spot_google_0076.jpg,grape leaf spot,leaf,,,,Training,CC0,LS_04
+LS-083,grape_leaf_spot_google_0077.jpg,grape leaf spot,leaf,small image of a leaf,,,Training,CC0,LS_04
+LS-084,grape_leaf_spot_google_0078.jpg,grape leaf spot,other,composite of 14 panels (rule 1),,,Training,CC0,LS_04
+LS-085,grape_leaf_spot_google_0090.jpg,grape leaf spot,other,leaf beside a gourd-like fruit; does not look like grape (rule 1),,,Validation,CC0,LS_04
+LS-086,grape_leaf_spot_google_0098.jpg,grape leaf spot,leaf,,,,Test,CC0,LS_04
+LS-087,grape_leaf_spot_google_0124.jpg,grape leaf spot,other,"small heart-shaped leaf, not grape-like, on a padded black background (rule 1)",,,Test,CC0,LS_04
+LS-088,grape_leaf_spot_google_0154.jpg,grape leaf spot,other,trailing vines on the ground; the species cannot be told,,,Training,CC0,LS_04
+LS-089,grape_leaf_spot_google_0156.jpg,grape leaf spot,leaf,pale lobed leaves fill the frame,,,Training,CC0,LS_04
+LS-090,grape_leaf_spot_google_0161.jpg,grape leaf spot,leaf,close-up of a leaf blade,,,Training,CC0,LS_04
+LS-091,grape_leaf_spot_google_0173.jpg,grape leaf spot,leaf,close-up of a leaf blade,,,Test,CC0,LS_04
+LR-001,grapevine_leafroll_disease_2.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Validation,CC-BY,LR_01
+LR-002,grapevine_leafroll_disease_6.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_01
+LR-003,grapevine_leafroll_disease_8.jpg,grapevine leafroll disease,leaf,,,,Training,CC-BY,LR_01
+LR-004,grapevine_leafroll_disease_12.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_01
+LR-005,grapevine_leafroll_disease_17.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_01
+LR-006,grapevine_leafroll_disease_20.jpg,grapevine leafroll disease,leaf,,,,Test,CC0,LR_01
+LR-007,grapevine_leafroll_disease_28.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_01
+LR-008,grapevine_leafroll_disease_41.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Validation,CC0,LR_01
+LR-009,grapevine_leafroll_disease_49.jpg,grapevine leafroll disease,leaf,,,,Validation,CC-BY,LR_01
+LR-010,grapevine_leafroll_disease_59.jpg,grapevine leafroll disease,leaf,,,,Training,CC-BY,LR_01
+LR-011,grapevine_leafroll_disease_69.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_01
+LR-012,grapevine_leafroll_disease_86.jpg,grapevine leafroll disease,other,vineyard row with trunks; no single organ dominates,,,Validation,CC0,LR_01
+LR-013,grapevine_leafroll_disease_126.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_01
+LR-014,grapevine_leafroll_disease_156.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_01
+LR-015,grapevine_leafroll_disease_google_0001.jpg,grapevine leafroll disease,other,row view of red foliage with black bunches; no single organ dominates,,,Test,CC0,LR_01
+LR-016,grapevine_leafroll_disease_google_0002.jpg,grapevine leafroll disease,other,canopy with a magnifier inset of one leaf: an inset makes it a composite (rule 1),,,Training,CC0,LR_01
+LR-017,grapevine_leafroll_disease_google_0003.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_01
+LR-018,grapevine_leafroll_disease_google_0006.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_01
+LR-019,grapevine_leafroll_disease_google_0007.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_01
+LR-020,grapevine_leafroll_disease_google_0008.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_01
+LR-021,grapevine_leafroll_disease_google_0012.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_01
+LR-022,grapevine_leafroll_disease_google_0015.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Test,CC0,LR_01
+LR-023,grapevine_leafroll_disease_google_0016.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_01
+LR-024,grapevine_leafroll_disease_google_0018.jpg,grapevine leafroll disease,leaf,single leaf on a white background,,,Test,CC0,LR_01
+LR-025,grapevine_leafroll_disease_google_0020.jpg,grapevine leafroll disease,leaf,leaf photo with a stock-image watermark,,,Training,CC0,LR_01
+LR-026,grapevine_leafroll_disease_google_0022.jpg,grapevine leafroll disease,other,whole vine in a field; foliage does not fill the frame,,,Training,CC0,LR_02
+LR-027,grapevine_leafroll_disease_google_0023.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Test,CC0,LR_02
+LR-028,grapevine_leafroll_disease_google_0024.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_02
+LR-029,grapevine_leafroll_disease_google_0028.jpg,grapevine leafroll disease,leaf,leaf photo with a stock-image watermark,,,Training,CC0,LR_02
+LR-030,grapevine_leafroll_disease_google_0030.jpg,grapevine leafroll disease,leaf,shoot: leaves are most of the tissue,,,Test,CC0,LR_02
+LR-031,grapevine_leafroll_disease_google_0033.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_02
+LR-032,grapevine_leafroll_disease_google_0036.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,,,Test,CC0,LR_02
+LR-033,grapevine_leafroll_disease_google_0037.jpg,grapevine leafroll disease,leaf,leaf photo with a stock-image watermark,,,Training,CC0,LR_02
+LR-034,grapevine_leafroll_disease_google_0040.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_02
+LR-035,grapevine_leafroll_disease_google_0041.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,,,Training,CC0,LR_02
+LR-036,grapevine_leafroll_disease_google_0043.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_02
+LR-037,grapevine_leafroll_disease_google_0045.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,,,Test,CC0,LR_02
+LR-038,grapevine_leafroll_disease_google_0046.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_02
+LR-039,grapevine_leafroll_disease_google_0049.jpg,grapevine leafroll disease,leaf,leaf photo with a stock-image watermark,,,Validation,CC0,LR_02
+LR-040,grapevine_leafroll_disease_google_0050.jpg,grapevine leafroll disease,leaf,canopy view: leaves fill the frame; a few small bunches,,,Test,CC0,LR_02
+LR-041,grapevine_leafroll_disease_google_0053.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_02
+LR-042,grapevine_leafroll_disease_google_0057.jpg,grapevine leafroll disease,leaf,shoot on a blue background: leaves are most of the tissue; panel letter; small cluster at the left,,,Test,CC0,LR_02
+LR-043,grapevine_leafroll_disease_google_0058.jpg,grapevine leafroll disease,leaf,canopy view: leaves fill the frame; a few small bunches,,,Training,CC0,LR_02
+LR-044,grapevine_leafroll_disease_google_0060.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_02
+LR-045,grapevine_leafroll_disease_google_0061.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_02
+LR-046,grapevine_leafroll_disease_google_0070.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_02
+LR-047,grapevine_leafroll_disease_google_0072.jpg,grapevine leafroll disease,other,symptomatic leaf and a large berry cluster both prominent (rule 4); figure caption,,,Validation,CC0,LR_02
+LR-048,grapevine_leafroll_disease_google_0077.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_02
+LR-049,grapevine_leafroll_disease_google_0078.jpg,grapevine leafroll disease,other,"red leaves with large black bunches, both prominent (rule 4)",,,Training,CC0,LR_02
+LR-050,grapevine_leafroll_disease_google_0080.jpg,grapevine leafroll disease,leaf,symptomatic leaf is the subject; a smaller bunch at the right edge,,,Training,CC0,LR_02
+LR-051,grapevine_leafroll_disease_google_0083.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_03
+LR-052,grapevine_leafroll_disease_google_0086.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Validation,CC0,LR_03
+LR-053,grapevine_leafroll_disease_google_0093.jpg,grapevine leafroll disease,leaf,,,,Test,CC0,LR_03
+LR-054,grapevine_leafroll_disease_google_0094.jpg,grapevine leafroll disease,leaf,single leaf cut out on a white background,,,Training,CC0,LR_03
+LR-055,grapevine_leafroll_disease_google_0096.jpg,grapevine leafroll disease,leaf,,,,Validation,CC0,LR_03
+LR-056,grapevine_leafroll_disease_google_0100.jpg,grapevine leafroll disease,other,"red leaf beside a large black bunch, both prominent (rule 4)",,,Training,CC0,LR_03
+LR-057,grapevine_leafroll_disease_google_0108.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,,,Training,CC0,LR_03
+LR-058,grapevine_leafroll_disease_google_0109.jpg,grapevine leafroll disease,other,distant view of a vineyard row,,,Training,CC0,LR_03
+LR-059,grapevine_leafroll_disease_google_0112.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,,,Training,CC0,LR_03
+LR-060,grapevine_leafroll_disease_google_0114.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_03
+LR-061,grapevine_leafroll_disease_google_0116.jpg,grapevine leafroll disease,leaf,single photo with a figure panel letter,,,Test,CC0,LR_03
+LR-062,grapevine_leafroll_disease_google_0121.jpg,grapevine leafroll disease,other,canopy with prominent bunches; no single organ dominates,,,Training,CC0,LR_03
+LR-063,grapevine_leafroll_disease_google_0124.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_03
+LR-064,grapevine_leafroll_disease_google_0126.jpg,grapevine leafroll disease,leaf,,,,Training,CC0,LR_03
+LR-065,grapevine_leafroll_disease_google_0154.jpg,grapevine leafroll disease,leaf,symptomatic leaves fill the frame; a small bunch at the bottom left,,,Test,CC0,LR_03
+LR-066,grapevine_leafroll_disease_google_0157.jpg,grapevine leafroll disease,leaf,small or narrow image of leaves,,,Training,CC0,LR_03
+LR-067,grapevine_leafroll_disease_google_0162.jpg,grapevine leafroll disease,leaf,single leaf cut out on a white background,,,Training,CC0,LR_03
+LR-068,grapevine_leafroll_disease_google_0181.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Test,CC0,LR_03
+LR-069,grapevine_leafroll_disease_google_0184.jpg,grapevine leafroll disease,other,"small image: a bunch among red leaves, both prominent (rule 4)",,,Training,CC0,LR_03
+LR-070,grapevine_leafroll_disease_google_0211.jpg,grapevine leafroll disease,leaf,small or narrow image of leaves,,,Training,CC0,LR_03
+LR-071,grapevine_leafroll_disease_google_0216.jpg,grapevine leafroll disease,leaf,"wide view, but leaves fill the frame and single leaves can be made out",,,Training,CC0,LR_03
