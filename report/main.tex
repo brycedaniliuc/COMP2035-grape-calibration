@@ -7,8 +7,9 @@
 %
 % Page budget: 8 pages in all, references included, so the total is a safe upper bound.
 % Check the course's rules on whether references count, and rebalance if they do not.
-%   Title + abstract 0.35 | 1 Intro 0.9 | 2 Related 1.0 | 3 Method 1.5 | 4 Results 1.85
-%   5 Discussion 1.0 | 6 Limitations 0.4 | 7 Conclusion 0.25 | References 0.75
+%   Title + abstract 0.35 | 1 Intro 0.875 | 2 Related 0.875 | 3 Method 1.375 | 4 Results 1.75
+%   5 Discussion 0.875 | 6 Limitations 0.375 | 7 Conclusion 0.25 | References 1.25
+%   (20 references in ACM style measured at about 1.25 pages; 8 pages in all, as built)
 %
 % Numbers: never type a result. Use the macros in generated/numbers.tex and the tables in
 % generated/ (written by tools/make_tables.py from the results JSON; src.verify fails if
@@ -79,7 +80,7 @@
 \maketitle
 
 \section{Introduction}
-% BUDGET: 0.9 page. Criterion: Project Scope and Motivation.
+% BUDGET: 0.875 page. Criterion: Project Scope and Motivation.
 % Belongs here: the motivation carried over (and shortened) from the submitted paper §1:
 % the cost of grapevine disease, manual inspection, near-saturated benchmark accuracy versus
 % the field gap (Gui et al.), overconfidence (Guo et al.), and confidence already being acted
@@ -89,7 +90,7 @@
 \budget{7}
 
 \section{Related Work}
-% BUDGET: 1.0 page. Criterion: Project Scope and Motivation.
+% BUDGET: 0.875 page. Criterion: Project Scope and Motivation.
 % Belongs here: a condensed version of the submitted literature review §2.1-2.4: grape leaf
 % classification on PlantVillage (Mohanty, Ji, Kunduracioglu & Pacal, Canoski [preprint]);
 % dataset bias and the laboratory-to-field gap (Gui, Noyan [preprint], PlantDoc, LDD);
@@ -97,10 +98,10 @@
 % Ghahramani, Lakshminarayanan, Ovadia); uncertainty in plant disease (Hernandez & Lopez,
 % Ergun et al.); selective classification (Geifman & El-Yaniv). End with the gap this project
 % fills. Reference [19] Wei et al. (PlantSeg) is uncited: cite it or drop it (DECISIONS.md).
-\budget{8}
+\budget{7}
 
 \section{Method}
-% BUDGET: 1.5 pages. Criterion: Method and Results ("sound and easily replicable").
+% BUDGET: 1.375 pages. Criterion: Method and Results ("sound and easily replicable").
 % Belongs here:
 %  - Data: the PlantVillage grape subset via the Kaggle copy; the audit of the supplied split
 %    (augmented copies of one leaf on both sides; how leaves are identified from filenames).
@@ -117,10 +118,10 @@
 %  - The threshold: chosen on degraded validation images, checked on held-out degraded test
 %    images (D10); the warning tool (src/predict.py).
 %  - Reproducibility: the public repository, fixture tests, independent verification.
-\budget{12}
+\budget{11}
 
 \section{Results}
-% BUDGET: 1.85 pages. Criterion: Method and Results.
+% BUDGET: 1.75 pages. Criterion: Method and Results.
 % Belongs here, every number from generated/ (tables: \input{generated/table_...}):
 %  - Leakage of the supplied split (generated/table_audit.tex).
 %  - Clean results, source versus supplied split (generated/table_results.tex): saturation,
@@ -131,19 +132,19 @@
 %  - Coverage curves and AURC by score (coverage_curves, aurc_by_score figures).
 %  - The threshold: value, held-out conditions met, referral cost (generated/table_threshold.tex).
 %  - Label preliminary or pending results as such. September numbers vs the re-run: say which.
-\budget{15}
+\budget{14}
 
 \section{Discussion}
-% BUDGET: 1.0 page. Criterion: Discussion and Analysis.
+% BUDGET: 0.875 page. Criterion: Discussion and Analysis.
 % Belongs here: what the findings mean for the research question: whether confidence still
 % separates correct from incorrect predictions as quality degrades; why post-hoc calibration
 % needs errors to fit against; what a threshold buys and what it costs in referrals; how
 % this compares with Ovadia et al. and Ergun et al.; what this means for a system like the
 % one in Liang et al.
-\budget{8}
+\budget{7}
 
 \section{Limitations and Future Work}
-% BUDGET: 0.4 page. Criterion: Discussion and Analysis.
+% BUDGET: 0.375 page. Criterion: Discussion and Analysis.
 % Belongs here: laboratory images only (LDD not used: the submitted plan's §3.4 contingency,
 % D11); synthetic corruptions; one model and one seed; small test set (610 leaves); MC dropout
 % and deep ensembles not done (allowed by the plan's §3.3-3.4); field data (PlantSeg) as
@@ -156,7 +157,7 @@
 % result with its limits.
 \budget{2}
 
-% REFERENCES: about 0.75 page for 20 entries. \nocite{*} lists every entry in refs.bib until
+% REFERENCES: about 1.25 pages for 20 entries. \nocite{*} lists every entry in refs.bib until
 % the text cites them; remove it once the sections are written, so only cited works appear.
 \nocite{*}
 \bibliographystyle{ACM-Reference-Format}

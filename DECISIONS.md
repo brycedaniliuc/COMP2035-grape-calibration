@@ -195,3 +195,22 @@ as the proxy. Per the owner's assessment (in the owner's notes; not re-checked i
 review), LDD has no public download URL and no licence. This repo implements the
 contingency. PlantSeg (Wei et al. 2026) is the owner's candidate substitute for real field
 images; it is an upgrade after Stage 9 and is not done.
+
+## D12 · Reference [19] (Wei et al. 2026, PlantSeg) is listed but never cited — OPEN (owner)
+
+The submitted paper's reference list has 20 entries; [19] (Wei et al., "A Large-Scale
+In-the-wild Dataset for Plant Disease Segmentation", Scientific Data 13, 205) is never cited
+in its text. It is kept in `report/refs.bib` (key `wei2026plantseg`). In the final report,
+either cite it (the natural place is Limitations and Future Work, as the field-image dataset
+for PlantSeg, D11) or remove it.
+
+Other differences between the submitted reference list and the verified records (2026-11-09),
+noted above each entry in `report/refs.bib`:
+- [2] The CSIRO page's title is now "Protecting wine grapes from mildew", not "Grapevine
+  mildew" as cited. Same URL.
+- [4] The publisher prints two authors as "Okumus" and "Cinar", without diacritics.
+- [9] The article prints its first author as "S. Hernandez", not "Sergio".
+- [13], [17], [18] Volume, issue or pages that the submitted list lacked were added from
+  Crossref. The LNCS volume number of [17] could not be verified and is left out.
+- [1] Canoski et al. and [15] Noyan are arXiv preprints with no published version listed;
+  both entries say "Preprint".
