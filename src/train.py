@@ -231,7 +231,8 @@ def _json_safe(obj: object) -> object:
 def run(cfg: Config, stamp: str | None = None) -> dict:
     """Index, audit, split, train, evaluate, calibrate; write every output. Returns results."""
     stamp = stamp or datetime.now().strftime("%Y%m%d-%H%M%S")
-    run_id = f"{cfg.model}_{cfg.split_mode}_{stamp}"
+    member = "" if cfg.train_seed is None else f"_seed{cfg.train_seed}"
+    run_id = f"{cfg.model}_{cfg.split_mode}{member}_{stamp}"
     out = Path(cfg.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     assert not (out / f"results_{run_id}.json").exists(), f"run {run_id} already exists"
@@ -239,7 +240,7 @@ def run(cfg: Config, stamp: str | None = None) -> dict:
     print(json.dumps(cfg.to_dict(), indent=2))
 
     device = select_device()
-    set_seed(cfg.seed)
+    set_seed(cfg.training_seed)
     configure_determinism(cfg.deterministic)
 
     records = index_dataset(cfg.data_root)
@@ -248,8 +249,8 @@ def run(cfg: Config, stamp: str | None = None) -> dict:
     audit = supplied_split_audit(records)
     print_audit(audit, leaking_leaves(records))
 
-    set_seed(cfg.seed)
-    splits = make_splits(records, cfg)
+    set_seed(cfg.training_seed)
+    splits = make_splits(records, cfg)  # always cfg.seed, whatever the training seed
     print(json.dumps(splits.summary(), indent=2))
 
     train_tf, eval_tf = build_transforms(cfg)
@@ -333,7 +334,9 @@ def parse_config(argv: list[str] | None = None) -> Config:
     defaults = Config()
     for f in fields(Config):
         d = getattr(defaults, f.name)
-        if isinstance(d, bool):
+        if f.name == "train_seed":
+            ap.add_argument("--train-seed", dest="train_seed", type=int, default=None)
+        elif isinstance(d, bool):
             ap.add_argument(f"--{f.name.replace('_', '-')}", dest=f.name,
                             type=lambda s: {"true": True, "false": False}[s.lower()],
                             default=d, metavar="{true,false}")

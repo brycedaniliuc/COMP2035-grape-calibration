@@ -23,7 +23,8 @@ threshold can and cannot be trusted.
 | Figures, independent verification | **Built and tested; not yet run on the real model** | `src/figures.py`, `src/verify.py` |
 | The real degradation run | **Pending**: one Colab session | [`HANDOVER.md`](HANDOVER.md) |
 | Prediction + confidence + warning tool | **Built and tested on the fixture**; its real threshold comes from the Colab run | `src/predict.py` |
-| MC dropout, deep ensembles | Not done. The submitted plan allowed both to be dropped if the schedule slipped | — |
+| Deep ensemble (3 members) through the same degradation sweep, compared with the single model | **Built and tested on the fixture; not yet run on the real model** (notebook 03) | `src/ensemble.py` |
+| MC dropout | Not done. The submitted plan allowed it to be dropped if the schedule slipped | — |
 | Field images (LDD in the submitted plan) | Not used. This repo runs the plan's §3.4 contingency instead: degraded held-out PlantVillage | `DECISIONS.md` D11 |
 
 No result of the degradation study appears in this README, because none exists yet.

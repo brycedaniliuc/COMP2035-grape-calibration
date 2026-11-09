@@ -4,6 +4,25 @@ This is the one step that needs a GPU, and the step where the September checkpoi
 were lost. Follow it exactly. Every output goes to Google Drive **as it is produced**, under
 run-tagged filenames, so nothing depends on downloading from the Colab session.
 
+## The notebooks: order, dependencies, and what is essential
+
+Run them in this order. **01 and 02 are essential**: together they are the complete core
+project (the leak-free baseline, the degradation study, coverage curves, the threshold, every
+core figure). **03–05 are upgrades.** Each is a separate notebook that saves to Drive as it
+goes, so a disconnect costs at most the notebook it happens in, and the project is complete
+without them.
+
+| # | Notebook | Status | Needs in Drive | Wall time on a T4 (basis) |
+|---|---|---|---|---|
+| 01 | `01_baseline_calibration` | **essential** | the dataset zip | about 45 min (September: 25.9 + 17.8 min of training) |
+| 02 | `02_degradation_study` | **essential** | 01's seed 42 source run | about 10 min (estimate: sweep about 6 min, see §2) |
+| 03 | `03_deep_ensemble` | upgrade | 01's seed 42 source run (02 optional) | about 70 min (estimate: 2 × 26 min training + 3 sweeps) |
+| 04 | PlantSeg field images | upgrade, **not built yet** | waits on the owner's decision after phase A (PROGRESS.md) | — |
+| 05 | MC dropout | upgrade, **not built yet** | built after 03 and 04 | — |
+
+If a session dies in an upgrade notebook, re-run that notebook: anything it already finished
+in Drive (a trained member, a sweep) is reused, not repeated.
+
 ## 0 · Before you start
 
 1. **The code comes from GitHub.** The notebooks clone
@@ -41,7 +60,7 @@ or an estimate marked as one.
 | # | Cell | What it does | Expected wall time |
 |---|---|---|---|
 | 1–3 | settings, setup, data | as above. Leave `SOURCE_RESULTS` empty to pick the newest source run | about 2 min |
-| 4 | locate | finds `results_resnet50_source_*.json` in `OUT` | instant |
+| 4 | locate | finds 01's seed 42 source run in `OUT`, never an ensemble member | instant |
 | 5 | **sweep** | 4 corruptions × severities 0–5 on the 610 test originals and the 609 validation images; all temperature conditions; bootstrap CIs; threshold chosen on validation, checked on test | **about 6 min** (estimate, not measured on Colab; see the note below) |
 | 6 | figures | 9 figures × (paper PDF + slide PNG) into `OUT/figures_<run_id>/` | about 1 min (not yet measured) |
 | 7 | verify | Tier 1 must pass | about 1 min |
@@ -58,6 +77,33 @@ about 6,900 images in 25.9 min). The sweep now degrades the validation images to
 choosing the threshold: 24 × (610 + 609) = 29,256 images. At that rate they take about
 4 min, plus the bootstrap, hence "about 6 min". If the cell is still running after 20 min,
 check that cell 2 printed a CUDA device.
+
+## 2b · Notebook 03 — `notebooks/03_deep_ensemble.ipynb` (upgrade)
+
+Needs notebook 01's seed 42 source run in `OUT`. That run **is** ensemble member 1 (not
+retrained). Members 2 and 3 are trained with the identical config and split, only the
+training seed changed (`train_seed` 43 and 44; DECISIONS.md D13).
+
+| # | Cell | What it does | Expected wall time |
+|---|---|---|---|
+| 1–3 | settings, setup, data | as above | about 2 min |
+| 4 | baseline | finds 01's seed 42 run (`find_run`), never an ensemble member | instant |
+| 5 | **members** | trains seeds 43 and 44, or reuses them if already in Drive | **about 52 min** (2 × September's 25.9 min; not measured with this code) |
+| 6 | **sweeps** | each member through the full sweep (seed 42's from 02 is reused if present) | **about 12–18 min** (estimate: 2–3 × about 6 min) |
+| 7 | ensemble | mean softmax across members, every condition; intervals, coverage, four scores, threshold | about 1 min (estimate) |
+| 8 | figure | `ensemble_vs_single` (paper PDF + slide PNG) | seconds |
+| 9 | verify | Tier 1 for each member, then the ensemble checks | about 3 min (estimate) |
+| 10 | list | prints every file of the ensemble and its members | seconds |
+
+**Check in Drive after 03:** for each of `resnet50_source_seed43_<stamp>` and
+`..._seed44_<stamp>` the same four files as a notebook 01 run plus its three sweep files;
+`ensemble_resnet50_source_ens3_<stamp>.json`, `ensemble_probs_<ens_id>.npz`,
+`ensemble_val_probs_<ens_id>.npz`; `figures_<ens_id>/ensemble_vs_single_{paper,slide}_<ens_id>`.
+Cell 9 must show Tier 1 with 0 failed for every member and for the ensemble.
+
+Tested locally on the fixture by executing the notebook's own cells three times: a fresh run,
+a re-run (nothing retrained), and a simulated disconnect during seed 44 (only seed 44
+retrained). Not yet run on Colab.
 
 ## 3 · Files that must be in Drive afterwards (`MyDrive/COMP2035_runs/`)
 
@@ -111,8 +157,10 @@ And `src.verify` must print **Tier 1: N passed, 0 failed**. The notebooks stop i
 
 Copy into `results/colab_<date>/` in the repo, for each run, **every file except the `.pt`
 checkpoint**: `results_`, `logits_`, `splits_`, `sweep_`, `sweep_logits_` and
-`sweep_val_logits_` (`verify` reads them side by side). Also copy `audit_<stamp>.json`. Copy
-the figures into `figures/`.
+`sweep_val_logits_` (`verify` reads them side by side). Also copy `audit_<stamp>.json`, and
+from notebook 03 the `ensemble_`, `ensemble_probs_` and `ensemble_val_probs_` files and both
+members' files. Copy the figures into `figures/`. Check the ensemble with
+`.venv/bin/python -m src.verify --ensemble results/colab_<date>/ensemble_<ens_id>.json`.
 The checkpoints stay in Drive; `*.pt` is gitignored. Then repeat every check from the copied
 files:
 `.venv/bin/python -m src.verify --run results/colab_<date>/results_<run_id>.json`

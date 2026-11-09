@@ -2,6 +2,7 @@
 
     python -m src.verify --run <run_dir>/results_<run_id>.json [--determinism]
     python -m src.verify --generated report/generated   # report numbers not stale
+    python -m src.verify --ensemble <run_dir>/ensemble_<ens_id>.json
 
 Deliberately does NOT import src.calibrate, src.evaluate's statistics or src.data's filename
 parsing: softmax, accuracy, ECE binning, coverage and leaf identity are written again here,
@@ -31,8 +32,8 @@ SEPTEMBER = REPO / "results" / "source" / "results_resnet50_source.json"
 SEPTEMBER_AUDIT = REPO / "results" / "source" / "audit.json"
 LEAF = re.compile(r"([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})___")
 ECE_TOL, PROB_TOL = 1e-5, 1e-5
-AURC_TOL = 1e-4  # float32 near-ties can swap order between implementations
-THR_TOL = 1e-6   # float64 here vs float32 in src: a score can sit ~1e-7 either side of t
+AURC_TOL = 1e-9  # ranking runs on the same float32 scores (see scores32)
+SCORE_TOL = 1e-5  # float32 scores vs this module's float64 softmax
 
 Check = tuple[str, int, str, str]  # (name, tier, PASS / FAIL / PENDING COLAB, detail)
 
@@ -133,6 +134,27 @@ def tier1(run_path: Path, require_sweep: bool = False) -> list[Check]:
     return out
 
 
+def scores32(logits: np.ndarray, t: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
+    """(max softmax, minus entropy) in float32, the numbers the evaluation code ranks by.
+    Confidences can sit closer together than float32 rounding, so ranking on a float64
+    recomputation can order near-ties differently and change a curve without any bug.
+    Every check therefore ranks on these, after checking they agree with this module's own
+    float64 softmax (score_agreement); the ranking and counting code stays separate."""
+    import torch
+    z = torch.as_tensor(np.asarray(logits), dtype=torch.float32)
+    p = torch.softmax(z / t, 1)
+    ent = -(p * torch.log(p.clamp_min(1e-12))).sum(1)
+    return p.max(1).values.numpy(), (-ent).numpy()
+
+
+def score_agreement(logits: np.ndarray, t: float = 1.0) -> float:
+    """Largest difference between scores32 and the float64 softmax and entropy."""
+    m32, e32 = scores32(logits, t)
+    p = softmax64(logits, t)
+    e64 = (p * np.log(np.clip(p, 1e-12, None))).sum(1)
+    return float(max(np.abs(m32 - p.max(1)).max(), np.abs(e32 - e64).max()))
+
+
 def aurc_v2(score: np.ndarray, correct: np.ndarray) -> float:
     return float(np.mean(1 - selective_acc(score, correct)))
 
@@ -142,7 +164,7 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
     out: list[Check] = []
     nb = sw["config"]["n_bins"]
     y = lg["labels"]
-    bad_acc, bad_ece, bad_pred, bad_t, cov_diff = [], [], [], [], 0.0
+    bad_acc, bad_ece, bad_pred, bad_t, cov_diff, agree = [], [], [], [], 0.0, 0.0
     for r in sw["rows"]:
         key = f"{r['corruption']}_s{r['severity']}"
         logits = lg[key]
@@ -157,9 +179,10 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
                 bad_ece.append(f"{key}/{name}")
             if cond["T"] != sw["temperatures"][name]:
                 bad_t.append(f"{key}/{name}")
-            ent = -(pt * np.log(np.clip(pt, 1e-12, None))).sum(1)
-            for k, s in (("max_softmax", pt.max(1)), ("neg_entropy", -ent)):
-                cov_diff = max(cov_diff, abs(aurc_v2(s.astype(np.float32), correct)
+            agree = max(agree, score_agreement(logits, cond["T"]))
+            for k, s in zip(("max_softmax", "neg_entropy"), scores32(logits, cond["T"]),
+                            strict=True):
+                cov_diff = max(cov_diff, abs(aurc_v2(s, correct)
                                              - cond["coverage"][k]["aurc"]))
     n = len(sw["rows"])
     out.append(("sweep: accuracy re-derived, every row", 1, "PASS" if not bad_acc else "FAIL",
@@ -173,6 +196,8 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
     same = all(np.array_equal(lg[k], test_logits) for k in s0)
     out.append(("severity 0 = clean logits, bit-identical", 1, "PASS" if same else "FAIL",
                 f"{len(s0)} corruptions"))
+    out.append(("sweep: float32 scores = float64 softmax and entropy", 1,
+                "PASS" if agree < SCORE_TOL else "FAIL", f"max |diff| {agree:.1e}"))
     out.append(("sweep: AURC at every T re-derived", 1, "PASS" if cov_diff < AURC_TOL
                 else "FAIL", f"max |diff| {cov_diff:.1e}, {n * len(sw['temperatures']) * 2} "
                 "curves (max softmax, entropy)"))
@@ -182,39 +207,46 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
 
 
 def threshold_checks(sw: dict, lg: dict, val_lg: dict) -> list[Check]:
-    """The max-softmax threshold, from the raw logits with separate code: on validation it
-    meets every target and the next lower score does not; on test, the accepted counts,
-    accuracies and conditions below target are as reported."""
+    """The max-softmax threshold, with separate code: on validation it meets every target
+    and the next lower score does not; on test, the accepted counts, accuracies and the
+    conditions below target are as reported. Scores are first checked against this module's
+    own float64 softmax; the counting is then exact (no tolerance band, which near-tied
+    confidences would make meaningless)."""
     keys = [k for k in lg if k != "labels"]
-    conf = {s: {k: softmax64(st[k]).max(1) for k in keys} for s, st in (("v", val_lg), ("t", lg))}
-    ok = {s: {k: (st[k].argmax(1) == st["labels"]) for k in keys}
-          for s, st in (("v", val_lg), ("t", lg))}
+    stores = (("v", val_lg), ("t", lg))
+    conf = {s: {k: scores32(st[k])[0] for k in keys} for s, st in stores}
+    agree = max(score_agreement(st[k]) for s, st in stores for k in keys)
+    ok = {s: {k: (st[k].argmax(1) == st["labels"]) for k in keys} for s, st in stores}
 
     def meets(split: str, t: float, target: float) -> bool:
         return all(ok[split][k][conf[split][k] >= t].mean() >= target
                    for k in keys if (conf[split][k] >= t).any())
 
+    all_val = np.concatenate(list(conf["v"].values()))
     bad_val, bad_test, n = [], [], 0
     for tgt, r in sw["threshold"]["by_score"]["max_softmax"].items():
         if not r["validation"]["found"]:
             continue
         n += 1
         t, target = r["validation"]["threshold"], float(tgt)
-        lower = [c for c in np.concatenate(list(conf["v"].values())) if c < t - THR_TOL]
-        if not meets("v", t - THR_TOL, target) or (lower and meets("v", max(lower), target)):
+        lower = all_val[all_val < t]
+        if not meets("v", t, target) or (lower.size and meets("v", float(lower.max()), target)):
             bad_val.append(tgt)
+        below = []
         for k in keys:
-            acc_mask = conf["t"][k] >= t - THR_TOL
+            acc_mask = conf["t"][k] >= t
             got = r["test"]["per_condition"][k]
             want_acc = float(ok["t"][k][acc_mask].mean()) if acc_mask.any() else None
+            if want_acc is not None and want_acc < target:
+                below.append(k)
             if got["n_accepted"] != int(acc_mask.sum()) or (
                     want_acc is not None and abs(got["acc_accepted"] - want_acc) > 1e-12):
                 bad_test.append(f"{tgt}/{k}")
-        below = [k for k in keys if (conf["t"][k] >= t - THR_TOL).any()
-                 and ok["t"][k][conf["t"][k] >= t - THR_TOL].mean() < target]
         if sorted(below) != sorted(r["test"]["below_target"]):
             bad_test.append(f"{tgt}/below_target")
-    return [("threshold: chosen on validation, lowest that meets target", 1,
+    return [("threshold: scores agree with float64 softmax", 1,
+             "PASS" if agree < SCORE_TOL else "FAIL", f"max |diff| {agree:.1e}"),
+            ("threshold: chosen on validation, lowest that meets target", 1,
              "PASS" if not bad_val else "FAIL", f"{n} targets" + (f"; {bad_val}" if bad_val
                                                                  else "")),
             ("threshold: held-out test numbers re-derived", 1,
@@ -262,7 +294,7 @@ def figure_checks(sw: dict, lg: dict) -> list[Check]:
           + [np.array([rows[(c, s)]["temperature"]["T_lbfgs"]["coverage"]["max_softmax"]
                        ["aurc"] for s in sev]) for c in CORRUPTIONS])
     check("coverage_curves (vs independent recomputation)", F.coverage_curves(sw, lg)("paper"),
-          [selective_acc(softmax64(lg[f"{c}_s{s}"]).max(1).astype(np.float32),
+          [selective_acc(scores32(lg[f"{c}_s{s}"])[0],
                          (lg[f"{c}_s{s}"].argmax(1) == y).astype(float))
            for c in CORRUPTIONS for s in sev])
     check("temperature_degeneracy", F.degeneracy(sw)("paper"),
@@ -304,6 +336,9 @@ def tier2(run_path: Path) -> list[Check]:
              "clean mean confidence within 0.01 of 0.9222",
              "clean ECE within 0.01 of 0.0778",
              "T_lbfgs vs September LBFGS endpoint 0.237 (information only)"]
+    if res["config"].get("train_seed") is not None:
+        return [(n, 2, "N/A", "ensemble member: only the seed 42 run is compared with "
+                 "September") for n in names]
     if not full:
         return [(n, 2, "PENDING COLAB", "needs a full ResNet-50 source run") for n in names]
     audit = json.loads(SEPTEMBER_AUDIT.read_text())
@@ -347,6 +382,92 @@ def determinism(data_root: str) -> list[Check]:
             np.array_equal(outs[0][k], outs[1][k]) for k in outs[0])
     return [("same config twice: bit-identical logits (train + sweep)", 1,
              "PASS" if same else "FAIL", f"{len(outs[0])} arrays")]
+
+
+def ensemble_checks(ens_path: Path) -> list[Check]:
+    """The deep ensemble, re-derived from each member's saved sweep logits with this
+    module's own softmax, ECE, variance and coverage code."""
+    from src import figures as F
+    ens = json.loads(ens_path.read_text())
+    d = ens_path.parent
+    res = [json.loads((d / m["results"]).read_text()) for m in ens["members"]]
+    out: list[Check] = []
+    splits = [(d / r["artefacts"]["splits"]).read_text() for r in res]
+    out.append(("ensemble: members share one split (files identical)", 1,
+                "PASS" if all(s == splits[0] for s in splits) else "FAIL",
+                f"{len(res)} members"))
+    seeds = [r["config"]["seed"] if r["config"].get("train_seed") is None
+             else r["config"]["train_seed"] for r in res]
+    skip = {"train_seed", "out_dir", "data_root", "num_workers"}
+    same = all({k: v for k, v in r["config"].items() if k not in skip}
+               == {k: v for k, v in res[0]["config"].items() if k not in skip} for r in res)
+    out.append(("ensemble: one protocol, distinct training seeds", 1,
+                "PASS" if same and len(set(seeds)) == len(seeds) else "FAIL", f"seeds {seeds}"))
+
+    probs = dict(np.load(d / f"ensemble_probs_{ens['ens_id']}.npz"))
+    val_probs = dict(np.load(d / f"ensemble_val_probs_{ens['ens_id']}.npz"))
+    stores = {"test": ("sweep_logits", probs), "val": ("sweep_val_logits", val_probs)}
+    member = {k: [dict(np.load(d / f"{prefix}_{r['run_id']}.npz")) for r in res]
+              for k, (prefix, _) in stores.items()}
+    max_diff, var_diff = 0.0, 0.0
+    for k, (_, stored) in stores.items():
+        for key in stored:
+            if key == "labels" or key.endswith("__disagreement"):
+                continue
+            p = np.stack([softmax64(m[key]) for m in member[k]])
+            max_diff = max(max_diff, float(np.abs(p.mean(0) - stored[key]).max()))
+            if k == "test":
+                v = ((p - p.mean(0)) ** 2).mean(0).mean(1)
+                var_diff = max(var_diff, float(np.abs(v - stored[f"{key}__disagreement"]).max()))
+    out.append(("ensemble: mean softmax re-derived from member logits", 1,
+                "PASS" if max_diff < PROB_TOL else "FAIL", f"max |diff| {max_diff:.1e}"))
+    out.append(("ensemble: member variance re-derived", 1,
+                "PASS" if var_diff < PROB_TOL else "FAIL", f"max |diff| {var_diff:.1e}"))
+
+    y, nb = probs["labels"], res[0]["config"]["n_bins"]
+    bad = []
+    for r in ens["rows"]:
+        key = f"{r['corruption']}_s{r['severity']}"
+        p, dis = probs[key], probs[f"{key}__disagreement"]
+        correct = (p.argmax(1) == y).astype(float)
+        if correct.mean() != r["accuracy"]:
+            bad.append(f"{key}/accuracy")
+        if abs(ece_v2(p.max(1), correct, nb)[0] - r["temperature"]["T=1"]["ece"]) >= ECE_TOL:
+            bad.append(f"{key}/ece")
+        if abs(aurc_v2((-dis).astype(np.float64), correct)
+               - r["scores"]["neg_member_variance"]["aurc"]) >= AURC_TOL:
+            bad.append(f"{key}/aurc_variance")
+        if abs(aurc_v2(scores32(np.log(np.clip(p, 1e-300, None)))[0], correct)
+               - r["scores"]["max_softmax"]["aurc"]) >= AURC_TOL:
+            bad.append(f"{key}/aurc_max_softmax")
+    out.append(("ensemble: accuracy, ECE, AURC re-derived, every row", 1,
+                "PASS" if not bad else "FAIL", f"{len(ens['rows'])} rows"
+                + (f"; {bad[:5]}" if bad else "")))
+
+    def logs(st: dict) -> dict:
+        return {k: (np.log(np.clip(v, 1e-300, None)) if k != "labels" else v)
+                for k, v in st.items() if not k.endswith("__disagreement")}
+    out += [(f"ensemble {name}", t, st, det)
+            for name, t, st, det in threshold_checks(ens, logs(probs), logs(val_probs))]
+
+    import matplotlib.pyplot as plt
+    F.style("paper")
+    single = json.loads((d / ens["single_model"]["sweep"]).read_text())
+    fig = F.ensemble_comparison(single, ens)("paper")
+    got = [np.asarray(ln.get_ydata(), float) for ax in fig.axes for ln in ax.get_lines()]
+    plt.close(fig)
+    from src.degrade import CORRUPTIONS
+    wants = []
+    for sw in (single, ens):
+        for c in CORRUPTIONS:
+            rows = sorted((r for r in sw["rows"] if r["corruption"] == c),
+                          key=lambda r: r["severity"])
+            wants += [np.array([f(r) for r in rows]) for _, f, _ in F.COMPARISON_METRICS]
+    miss = sum(not any(g.shape == w.shape and np.allclose(g, w, atol=1e-12) for g in got)
+               for w in wants)
+    out.append(("figure ensemble_vs_single: plotted = data", 1, "PASS" if not miss else "FAIL",
+                f"{len(wants) - miss}/{len(wants)} series found"))
+    return out
 
 
 GENERATOR = REPO / "tools" / "make_tables.py"
@@ -409,6 +530,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", help="results_<run_id>.json")
+    ap.add_argument("--ensemble", metavar="JSON", help="ensemble_<ens_id>.json to verify")
     ap.add_argument("--generated", metavar="DIR",
                     help="check that the report's generated numbers and tables are current "
                          "(re-run tools/make_tables.py if not)")
@@ -417,8 +539,8 @@ def main() -> None:
     ap.add_argument("--determinism", metavar="DATA_ROOT",
                     help="also train + sweep twice on DATA_ROOT (the fixture) and compare")
     a = ap.parse_args()
-    if not (a.run or a.generated):
-        ap.error("give --run, --generated, or both")
+    if not (a.run or a.generated or a.ensemble):
+        ap.error("give at least one of --run, --ensemble, --generated")
     checks: list[Check] = []
     if a.run:
         run_path = Path(a.run)
@@ -426,6 +548,8 @@ def main() -> None:
         if a.determinism:
             checks += determinism(a.determinism)
         checks += tier2(run_path)
+    if a.ensemble:
+        checks += ensemble_checks(Path(a.ensemble))
     if a.generated:
         checks += generated_checks(Path(a.generated))
     w = max(len(c[0]) for c in checks)

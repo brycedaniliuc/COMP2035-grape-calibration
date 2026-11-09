@@ -48,7 +48,11 @@ class Config:
     label_smoothing: float = 0.1
     class_weighted_loss: bool = True  # inverse frequency over train; see D3
     num_workers: int = 2
-    seed: int = 42
+    seed: int = 42  # the split, and training too unless train_seed is set
+    # Training randomness only (head init, shuffling, augmentation). None = use `seed`.
+    # Deep-ensemble members set it so they share seed 42's split (and its test set): a new
+    # split would put another member's test leaves in training.
+    train_seed: int | None = None
     use_amp: bool = True  # only takes effect on CUDA
     deterministic: bool = True  # see D2
 
@@ -67,6 +71,11 @@ class Config:
             "fractions must sum to 1"
         assert self.head_epochs >= 1 and self.finetune_epochs >= 0
         assert self.batch_size >= 1 and self.n_bins >= 1 and self.num_workers >= 0
+        assert self.train_seed is None or self.train_seed >= 0
+
+    @property
+    def training_seed(self) -> int:
+        return self.seed if self.train_seed is None else self.train_seed
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

@@ -261,7 +261,7 @@ def _seed_worker(worker_id: int) -> None:
 def make_loader(rows: list[Record], tf: transforms.Compose, cls2idx: dict[str, int],
                 cfg: Config, device: torch.device, shuffle: bool) -> DataLoader:
     g = torch.Generator()
-    g.manual_seed(cfg.seed)
+    g.manual_seed(cfg.training_seed)
     return DataLoader(LeafDataset(rows, tf, cls2idx), batch_size=cfg.batch_size,
                       shuffle=shuffle, num_workers=cfg.num_workers,
                       pin_memory=device.type == "cuda",

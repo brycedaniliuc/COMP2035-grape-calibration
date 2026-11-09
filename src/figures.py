@@ -397,6 +397,62 @@ def ece_by_fixed_t(sweep: dict) -> Callable[[str], Figure]:
     return build
 
 
+COMPARISON_METRICS = (  # (row label, value, 95% interval or None), all at T = 1
+    ("Accuracy", lambda r: r["accuracy"], lambda r: r["accuracy_wilson95"]),
+    ("ECE ($T{=}1$)", lambda r: r["temperature"]["T=1"]["ece"],
+     lambda r: r["temperature"]["T=1"]["ece_bootstrap95"]),
+    ("AURC (max softmax)", lambda r: r["scores"]["max_softmax"]["aurc"], None),
+)
+
+
+def ensemble_comparison(single: dict, ens: dict) -> Callable[[str], Figure]:
+    """Single model vs deep ensemble at every severity (the comparison of Ovadia et al. 2019):
+    accuracy, calibration and ranking, with 95% intervals shaded where they exist. Paper size
+    is full text width (a figure* in the two-column ACM layout)."""
+    from src.degrade import CORRUPTIONS
+    who = ((single, BLUE, "-", "o", "Single model"),
+           (ens, RED, "--", "s", f"Deep ensemble ({ens['n_members']} members)"))
+
+    def build(size: str) -> Figure:
+        figsize = (7.0, 4.4) if size == "paper" else SIZES["slide"]
+        fig, axes = plt.subplots(3, 4, figsize=figsize, sharex=True, sharey="row",
+                                 constrained_layout=True)
+        ms = 3 if size == "paper" else 7
+        for j, c in enumerate(CORRUPTIONS):
+            for i, (label, value, interval) in enumerate(COMPARISON_METRICS):
+                ax = axes[i, j]
+                for sw, col, ls, mk, name in who:
+                    rs = _rows(sw, c)
+                    x = [r["severity"] for r in rs]
+                    ax.plot(x, [value(r) for r in rs], color=col, ls=ls, marker=mk, ms=ms,
+                            label=name)
+                    if interval is not None:
+                        lo, hi = zip(*(interval(r) for r in rs), strict=True)
+                        ax.fill_between(x, lo, hi, color=col, alpha=0.15, lw=0)
+                if i == 0:
+                    ax.set_title(LABEL[c])
+                if j == 0:
+                    ax.set_ylabel(label)
+                ax.set_xticks(range(6))
+                ax.grid(axis="y")
+        fig.supxlabel("Severity level (0 = clean)", fontsize=FONT[size])
+        h, lab = axes[0, 0].get_legend_handles_labels()
+        fig.legend(h, lab, loc="upper center", bbox_to_anchor=(0.5, 0.0), ncol=2,
+                   frameon=False)
+        fig.suptitle(f"Single model vs deep ensemble under corruption "
+                     f"(n = {ens['n_test']}, $T = 1$, shaded: 95% interval)")
+        return fig
+
+    return build
+
+
+def render_ensemble(ens_path: str | Path, out: str | Path, tag: str = "") -> list[Path]:
+    ens_path = Path(ens_path)
+    ens = json.loads(ens_path.read_text())
+    single = json.loads((ens_path.parent / ens["single_model"]["sweep"]).read_text())
+    return render(ensemble_comparison(single, ens), "ensemble_vs_single", out, tag)
+
+
 SWEEP_FIGURES = {
     "accuracy_vs_severity": lambda s, lg: accuracy_vs_severity(s),
     "ece_vs_severity": lambda s, lg: ece_vs_severity(s),

@@ -170,10 +170,11 @@ Run notebook 01 first. Runtime → Run all."""),
 '''),
     code(SETUP),
     code(DATA),
-    code('''if not SOURCE_RESULTS:
-    runs = sorted(Path(OUT).glob("results_resnet50_source_*.json"))
-    assert runs, f"no results_resnet50_source_*.json in {OUT}: run notebook 01 first"
-    SOURCE_RESULTS = str(runs[-1])
+    code('''if not SOURCE_RESULTS:  # the newest seed 42 baseline, never an ensemble member
+    from src.ensemble import find_run
+    found = find_run(OUT, seed=42)
+    assert found, f"no finished resnet50 source run in {OUT}: run notebook 01 first"
+    SOURCE_RESULTS = str(found)
 print("using", SOURCE_RESULTS)'''),
     md("## Sweep: 4 corruptions × severities 0–5 on the 610 test originals, and on the 609 "
        "validation images that the threshold is chosen on"),
@@ -205,11 +206,73 @@ print(f"total elapsed {(time.time() - T0) / 60:.1f} min")'''),
 ])
 
 
+NB3 = notebook([
+    md("""# 03 · Deep ensemble under corruption (upgrade, Colab T4)
+
+Three ResNet-50 members on the same leak-free split, differing only in training seed:
+**42 is the notebook 01 baseline, reused**; 43 and 44 are trained here (about 26 min each).
+The ensemble predicts the mean softmax of the members. It goes through the same sweep as the
+single model (4 corruptions × severities 0–5; Wilson and bootstrap intervals; coverage and
+AURC for max softmax, entropy, margin, and the members' disagreement), and one figure
+compares it with the single model at every severity.
+
+**Needs:** notebook 01 finished (its seed 42 run in `OUT`). Notebook 02 is not needed; its
+sweep is reused if it is there. **After a disconnect:** run all again. A member or sweep that
+is already in Drive is reused, so only unfinished work is repeated."""),
+    code(SETTINGS + '''MEMBER_SEEDS = (42, 43, 44)   # 42 = notebook 01's baseline, reused
+'''),
+    code(SETUP),
+    code(DATA),
+    md("## The seed 42 baseline from notebook 01"),
+    code('''from src.ensemble import ensemble_sweep, ensure_member, ensure_sweep, find_run
+BASE = find_run(OUT, seed=42)
+assert BASE, f"no finished resnet50 source run in {OUT}: run notebook 01 first"
+print("baseline:", BASE.name)'''),
+    md("""## Members (about 26 min for each one trained)
+
+A member already in Drive is reused. Each checkpoint is saved to Drive as it improves."""),
+    code('''MEMBERS = []
+for seed in MEMBER_SEEDS:
+    MEMBERS.append(ensure_member(BASE, seed, data_root=DATA_ROOT))
+    print(f"seed {seed}: {MEMBERS[-1].name} | elapsed {(time.time() - T0) / 60:.1f} min")'''),
+    md("## Each member through the degradation sweep (about 6 min each, estimated)"),
+    code('''for m in MEMBERS:
+    ensure_sweep(m, data_root=DATA_ROOT)
+print(f"elapsed {(time.time() - T0) / 60:.1f} min")'''),
+    md("## The ensemble: mean softmax across members, in every condition"),
+    code('''from src.evaluate import print_threshold
+ENS = ensemble_sweep(MEMBERS, data_root=DATA_ROOT)
+ENS_PATH = f"{OUT}/ensemble_{ENS['ens_id']}.json"
+print_threshold(ENS["threshold"])'''),
+    md("## Single model vs ensemble at every severity (paper PDF + slide PNG), to Drive"),
+    code('''from src.figures import render_ensemble
+paths = render_ensemble(ENS_PATH, f"{OUT}/figures_{ENS['ens_id']}", tag=ENS["ens_id"])
+print(len(paths), "files ->", f"{OUT}/figures_{ENS['ens_id']}")'''),
+    md("## Verify (Tier 1 must pass): every member, then the ensemble"),
+    code('''for m in MEMBERS:
+    r = subprocess.run([sys.executable, "-m", "src.verify", "--run", str(m), "--require-sweep"],
+                       capture_output=True, text=True)
+    print(m.name, "|", r.stdout.strip().splitlines()[-1] if r.stdout.strip() else r.stderr[-500:])
+    assert r.returncode == 0, r.stdout[-6000:]
+r = subprocess.run([sys.executable, "-m", "src.verify", "--ensemble", ENS_PATH],
+                   capture_output=True, text=True)
+print(r.stdout[-6000:], r.stderr[-3000:])
+assert r.returncode == 0, "a Tier 1 check failed: stop and investigate"
+print(f"total elapsed {(time.time() - T0) / 60:.1f} min")'''),
+    md("## Everything this notebook relies on or wrote, in Drive"),
+    code('''ids = [ENS["ens_id"]] + [json.loads(m.read_text())["run_id"] for m in MEMBERS]
+for p in sorted(Path(OUT).rglob("*")):
+    if p.is_file() and any(i in p.name for i in ids):
+        print(f"{p.stat().st_size / 1e6:9.2f} MB  {p.relative_to(OUT)}")'''),
+])
+
+
 def main() -> None:
     import json
     warnings.simplefilter("error")  # any nbformat validator warning fails the build
     for name, nb in (("01_baseline_calibration.ipynb", NB1),
-                     ("02_degradation_study.ipynb", NB2)):
+                     ("02_degradation_study.ipynb", NB2),
+                     ("03_deep_ensemble.ipynb", NB3)):
         path = OUT / name
         path.write_text(json.dumps(nb, indent=1, ensure_ascii=False) + "\n")
         # check the file as written: raw JSON, sources joined with ""

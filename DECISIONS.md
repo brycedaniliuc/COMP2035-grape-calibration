@@ -214,3 +214,28 @@ noted above each entry in `report/refs.bib`:
   Crossref. The LNCS volume number of [17] could not be verified and is left out.
 - [1] Canoski et al. and [15] Noyan are arXiv preprints with no published version listed;
   both entries say "Preprint".
+
+## D13 · Deep ensemble design (upgrade 1) — DONE in code, owner to confirm
+
+- **Members share one split.** `Config.seed` sets the split, so a member trained with seed 43
+  would get a new split: another member's test leaves would land in its training set, and
+  the members would not share a test set. So members keep `seed = 42` and set a separate
+  `train_seed` (43, 44), which changes only head initialisation, shuffling and augmentation.
+  With `train_seed` unset (the single-model path) training uses `seed` exactly as before:
+  a fixture run under the new code gave bit-identical logits and results to the old code.
+- **Seed 42 is the notebook 01 baseline, reused**, so the ensemble costs two trainings.
+- **Prediction:** mean softmax across members, at T = 1. No temperature is fitted for the
+  ensemble, so ensemble and single model are compared on the same footing (T = 1, the
+  primary condition, D1).
+- **Same sweep as the single model:** all 24 conditions; Wilson and bootstrap intervals;
+  coverage and AURC for max softmax, entropy and margin; the threshold chosen on degraded
+  validation and checked on held-out test (D10). Margin on the averaged distribution is
+  log(p1 / p2), which equals the logit margin for a single model.
+- **The fourth score (disagreement):** the variance across members of each class
+  probability, averaged over the classes; ranked high-agreement-first
+  (`neg_member_variance`). The brief's "mean predictive entropy of the averaged
+  distribution" is the entropy score applied to the ensemble's mean, so it is already score
+  two. Each row also reports its mean over images. Choosing the variance rather than mutual
+  information as the disagreement score is a design choice: owner to confirm.
+- **Reuse after a disconnect:** notebook 03 reuses any finished member or sweep in Drive. A
+  member whose results JSON is missing (a disconnect mid-training) is trained again. Tested.

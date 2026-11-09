@@ -39,9 +39,11 @@ sys.path.insert(0, str(REPO))
 from src.evaluate import wilson_ci  # noqa: E402  (needs the repo on sys.path first)
 
 GENERATOR = Path(__file__).resolve()
-SOURCE_GLOB = "results/colab_*/results_resnet50_source_*.json"
+# Baseline runs only: an ensemble member's id has "_seed<n>_" where a baseline's timestamp
+# (20xx...) begins, so "_source_2*" never matches one.
+SOURCE_GLOB = "results/colab_*/results_resnet50_source_2*.json"
 SUPPLIED_GLOB = "results/colab_*/results_resnet50_supplied_*.json"
-SWEEP_GLOB = "results/colab_*/sweep_resnet50_source_*.json"
+SWEEP_GLOB = "results/colab_*/sweep_resnet50_source_2*.json"
 SEPTEMBER = {"source": REPO / "results/source/results_resnet50_source.json",
              "supplied": REPO / "results/supplied/results_resnet50_supplied.json"}
 CORR = {"gaussian_blur": ("Gaussian blur", "Blur"), "brightness": ("Brighten", "Brighten"),
@@ -419,7 +421,12 @@ def main() -> None:
     a = ap.parse_args()
     source, g1 = resolve(a.source_results, SOURCE_GLOB, SEPTEMBER["source"])
     supplied, g2 = resolve(a.supplied_results, SUPPLIED_GLOB, SEPTEMBER["supplied"])
-    sweep, g3 = resolve(a.sweep, SWEEP_GLOB, None)
+    if a.sweep is None and source is not None:  # the sweep OF the chosen source run
+        run_id = json.loads(source.read_text()).get("run_id")  # September runs have none
+        own = source.parent / f"sweep_{run_id}.json" if run_id else None
+        sweep, g3 = (own, None) if own is not None and own.exists() else (None, SWEEP_GLOB)
+    else:
+        sweep, g3 = resolve(a.sweep, SWEEP_GLOB, None)
     pending = {w: g for w, g in (("source", g1), ("supplied", g2), ("sweep", g3)) if g}
     for what, p in (("source run", source), ("supplied run", supplied), ("sweep", sweep)):
         print(f"{what:13s}: {rel(p) if p else 'PENDING (not available yet)'}")
