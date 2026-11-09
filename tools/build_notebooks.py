@@ -267,12 +267,75 @@ for p in sorted(Path(OUT).rglob("*")):
 ])
 
 
+NB4 = notebook([
+    md("""# 04 · PlantSeg field leaves (upgrade, Colab T4)
+
+Runs the seed 42 ResNet-50 from notebook 01 over real field photographs of grape leaves from
+PlantSeg v6 (Zenodo record 16665770, CC BY 4.0; DECISIONS.md D14). It uses only the leaves
+selected in `results/plantseg/leaf_filter.csv` (D15), each photograph once. Two analyses,
+never merged (D16):
+
+* **Black rot leaves (n = 25):** the one PlantSeg class the model knows. Accuracy with a
+  Wilson interval, mean confidence, ECE, the confidence distribution. n is small.
+* **Downy mildew, leaf spot, leafroll leaves:** none of the model's classes is correct, so
+  there is **no accuracy**: out-of-distribution confidence, and which class it assigns.
+
+Both are compared with the same model on clean PlantVillage test images and on the most
+severe simulated corruption, and with the threshold chosen on validation.
+
+**Needs:** notebooks 01 and 02 finished (the seed 42 run and its sweep in `OUT`). It does not
+need the PlantVillage zip. It downloads PlantSeg (1.7 GB) into this Colab session, not to
+Drive, and checks its MD5. **No PlantSeg image is written to Drive**: only numbers, logits and
+figures."""),
+    code(SETTINGS + """PLANTSEG_URL = "https://zenodo.org/api/records/16665770/files/Plantseg.zip/content"
+PLANTSEG_ZIP = "/content/Plantseg.zip"   # this session only, never Drive
+"""),
+    code(SETUP),
+    md("## The seed 42 run (notebook 01) and its sweep (notebook 02)"),
+    code("""from src.ensemble import find_run
+BASE = find_run(OUT, seed=42)
+assert BASE, f"no finished resnet50 source run in {OUT}: run notebook 01 first"
+RUN_ID = json.loads(BASE.read_text())["run_id"]
+for f in (f"sweep_{RUN_ID}.json", f"sweep_logits_{RUN_ID}.npz"):
+    assert (BASE.parent / f).exists(), f"{f} missing: run notebook 02 first"
+print("model:", BASE.name)"""),
+    md("## PlantSeg v6 from Zenodo (about 1–2 min), checked against its MD5"),
+    code("""import shutil, urllib.request
+from src.plantseg import SOURCE, md5
+if not (os.path.exists(PLANTSEG_ZIP) and md5(PLANTSEG_ZIP) == SOURCE["md5"]):
+    with urllib.request.urlopen(PLANTSEG_URL) as r, open(PLANTSEG_ZIP, "wb") as fh:
+        shutil.copyfileobj(r, fh, length=1 << 22)
+got = md5(PLANTSEG_ZIP)
+assert got == SOURCE["md5"], f"download is not PlantSeg v6 (md5 {got}): run the cell again"
+print(f"PlantSeg v6 OK: {os.path.getsize(PLANTSEG_ZIP) / 1e9:.2f} GB, md5 {got}")"""),
+    md("## The two analyses (about 1 min)"),
+    code("""from src.plantseg import plantseg_eval
+PS = plantseg_eval(BASE, PLANTSEG_ZIP)
+PS_PATH = f"{OUT}/plantseg_{RUN_ID}.json\""""),
+    md("## Figures (paper PDF + slide PNG), to Drive"),
+    code("""from src.figures import render_plantseg
+paths = render_plantseg(PS_PATH, f"{OUT}/figures_{RUN_ID}", tag=RUN_ID)
+print(len(paths), "files ->", f"{OUT}/figures_{RUN_ID}")"""),
+    md("## Verify (Tier 1 must pass)"),
+    code("""r = subprocess.run([sys.executable, "-m", "src.verify", "--plantseg", PS_PATH],
+                   capture_output=True, text=True)
+print(r.stdout[-6000:], r.stderr[-3000:])
+assert r.returncode == 0, "a Tier 1 check failed: stop and investigate"
+print(f"total elapsed {(time.time() - T0) / 60:.1f} min")"""),
+    md("## Everything this notebook wrote to Drive"),
+    code("""for p in sorted(Path(OUT).rglob("*plantseg*")):
+    if p.is_file():
+        print(f"{p.stat().st_size / 1e6:9.2f} MB  {p.relative_to(OUT)}")"""),
+])
+
+
 def main() -> None:
     import json
     warnings.simplefilter("error")  # any nbformat validator warning fails the build
     for name, nb in (("01_baseline_calibration.ipynb", NB1),
                      ("02_degradation_study.ipynb", NB2),
-                     ("03_deep_ensemble.ipynb", NB3)):
+                     ("03_deep_ensemble.ipynb", NB3),
+                     ("04_plantseg_field.ipynb", NB4)):
         path = OUT / name
         path.write_text(json.dumps(nb, indent=1, ensure_ascii=False) + "\n")
         # check the file as written: raw JSON, sources joined with ""

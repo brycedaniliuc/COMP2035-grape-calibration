@@ -3,6 +3,7 @@
     python -m src.verify --run <run_dir>/results_<run_id>.json [--determinism]
     python -m src.verify --generated report/generated   # report numbers not stale
     python -m src.verify --ensemble <run_dir>/ensemble_<ens_id>.json
+    python -m src.verify --plantseg <run_dir>/plantseg_<run_id>.json
 
 Deliberately does NOT import src.calibrate, src.evaluate's statistics or src.data's filename
 parsing: softmax, accuracy, ECE binning, coverage and leaf identity are written again here,
@@ -470,6 +471,128 @@ def ensemble_checks(ens_path: Path) -> list[Check]:
     return out
 
 
+def _has_accuracy(obj: object) -> bool:
+    if isinstance(obj, dict):
+        return any(bool(re.search("accura|correct", k)) or _has_accuracy(v)
+                   for k, v in obj.items())
+    if isinstance(obj, list):
+        return any(_has_accuracy(v) for v in obj)
+    return False
+
+
+def _wilson(k: int, n: int) -> tuple[float, float]:
+    z = 1.959963984540054
+    centre = (k / n + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * np.sqrt(k / n * (1 - k / n) / n + z * z / (4 * n * n)) / (1 + z * z / n)
+    return (0.0 if k == 0 else centre - half), (1.0 if k == n else centre + half)
+
+
+def plantseg_checks(ps_path: Path, filter_csv: Path | None = None) -> list[Check]:
+    """PlantSeg phase B2, from the saved logits and the committed leaf filter, with this
+    module's own selection, softmax, Wilson interval and ECE. The out-of-distribution
+    sections must carry no accuracy of any kind (D16)."""
+    import csv
+
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+
+    from src import figures as F
+    ps = json.loads(ps_path.read_text())
+    d = ps_path.parent
+    lg = dict(np.load(d / f"plantseg_logits_{ps['run_id']}.npz"))
+    sw_lg = dict(np.load(d / f"sweep_logits_{ps['run_id']}.npz"))
+    sw = json.loads((d / f"sweep_{ps['run_id']}.json").read_text())
+    filter_csv = filter_csv or REPO / "results" / "plantseg" / "leaf_filter.csv"
+    rows = list(csv.DictReader(open(filter_csv)))
+    names = {"black_rot": "grape black rot", "downy_mildew": "grape downy mildew",
+             "leaf_spot": "grape leaf spot", "leafroll": "grapevine leafroll disease"}
+    want = {g: [r["id"] for r in rows if r["disease"] == n and r["tag"] == "leaf"
+                and r["duplicate_of"] == "" and r["label_conflict_with"] == ""]
+            for g, n in names.items()}
+    got = {"black_rot": ps["black_rot"]["ids"],
+           **{g: ps["out_of_distribution"][g]["ids"] for g in names if g != "black_rot"}}
+    npz_ids = {g: [str(x) for x in lg[f"{g}__ids"]] for g in names}
+    out: list[Check] = [("plantseg: images = leaf filter, each photograph once", 1,
+                         "PASS" if want == got == npz_ids else "FAIL",
+                         ", ".join(f"{g} {len(v)}" for g, v in want.items()))]
+    out.append(("plantseg: out-of-distribution sections carry no accuracy", 1,
+                "FAIL" if _has_accuracy(ps["out_of_distribution"]) else "PASS",
+                "downy mildew, leaf spot, leafroll"))
+
+    target = ps["classes"].index("Black_rot")
+    unusual = re.compile("close-up|wide view|shoot", re.I)
+    reason = {r["id"]: r["reason"] for r in rows}
+    bad = []
+    usual = [j for j, i in enumerate(want["black_rot"]) if not unusual.search(reason[i])]
+    for key, sel in (("black_rot", list(range(len(want["black_rot"])))),
+                     ("black_rot_usual_framing", usual)):
+        a = ps[key]
+        p = softmax64(lg["black_rot"][sel])
+        correct = (p.argmax(1) == target).astype(float)
+        n, k = correct.size, int(correct.sum())
+        lo, hi = _wilson(k, n)
+        if a["ids"] != [want["black_rot"][j] for j in sel]:
+            bad.append(f"{key}/ids")
+        if (a["n"], a["n_correct"]) != (n, k) or abs(a["accuracy"] - k / n) > 1e-12:
+            bad.append(f"{key}/accuracy")
+        if max(abs(lo - a["accuracy_wilson95"][0]), abs(hi - a["accuracy_wilson95"][1])) > 1e-9:
+            bad.append(f"{key}/wilson")
+        if abs(p.max(1).mean() - a["mean_confidence"]) > PROB_TOL:
+            bad.append(f"{key}/mean_confidence")
+        if abs(ece_v2(p.max(1), correct, 15)[0] - a["ece"]) > ECE_TOL:
+            bad.append(f"{key}/ece")
+    out.append(("plantseg: black rot accuracy, Wilson, confidence, ECE re-derived", 1,
+                "PASS" if not bad else "FAIL", f"n = {ps['black_rot']['n']}, sensitivity "
+                f"n = {ps['black_rot_usual_framing']['n']}" + (f"; {bad}" if bad else "")))
+
+    t = ps["threshold"]
+    groups = {"black_rot": (lg["black_rot"], ps["black_rot"]),
+              **{g: (lg[g], ps["out_of_distribution"][g]) for g in names if g != "black_rot"}}
+    worst = min((r for r in sw["rows"] if r["severity"] == 5),
+                key=lambda r: float((sw_lg[f"{r['corruption']}_s5"].argmax(1)
+                                     == sw_lg["labels"]).mean()))
+    refs = {"plantvillage_clean": "gaussian_blur_s0",
+            "plantvillage_most_severe": f"{worst['corruption']}_s5"}
+    bad = [ref for ref, cond in refs.items() if ps["references"][ref]["condition"] != cond]
+    for ref, cond in refs.items():
+        groups[ref] = (sw_lg[cond], ps["references"][ref])
+    for g, (z, a) in groups.items():
+        conf = scores32(z)[0]
+        pred = softmax64(z).argmax(1)
+        c = a["confidence"]
+        if c["n"] != conf.size or abs(c["mean"] - float(conf.mean())) > PROB_TOL \
+                or abs(c["median"] - float(np.median(conf))) > PROB_TOL:
+            bad.append(f"{g}/confidence")
+        if t is not None and abs(c["share_without_warning"] - float((conf >= t).mean())) > 1e-12:
+            bad.append(f"{g}/share_without_warning")
+        if "predicted_class" in a and a["predicted_class"] != {
+                cl: int((pred == i).sum()) for i, cl in enumerate(ps["classes"])}:
+            bad.append(f"{g}/predicted_class")
+    out.append(("plantseg: confidence distributions, classes assigned, references", 1,
+                "PASS" if not bad else "FAIL",
+                f"{len(groups)} groups; most severe = {refs['plantvillage_most_severe']}"
+                + (f"; {bad}" if bad else "")))
+
+    F.style("paper")
+    confs = {g: scores32(z)[0] for g, (z, _) in groups.items()}
+    fig = F.plantseg_confidence(ps, confs)("paper")
+    lines = [np.asarray(ln.get_ydata(), float) for ax in fig.axes for ln in ax.get_lines()]
+    wants = [F.survival(confs[g])[1] for _, series in F.PLANTSEG_PANELS for g, *_ in series]
+    miss = sum(not any(x.shape == w.shape and np.allclose(x, w) for x in lines) for w in wants)
+    plt.close(fig)
+    fig = F.plantseg_predicted_class(ps)("paper")
+    widths = sorted(round(r.get_width(), 9) for ax in fig.axes for r in ax.patches
+                    if isinstance(r, Rectangle) and r.get_width() > 0)
+    shares = sorted(round(a["predicted_class"][cl] / a["n"], 9)
+                    for g, (_, a) in groups.items() if g in names
+                    for cl in ps["classes"] if a["predicted_class"][cl] > 0)
+    plt.close(fig)
+    out.append(("figures plantseg: plotted = data", 1,
+                "PASS" if miss == 0 and widths == shares else "FAIL",
+                f"{len(wants) - miss}/{len(wants)} curves, {len(widths)} bar segments"))
+    return out
+
+
 GENERATOR = REPO / "tools" / "make_tables.py"
 HEADER = re.compile(r"% (generator-sha256|source|pending|body-sha256): (.*)")
 
@@ -531,6 +654,7 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", help="results_<run_id>.json")
     ap.add_argument("--ensemble", metavar="JSON", help="ensemble_<ens_id>.json to verify")
+    ap.add_argument("--plantseg", metavar="JSON", help="plantseg_<run_id>.json to verify")
     ap.add_argument("--generated", metavar="DIR",
                     help="check that the report's generated numbers and tables are current "
                          "(re-run tools/make_tables.py if not)")
@@ -539,8 +663,8 @@ def main() -> None:
     ap.add_argument("--determinism", metavar="DATA_ROOT",
                     help="also train + sweep twice on DATA_ROOT (the fixture) and compare")
     a = ap.parse_args()
-    if not (a.run or a.generated or a.ensemble):
-        ap.error("give at least one of --run, --ensemble, --generated")
+    if not (a.run or a.generated or a.ensemble or a.plantseg):
+        ap.error("give at least one of --run, --ensemble, --plantseg, --generated")
     checks: list[Check] = []
     if a.run:
         run_path = Path(a.run)
@@ -550,6 +674,8 @@ def main() -> None:
         checks += tier2(run_path)
     if a.ensemble:
         checks += ensemble_checks(Path(a.ensemble))
+    if a.plantseg:
+        checks += plantseg_checks(Path(a.plantseg))
     if a.generated:
         checks += generated_checks(Path(a.generated))
     w = max(len(c[0]) for c in checks)

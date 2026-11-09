@@ -453,6 +453,113 @@ def render_ensemble(ens_path: str | Path, out: str | Path, tag: str = "") -> lis
     return render(ensemble_comparison(single, ens), "ensemble_vs_single", out, tag)
 
 
+def survival(conf: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """x = each confidence in ascending order, y = share of images with confidence >= x."""
+    x = np.sort(np.asarray(conf, float))
+    return x, 1 - np.arange(x.size) / x.size
+
+
+PLANTSEG_PANELS = (  # (title, [(group key, colour, line style, label)])
+    ("A. Black rot leaves: the model knows this class",
+     [("plantvillage_clean", BLUE, "-", "PlantVillage, clean"),
+      ("plantvillage_most_severe", INK, ":", "PlantVillage, most severe corruption"),
+      ("black_rot", RED, "--", "PlantSeg black rot leaves")]),
+    ("B. Out-of-distribution confidence (no correct class)",
+     [("plantvillage_clean", BLUE, "-", "PlantVillage, clean"),
+      ("downy_mildew", RED, "--", "PlantSeg downy mildew leaves"),
+      ("leaf_spot", INK, "-.", "PlantSeg leaf spot leaves"),
+      ("leafroll", MUTED, ":", "PlantSeg leafroll leaves")]),
+)
+
+
+def plantseg_confidence(ps: dict, conf: dict[str, np.ndarray]) -> Callable[[str], Figure]:
+    """Confidence on PlantSeg field leaves against PlantVillage, same model, T = 1. The two
+    analyses (D16) stay in separate panels. Panel B is out-of-distribution confidence only."""
+    def build(size: str) -> Figure:
+        shape, figsize = ((2, 1), _figsize(size, 1.25)) if size == "paper" else \
+            ((1, 2), SIZES["slide"])
+        fig, axes = plt.subplots(*shape, figsize=figsize, sharex=True, sharey=True,
+                                 constrained_layout=True)
+        for ax, (title, series) in zip(np.ravel(axes), PLANTSEG_PANELS, strict=True):
+            for key, col, ls, label in series:
+                x, y = survival(conf[key])
+                ax.step(x, y, where="post", color=col, ls=ls, label=f"{label} (n = {x.size})")
+            if ps["threshold"] is not None:
+                ax.axvline(ps["threshold"], color=MUTED, lw=0.8, ls=(0, (2, 2)))
+                ax.text(ps["threshold"], 1.02, f" threshold {ps['threshold']:.3g}",
+                        color=MUTED, fontsize=FONT[size] - 1.5, va="bottom")
+            ax.set_title(title, fontsize=FONT[size], loc="left")
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1.08)
+            ax.grid(axis="y")
+            ax.legend(frameon=False, fontsize=FONT[size] - 1.5, loc="upper center",
+                      bbox_to_anchor=(0.5, -0.14), ncol=1)
+        fig.supxlabel("Confidence x (max softmax, T = 1)", fontsize=FONT[size])
+        fig.supylabel("Share of images with confidence at least x", fontsize=FONT[size])
+        fig.suptitle("PlantSeg field leaves vs PlantVillage, same model")
+        return fig
+
+    return build
+
+
+def plantseg_predicted_class(ps: dict) -> Callable[[str], Figure]:
+    """Which of its four classes the model assigns to each PlantSeg group. For downy mildew,
+    leaf spot and leafroll none of the four is correct: out of distribution."""
+    groups = [("PlantSeg black rot leaves", ps["black_rot"])] + [
+        (f"PlantSeg {g.replace('_', ' ')} leaves (OOD)", ps["out_of_distribution"][g])
+        for g in ("downy_mildew", "leaf_spot", "leafroll")]
+    classes = ps["classes"]
+    colours = [RED, BLUE, "#b0afaa", INK]
+    hatches = ["", "//", "..", ""]  # identity is never colour alone
+
+    def build(size: str) -> Figure:
+        fig, ax = plt.subplots(figsize=_figsize(size, 0.75), constrained_layout=True)
+        left = np.zeros(len(groups))
+        for c, col, h in zip(classes, colours, hatches, strict=True):
+            share = np.array([g["predicted_class"][c] / g["n"] for _, g in groups])
+            ax.barh(range(len(groups)), share, left=left, color=col, hatch=h,
+                    edgecolor="white", lw=0.8, label=c.replace("_", " "))
+            for i, (s, lft) in enumerate(zip(share, left, strict=True)):
+                if s >= 0.12:
+                    ax.text(lft + s / 2, i, f"{s:.0%}", ha="center", va="center",
+                            color="white" if col in (RED, BLUE, INK) else INK,
+                            fontsize=FONT[size] - 1.5)
+            left += share
+        ax.set_yticks(range(len(groups)))
+        ax.set_yticklabels([f"{name} (n = {g['n']})" for name, g in groups])
+        ax.invert_yaxis()
+        ax.set_xlim(0, 1)
+        ax.set_xlabel("Share of images assigned to each of the model's classes")
+        ax.legend(frameon=False, ncol=2, loc="upper center", bbox_to_anchor=(0.5, -0.18),
+                  fontsize=FONT[size] - 1.5)
+        ax.set_title("What the model calls PlantSeg leaves (rows marked OOD have no correct "
+                     "class)", fontsize=FONT[size], loc="left")
+        return fig
+
+    return build
+
+
+def plantseg_confidences(ps_path: Path) -> dict[str, np.ndarray]:
+    """Max-softmax confidence (T = 1) per group, from the saved logits."""
+    from src.evaluate import scores
+    ps = json.loads(ps_path.read_text())
+    lg = dict(np.load(ps_path.parent / f"plantseg_logits_{ps['run_id']}.npz"))
+    sw = dict(np.load(ps_path.parent / f"sweep_logits_{ps['run_id']}.npz"))
+    conf = {g: scores(lg[g])["max_softmax"] for g in
+            ("black_rot", "downy_mildew", "leaf_spot", "leafroll")}
+    for k, ref in ps["references"].items():
+        conf[k] = scores(sw[ref["condition"]])["max_softmax"]
+    return conf
+
+
+def render_plantseg(ps_path: str | Path, out: str | Path, tag: str = "") -> list[Path]:
+    ps_path = Path(ps_path)
+    ps = json.loads(ps_path.read_text())
+    return (render(plantseg_confidence(ps, plantseg_confidences(ps_path)),
+                   "plantseg_confidence", out, tag)
+            + render(plantseg_predicted_class(ps), "plantseg_predicted_class", out, tag))
+
+
 SWEEP_FIGURES = {
     "accuracy_vs_severity": lambda s, lg: accuracy_vs_severity(s),
     "ece_vs_severity": lambda s, lg: ece_vs_severity(s),

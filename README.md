@@ -24,8 +24,9 @@ threshold can and cannot be trusted.
 | The real degradation run | **Pending**: one Colab session | [`HANDOVER.md`](HANDOVER.md) |
 | Prediction + confidence + warning tool | **Built and tested on the fixture**; its real threshold comes from the Colab run | `src/predict.py` |
 | Deep ensemble (3 members) through the same degradation sweep, compared with the single model | **Built and tested on the fixture; not yet run on the real model** (notebook 03) | `src/ensemble.py` |
-| MC dropout | Not done. The submitted plan allowed it to be dropped if the schedule slipped | — |
+| MC dropout | Parked by the owner. The submitted plan allowed it to be dropped if the schedule slipped | — |
 | Field images (LDD in the submitted plan) | Not used. This repo runs the plan's §3.4 contingency instead: degraded held-out PlantVillage | `DECISIONS.md` D11 |
+| Field photographs: PlantSeg v6 grape leaves (black rot accuracy, n = 25; the other three classes as out-of-distribution confidence only) | **Leaf filter done** (564 images tagged by eye against a stated rule); **analysis built and tested, real run pending** (notebook 04) | `results/plantseg/`, `src/plantseg.py`, D14–D16 |
 
 No result of the degradation study appears in this README, because none exists yet.
 
@@ -250,7 +251,8 @@ the preinstalled CUDA build of PyTorch is used instead of the CPU pin.
 ```
 src/            config, data (indexing, splits), audit, train, calibrate, degrade,
                 evaluate (sweep, coverage, threshold), figures, verify,
-                predict (prediction + confidence + warning)
+                predict (prediction + confidence + warning), ensemble (deep ensemble),
+                plantseg (field photographs)
 tests/          pytest suite; fixture/ = 80 real images, MANIFEST.md, build_fixture.py
 notebooks/      01 and 02 for Colab; archive/ holds the September 2026 notebook
 tools/          build_notebooks.py (generates and validates the notebooks),
@@ -272,6 +274,11 @@ The dataset author's Hugging Face card (`mohanty/PlantVillage`) gives the licenc
 **CC BY-SA 3.0**. The dataset itself is not in this repository. The 80 fixture images and the
 corruption-grid figure are, under CC BY-SA 3.0 with attribution: see
 `tests/fixture/IMAGES-LICENSE.md`.
+
+The field photographs come from PlantSeg v6 (Wei et al. 2026; Zenodo record 16665770,
+CC BY 4.0). No PlantSeg image is in this repository. `results/plantseg/leaf_filter.csv`
+holds only each image's filename, PlantSeg's own labels, and the tags assigned here, and
+notebook 04 downloads the images from Zenodo.
 
 The code is MIT licensed (`LICENSE`).
 
@@ -302,3 +309,5 @@ The code is MIT licensed (`LICENSE`).
   enable the development of mobile disease diagnostics. arXiv:1511.08060.
 - Mohanty, S. P., Hughes, D. P. and Salathé, M. 2016. Using deep learning for image-based
   plant disease detection. Frontiers in Plant Science 7:1419.
+- Wei, T., Chen, Z., Yu, X., Chapman, S., Melloy, P. and Huang, Z. 2026. A large-scale
+  in-the-wild dataset for plant disease segmentation. Scientific Data 13, 205.

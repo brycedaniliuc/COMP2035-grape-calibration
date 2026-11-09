@@ -10,6 +10,7 @@ Writes into report/generated/ (by default):
   table_audit.tex      leakage of the supplied split
   table_sweep.tex      the degradation sweep
   table_threshold.tex  the threshold, chosen on validation, checked on held-out test
+  table_plantseg.tex   PlantSeg field leaves (accuracy for black rot only; D16)
 The tables are bare `tabular`s: the caption and the float are the author's.
 
 Default sources: the newest Colab re-run under results/colab_*/ if there is one, otherwise
@@ -44,6 +45,7 @@ GENERATOR = Path(__file__).resolve()
 SOURCE_GLOB = "results/colab_*/results_resnet50_source_2*.json"
 SUPPLIED_GLOB = "results/colab_*/results_resnet50_supplied_*.json"
 SWEEP_GLOB = "results/colab_*/sweep_resnet50_source_2*.json"
+PLANTSEG_GLOB = "results/colab_*/plantseg_resnet50_source_2*.json"
 SEPTEMBER = {"source": REPO / "results/source/results_resnet50_source.json",
              "supplied": REPO / "results/supplied/results_resnet50_supplied.json"}
 CORR = {"gaussian_blur": ("Gaussian blur", "Blur"), "brightness": ("Brighten", "Brighten"),
@@ -262,7 +264,98 @@ def threshold_table(sw: dict) -> str:
     return "\n".join(body) + "\n"
 
 
-def numbers(src: dict | None, sup: dict | None, a: dict | None, sw: dict | None) -> str:
+PS_GROUPS = (("downy_mildew", "Downy", "downy mildew"), ("leaf_spot", "LeafSpot", "leaf spot"),
+             ("leafroll", "Leafroll", "leafroll"))
+
+
+def _top_class(predicted: dict[str, int]) -> str:
+    c, k = max(predicted.items(), key=lambda kv: kv[1])
+    return f"{tex_class(c)} ({k} of {sum(predicted.values())})"
+
+
+def plantseg_table(ps: dict) -> str:
+    """PlantSeg field leaves (D16). Accuracy exists only for black rot; the other three
+    classes are out of distribution, and their accuracy cell says so."""
+    def conf_cells(c: dict) -> str:
+        nw = pct(100 * c["share_without_warning"]) if "share_without_warning" in c else "--"
+        return (f"{f4(c['mean'])} & {f4(c['median'])} & {pct(100 * c['share_at_least']['0.90'])}"
+                f" & {nw}")
+
+    body = ["\\begin{tabular}{lrlrrrrl}", "\\toprule",
+            "Images & $n$ & Accuracy [95\\% CI] & Mean conf. & Median & "
+            "$\\ge 0.9$ & No warning & Most assigned class\\\\", "\\midrule"]
+    for key, label in (("black_rot", "PlantSeg black rot leaves"),
+                       ("black_rot_usual_framing", "\\quad without close-ups, wide views")):
+        a = ps[key]
+        body.append(f"{label} & {a['n']} & {f4(a['accuracy'])} {ci(*a['accuracy_wilson95'])} & "
+                    f"{conf_cells(a['confidence'])} & {_top_class(a['predicted_class'])}\\\\")
+    body.append("\\midrule")
+    for g, _, name in PS_GROUPS:
+        a = ps["out_of_distribution"][g]
+        body.append(f"PlantSeg {name} leaves & {a['n']} & n/a (out of distribution) & "
+                    f"{conf_cells(a['confidence'])} & {_top_class(a['predicted_class'])}\\\\")
+    body.append("\\midrule")
+    for k, label in (("plantvillage_clean", "PlantVillage clean test"),
+                     ("plantvillage_most_severe", "PlantVillage most severe corruption")):
+        a = ps["references"][k]
+        body.append(f"{label} & {a['confidence']['n']} & see Table (sweep) & "
+                    f"{conf_cells(a['confidence'])} & --\\\\")
+    body += ["\\bottomrule", "\\end{tabular}"]
+    return "\n".join(body) + "\n"
+
+
+def plantseg_macros(ps: dict | None) -> list[tuple[str, str, str]]:
+    names = ["psN", "psBrN", "psBrCorrect", "psBrAcc", "psBrAccCI", "psBrMeanConf", "psBrEce",
+             "psBrNoWarning", "psBrSensN", "psBrSensAcc", "psBrSensAccCI", "psThreshold",
+             "psCleanMeanConf", "psCleanNoWarning", "psSevereCondition", "psSevereMeanConf",
+             "psSevereNoWarning"]
+    names += [f"ps{m}{x}" for _, m, _ in PS_GROUPS
+              for x in ("N", "MeanConf", "MedianConf", "ShareNinety", "NoWarning")]
+    if ps is None:
+        return [(n, "\\pending{plantseg}", "") for n in names]
+
+    def nw(c: dict) -> str:
+        return pct(100 * c["share_without_warning"]) if "share_without_warning" in c else "--"
+
+    br, sens = ps["black_rot"], ps["black_rot_usual_framing"]
+    refs = ps["references"]
+    clean, severe = refs["plantvillage_clean"], refs["plantvillage_most_severe"]
+    corr, sev = severe["condition"].rsplit("_s", 1)
+    m = [("psN", str(br["n"] + sum(ps["out_of_distribution"][g]["n"] for g, _, _ in PS_GROUPS)),
+          "PlantSeg leaves analysed, each photograph once"),
+         ("psBrN", str(br["n"]), "black rot leaves: SMALL, quote with the interval"),
+         ("psBrCorrect", str(br["n_correct"]), ""),
+         ("psBrAcc", f4(br["accuracy"]), "black rot leaves, the one class that maps"),
+         ("psBrAccCI", ci(*br["accuracy_wilson95"]), "Wilson 95%"),
+         ("psBrMeanConf", f4(br["mean_confidence"]), ""),
+         ("psBrEce", f4(br["ece"]), "no interval: not valid at this n (D16)"),
+         ("psBrNoWarning", nw(br["confidence"]), "share accepted without a warning"),
+         ("psBrSensN", str(sens["n"]), "without close-ups, wide views and shoots"),
+         ("psBrSensAcc", f4(sens["accuracy"]), ""),
+         ("psBrSensAccCI", ci(*sens["accuracy_wilson95"]), ""),
+         ("psThreshold", f"{ps['threshold']:.4g}" if ps["threshold"] is not None else "--",
+          "max softmax, chosen on validation (D10)"),
+         ("psCleanMeanConf", f4(clean["confidence"]["mean"]), "PlantVillage clean, T = 1"),
+         ("psCleanNoWarning", nw(clean["confidence"]), ""),
+         ("psSevereCondition", f"{CORR[corr][0]}, severity {sev}",
+          "lowest-accuracy severity-5 condition"),
+         ("psSevereMeanConf", f4(severe["confidence"]["mean"]), ""),
+         ("psSevereNoWarning", nw(severe["confidence"]), "")]
+    for g, mname, _ in PS_GROUPS:
+        a = ps["out_of_distribution"][g]
+        c = a["confidence"]
+        m += [(f"ps{mname}N", str(a["n"]), "out of distribution: confidence only"),
+              (f"ps{mname}MeanConf", f4(c["mean"]), ""),
+              (f"ps{mname}MedianConf", f4(c["median"]), ""),
+              (f"ps{mname}ShareNinety", pct(100 * c["share_at_least"]["0.90"]),
+               "share with confidence >= 0.9"),
+              (f"ps{mname}NoWarning", nw(c), "")]
+    assert [x[0] for x in m] == names
+    return m
+
+
+def numbers(src: dict | None, sup: dict | None, a: dict | None, sw: dict | None,
+            ps: dict | None = None) -> str:
     m: list[tuple[str, str, str]] = []  # (name, value, comment)
 
     def add(name: str, value: str, comment: str = "") -> None:
@@ -355,6 +448,7 @@ def numbers(src: dict | None, sup: dict | None, a: dict | None, sw: dict | None)
     else:
         pend(sweep_names + [x for pair in sev5.values() for x in pair], "sweep")
 
+    m += plantseg_macros(ps)
     lines = ["\\usepackage{xspace}",
              "\\providecommand{\\pending}[1]{\\textbf{[pending: #1]}\\xspace}"]
     for name, value, comment in m:
@@ -370,11 +464,12 @@ def write(out: Path, name: str, body: str, sources: Sources) -> Path:
 
 
 def build(source: Path | None, supplied: Path | None, sweep: Path | None, out: Path,
-          audit: Path | None = None, pending_globs: dict[str, str] | None = None) -> list[Path]:
+          audit: Path | None = None, pending_globs: dict[str, str] | None = None,
+          plantseg: Path | None = None) -> list[Path]:
     pending_globs = pending_globs or {}
     out.mkdir(parents=True, exist_ok=True)
     load = (lambda p: json.loads(p.read_text()) if p else None)  # noqa: E731
-    res_src, res_sup, sw = load(source), load(supplied), load(sweep)
+    res_src, res_sup, sw, ps = load(source), load(supplied), load(sweep), load(plantseg)
     a = load(audit) if audit else (res_src or {}).get("audit")
     src = run_numbers(res_src) if res_src else None
     sup = run_numbers(res_sup) if res_sup else None
@@ -390,9 +485,9 @@ def build(source: Path | None, supplied: Path | None, sweep: Path | None, out: P
 
     audit_src = audit if audit else source
     written = [
-        write(out, "numbers.tex", numbers(src, sup, a, sw),
+        write(out, "numbers.tex", numbers(src, sup, a, sw, ps),
               srcs((source, "source"), (supplied, "supplied"), (audit_src, "audit"),
-                   (sweep, "sweep"))),
+                   (sweep, "sweep"), (plantseg, "plantseg"))),
         write(out, "table_results.tex", results_table(src, sup),
               srcs((source, "source"), (supplied, "supplied"))),
         write(out, "table_audit.tex",
@@ -406,6 +501,10 @@ def build(source: Path | None, supplied: Path | None, sweep: Path | None, out: P
               threshold_table(sw) if sw else pending_tabular(
                   "threshold", "comes from the degradation sweep (HANDOVER.md)"),
               srcs((sweep, "sweep"))),
+        write(out, "table_plantseg.tex",
+              plantseg_table(ps) if ps else pending_tabular(
+                  "plantseg", "PlantSeg field leaves come from notebook 04 (HANDOVER.md)"),
+              srcs((plantseg, "plantseg"))),
     ]
     return written
 
@@ -417,6 +516,7 @@ def main() -> None:
     ap.add_argument("--supplied-results", help="results JSON of the supplied run ('none')")
     ap.add_argument("--sweep", help="sweep JSON of the source run ('none' = absent)")
     ap.add_argument("--audit", help="audit JSON (default: the source run's own audit)")
+    ap.add_argument("--plantseg", help="plantseg JSON of the source run ('none' = absent)")
     ap.add_argument("--out", default=str(REPO / "report" / "generated"))
     a = ap.parse_args()
     source, g1 = resolve(a.source_results, SOURCE_GLOB, SEPTEMBER["source"])
@@ -427,11 +527,19 @@ def main() -> None:
         sweep, g3 = (own, None) if own is not None and own.exists() else (None, SWEEP_GLOB)
     else:
         sweep, g3 = resolve(a.sweep, SWEEP_GLOB, None)
-    pending = {w: g for w, g in (("source", g1), ("supplied", g2), ("sweep", g3)) if g}
-    for what, p in (("source run", source), ("supplied run", supplied), ("sweep", sweep)):
+    if a.plantseg is None and source is not None:  # the PlantSeg run OF the chosen source run
+        run_id = json.loads(source.read_text()).get("run_id")
+        own = source.parent / f"plantseg_{run_id}.json" if run_id else None
+        plantseg, g4 = (own, None) if own is not None and own.exists() else (None, PLANTSEG_GLOB)
+    else:
+        plantseg, g4 = resolve(a.plantseg, PLANTSEG_GLOB, None)
+    pending = {w: g for w, g in (("source", g1), ("supplied", g2), ("sweep", g3),
+                                 ("plantseg", g4)) if g}
+    for what, p in (("source run", source), ("supplied run", supplied), ("sweep", sweep),
+                    ("plantseg", plantseg)):
         print(f"{what:13s}: {rel(p) if p else 'PENDING (not available yet)'}")
     for p in build(source, supplied, sweep, Path(a.out), Path(a.audit) if a.audit else None,
-                   pending):
+                   pending, plantseg):
         print("written ->", rel(p))
 
 

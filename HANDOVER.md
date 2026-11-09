@@ -8,17 +8,21 @@ run-tagged filenames, so nothing depends on downloading from the Colab session.
 
 Run them in this order. **01 and 02 are essential**: together they are the complete core
 project (the leak-free baseline, the degradation study, coverage curves, the threshold, every
-core figure). **03–05 are upgrades.** Each is a separate notebook that saves to Drive as it
-goes, so a disconnect costs at most the notebook it happens in, and the project is complete
-without them.
+core figure). **03 and 04 are upgrades**, and 05 is parked. Each upgrade is a separate
+notebook that saves to Drive as it goes, so a disconnect costs at most the notebook it
+happens in. If the session runs out after 02, the project is still complete. 03 and 04 do
+not depend on each other: run them in either order, or only one.
+
+Wall times say what they rest on: "September" is a measured T4 run, "measured locally" is a
+CPU run of the same code on this machine, and "estimate" is neither.
 
 | # | Notebook | Status | Needs in Drive | Wall time on a T4 (basis) |
 |---|---|---|---|---|
 | 01 | `01_baseline_calibration` | **essential** | the dataset zip | about 45 min (September: 25.9 + 17.8 min of training) |
 | 02 | `02_degradation_study` | **essential** | 01's seed 42 source run | about 10 min (estimate: sweep about 6 min, see §2) |
 | 03 | `03_deep_ensemble` | upgrade | 01's seed 42 source run (02 optional) | about 70 min (estimate: 2 × 26 min training + 3 sweeps) |
-| 04 | PlantSeg field images | upgrade, **not built yet** | phases A and B1 done (D14, D15: 25 black rot leaves); B2 waits on the owner | — |
-| 05 | MC dropout | upgrade, **parked** (owner, 2026-11-10) | — | — |
+| 04 | `04_plantseg_field` | upgrade | 01's seed 42 run **and** 02's sweep (no PlantVillage zip needed) | about 5 min (estimate: a 1.7 GB download, then 334 images; measured locally: 95 s on CPU for the analysis) |
+| 05 | MC dropout | **parked** (owner, 2026-11-10) | — | — |
 
 If a session dies in an upgrade notebook, re-run that notebook: anything it already finished
 in Drive (a trained member, a sweep) is reused, not repeated.
@@ -105,6 +109,28 @@ Tested locally on the fixture by executing the notebook's own cells three times:
 a re-run (nothing retrained), and a simulated disconnect during seed 44 (only seed 44
 retrained). Not yet run on Colab.
 
+## 2c · Notebook 04 — `notebooks/04_plantseg_field.ipynb` (upgrade)
+
+Needs notebook 01's seed 42 run and notebook 02's sweep of it in `OUT`. It does **not** need
+the PlantVillage zip. It downloads PlantSeg v6 (1.7 GB, Zenodo record 16665770, CC BY 4.0)
+into the Colab session (`/content`), never to Drive, and refuses a file whose MD5 does not
+match. **No PlantSeg image is written to Drive.**
+
+| # | Cell | What it does | Expected wall time |
+|---|---|---|---|
+| 1–2 | settings, setup | as above | about 1 min |
+| 3 | locate | the seed 42 run and its sweep (stops if 02 has not run) | instant |
+| 4 | **download** | PlantSeg v6, then its MD5 (skipped if already in the session and correct) | about 1–2 min (estimate) |
+| 5 | **analyses** | black rot leaves (accuracy, n = 25); the other three classes (out-of-distribution confidence only); the PlantVillage references; the threshold | about 1 min (measured locally: 95 s on CPU) |
+| 6 | figures | `plantseg_confidence`, `plantseg_predicted_class` (paper PDF + slide PNG) | seconds |
+| 7 | verify | Tier 1 must pass (5 checks; one fails if accuracy ever appears for the other classes) | seconds |
+| 8 | list | prints every PlantSeg file in Drive | seconds |
+
+**Check in Drive after 04:** `plantseg_<run_id>.json`, `plantseg_logits_<run_id>.npz`, and in
+`figures_<run_id>/` the four `plantseg_*` files. Cell 7 must show Tier 1 with 0 failed.
+Executed locally, cell by cell, on the real PlantSeg zip with a stand-in model; not yet run
+on Colab.
+
 ## 3 · Files that must be in Drive afterwards (`MyDrive/COMP2035_runs/`)
 
 `<run_id>` is `<model>_<split>_<YYYYmmdd-HHMMSS>`. Nothing is ever overwritten: a run refuses
@@ -159,8 +185,9 @@ Copy into `results/colab_<date>/` in the repo, for each run, **every file except
 checkpoint**: `results_`, `logits_`, `splits_`, `sweep_`, `sweep_logits_` and
 `sweep_val_logits_` (`verify` reads them side by side). Also copy `audit_<stamp>.json`, and
 from notebook 03 the `ensemble_`, `ensemble_probs_` and `ensemble_val_probs_` files and both
-members' files. Copy the figures into `figures/`. Check the ensemble with
-`.venv/bin/python -m src.verify --ensemble results/colab_<date>/ensemble_<ens_id>.json`.
+members' files, and from notebook 04 the `plantseg_` and `plantseg_logits_` files. Copy the figures into `figures/`. Check the ensemble with
+`.venv/bin/python -m src.verify --ensemble results/colab_<date>/ensemble_<ens_id>.json` and
+`.venv/bin/python -m src.verify --plantseg results/colab_<date>/plantseg_<run_id>.json`.
 The checkpoints stay in Drive; `*.pt` is gitignored. Then repeat every check from the copied
 files:
 `.venv/bin/python -m src.verify --run results/colab_<date>/results_<run_id>.json`

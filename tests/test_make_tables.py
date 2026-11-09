@@ -16,7 +16,7 @@ def test_committed_report_numbers_are_current():
     """report/generated must match the JSON in results/ and the current generator.
     If this fails: .venv/bin/python tools/make_tables.py"""
     st = _status(REPO / "report" / "generated")
-    assert len(st) == 5 and all(s == "PASS" for s, _ in st.values()), st
+    assert len(st) == 6 and all(s == "PASS" for s, _ in st.values()), st
 
 
 def test_september_runs_are_read_correctly():

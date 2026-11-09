@@ -380,3 +380,70 @@ the web, so the same photograph can appear more than once.
     any of the 25 is at distance 88 or more, and those are different photographs.
 - **Limit.** A copy cropped or edited heavily enough to move past distance 90 would not be
   caught.
+
+## D16 · PlantSeg phase B2: the protocol, fixed before the real model exists — BUILT, run pending
+
+The real ResNet-50 has not been trained yet (notebooks 01 and 02 run on Colab). This is
+written before any real B2 number exists, so the comparison cannot be chosen after seeing
+the results.
+
+- **Images.** The leaves of D15, each photograph once: 25 black rot, 174 downy mildew, 74
+  leaf spot, 61 leafroll. They go through the evaluation transform (resize 256, centre crop
+  224), exactly as the PlantVillage test images do, at T = 1. A centre crop can cut off part
+  of a wide field photograph; PlantVillage test images get the same treatment.
+- **Analysis A, black rot leaves (n = 25).** PlantSeg's "grape black rot" is the model's
+  `Black_rot`.
+  - **Reported:** accuracy with a Wilson 95% interval, mean confidence, the confidence
+    distribution and the classes assigned.
+  - **ECE without an interval.** ECE is noisy and biased upward at this n, and the first
+    real-image run showed its percentile bootstrap interval failing to contain its own
+    estimate. Wilson is valid at any n.
+  - **Sensitivity check:** the same without the eight close-ups, wide views and shoots
+    (D15; selected by the reason text), n = 17.
+  - **n is printed with every number.**
+- **Analysis B, downy mildew, leaf spot and leafroll leaves.** None of the model's four
+  classes is the true disease, so correctness is undefined.
+  - **No accuracy is computed:** the code has no path that would, and `src.verify` fails if
+    any accuracy field appears in these sections.
+  - **Reported:** the confidence distribution and the share assigned to each of the four
+    classes. Every label and figure says "out-of-distribution confidence".
+- **The two analyses are never merged:** separate JSON sections, separate figure panels,
+  separate table rows.
+- **References, the same model at T = 1:** the clean PlantVillage test images, and the most
+  severe simulated corruption. That is defined in advance as the severity-5 condition with
+  the lowest accuracy.
+- **The warning tool (Stage 10).** For every group, the share that would pass **without a
+  warning** at the threshold chosen on validation (D10).
+- **How the Discussion claim will be judged, fixed now.** "Field images get the same high
+  confidence as clean lab images" will be judged on three things:
+  - the share passing without a warning
+  - the share at or above 0.9
+  - the median confidence
+  
+  Each of these PlantSeg groups is set against PlantVillage clean, using the means with
+  their bootstrap intervals. If the out-of-distribution groups pass without a warning at a
+  rate close to clean PlantVillage, the warning does not protect against field images. If
+  they pass far less often, the warning works as a field-image guard on this data. Either
+  way it is reported.
+- **Status.** Built, tested on a fixture stand-in, and run end to end through notebook 04's
+  own cells on the real 334 PlantSeg leaves with a stand-in model (a one-epoch
+  EfficientNet-B0, not a result). The real numbers come from notebook 04 after notebooks 01
+  and 02.
+
+## D17 · Bootstrap intervals on small ECE values in the main sweep — OPEN (owner decides)
+
+Found while building B2. ECE is biased upward, so when it is resampled its percentile
+bootstrap distribution sits above a small point estimate. In the real-image smoke sweep
+(n = 610), 1 of 144 ECE intervals did not contain its own estimate (0.0192 vs
+[0.0214, 0.0532]). The case to watch in the real run is the LBFGS-endpoint condition: with a
+degenerate T its ECE is near 0, and its "interval" will sit wholly above it. The numbers are
+computed correctly. The issue is that a percentile interval of a biased statistic is not a
+confidence interval for the true ECE.
+- **Options:**
+  1. Keep the intervals, with a caption noting that they are percentile intervals of a
+     biased statistic and are not shown where ECE is near zero.
+  2. Report ECE without intervals, and compare conditions by the accuracy and confidence
+     intervals.
+  3. Replace them with a bias-corrected ECE estimator. That is a method change, and its
+     reference would need checking before it is used.
+- **Recommendation:** 1. It changes no code and is honest.
