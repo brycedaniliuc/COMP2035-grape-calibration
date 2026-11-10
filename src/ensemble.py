@@ -32,7 +32,7 @@ from src.config import Config
 from src.degrade import CORRUPTIONS, SEVERITIES
 from src.evaluate import (
     evaluate_logits,
-    report_aurc,
+    reported_aurc,
     rescore,
     risk_coverage,
     sweep,
@@ -183,6 +183,11 @@ def evaluate_samples(test: dict[str, list[np.ndarray]], val: dict[str, list[np.n
     return rows, probs, val_probs
 
 
+def _aurc(row: dict) -> str:
+    x = reported_aurc(row, "scores", "max_softmax")
+    return "sat." if x is None else f"{x:.2f}"
+
+
 def ensemble_sweep(member_results: Sequence[str | Path], stamp: str | None = None,
                    data_root: str | None = None) -> dict:
     paths = [Path(p) for p in member_results]
@@ -243,7 +248,6 @@ def ensemble_sweep(member_results: Sequence[str | Path], stamp: str | None = Non
         print(f"{r['corruption'] + ' s' + str(r['severity']):<18}{s['accuracy']:>11.4f}"
               f"{r['accuracy']:>10.4f}{s['temperature']['T=1']['ece']:>12.4f}"
               f"{r['temperature']['T=1']['ece']:>10.4f}"
-              f"{report_aurc(s['scores']['max_softmax']['aurc']):>13.2f}"
-              f"{report_aurc(r['scores']['max_softmax']['aurc']):>10.2f}")  # D20
+              f"{_aurc(s):>13}{_aurc(r):>10}")  # D20: "sat." where the score saturates
     print(f"written -> {out_dir / f'ensemble_{ens_id}.json'}")
     return out

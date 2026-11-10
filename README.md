@@ -126,7 +126,9 @@ why the degradation study, where errors occur, is the real experiment.
 - **Selective classification** (Geifman & El-Yaniv 2017). Coverage curves and the area
   under the risk–coverage curve (AURC) for each score at T = 1, and for max softmax and
   entropy at every temperature condition, because a temperature can reorder images. Margin
-  divided by T ranks images exactly as margin does.
+  divided by T ranks images exactly as margin does. AURC is reported at T = 1 only, to two
+  decimals: at the LBFGS endpoint max softmax saturates at 1.0, so the ranking cannot order
+  the tied predictions; the saturation counts are reported instead (DECISIONS.md D20).
 - **Threshold.** Chosen on the **validation** images under every (corruption, severity)
   condition: the lowest score at which every condition reaches the target accuracy on the
   accepted predictions (primary target 95%). It is then applied, unchanged, to the **test**

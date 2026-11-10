@@ -184,6 +184,64 @@ def own_score(logits: np.ndarray, t: float, score: str) -> np.ndarray:
     return p.max(1) if score == "max_softmax" else (p * np.log(np.clip(p, 1e-12, None))).sum(1)
 
 
+def saturation_v2(s: np.ndarray, correct: np.ndarray) -> dict:
+    """The saturation statistic (D20), written again: sort, and mark each prediction whose
+    neighbour in sorted order has the same score."""
+    v = np.sort(s, kind="mergesort")
+    same = v[1:] == v[:-1]
+    tied = np.r_[False, same] | np.r_[same, False]
+    at_top = s == v[-1]
+    n_top = int(at_top.sum())
+    return {"top_score": float(v[-1]), "top_tie": n_top if n_top > 1 else 0,
+            "top_tie_wrong": int((1 - correct[at_top]).sum()) if n_top > 1 else 0,
+            "tied_fraction": float(tied.mean())}
+
+
+def saturation_checks(label: str, rows: list[dict], store: dict) -> list[Check]:
+    """D20, from the stored score arrays: every curve's saturation statistic re-derived.
+    The figure and table checks then use it: a saturated curve's AURC must not appear."""
+    from src.evaluate import REPORTED_AURC, SATURATION_LIMIT  # declarations, not statistics
+    y = store["labels"]
+    bad, over, n, n_rep, worst, worst_at = [], [], 0, 0, 0.0, "-"
+    for r in rows:
+        key = f"{r['corruption']}_s{r['severity']}"
+        correct = (store[key].argmax(1) == y).astype(float)
+        blocks = [(name, cond["coverage"]) for name, cond in r["temperature"].items()
+                  if "coverage" in cond]
+        for name, block in blocks + [("scores", r["scores"])]:
+            for k, c in block.items():
+                s = (-store[f"{key}__mutual_info"] if k == "neg_mutual_info"
+                     and f"{key}__mutual_info" in store else stored_scores(store, key, name, k))
+                if s is None:
+                    bad.append(f"{key}/{name}/{k}: {NO_STORED}")
+                    continue
+                n += 1
+                own = saturation_v2(s, correct)
+                if c.get("saturation") != own:
+                    bad.append(f"{key}/{name}/{k}")
+                if (name, k) in REPORTED_AURC:
+                    n_rep += 1
+                    if own["tied_fraction"] > SATURATION_LIMIT:
+                        over.append(f"{key}/{k}")
+                    elif own["tied_fraction"] >= worst:
+                        worst, worst_at = own["tied_fraction"], f"{key}/{k}"
+    return [(f"{label}: saturation re-derived, every curve", 1,
+             "PASS" if n and not bad else "FAIL",
+             f"{n} curves" + (f"; {bad[:3]}" if bad else "")
+             + f"; of the {n_rep} reported AURC curves, {len(over)} saturate beyond "
+             f"{SATURATION_LIMIT:.0%} (omitted from the report, D20); the most tied of the rest "
+             f"{worst:.1%} ({worst_at})")]
+
+
+def shown_aurc(c: dict, tied_fraction: float | None = None) -> float:
+    """What the report may show for a curve (D20): its AURC to two decimals, or NaN (nothing)
+    if its score saturates beyond the limit. tied_fraction: this module's own value from the
+    stored scores where available, otherwise the JSON's (re-derived by saturation_checks)."""
+    from src.evaluate import AURC_DECIMALS, SATURATION_LIMIT  # declarations
+    tf = c["saturation"]["tied_fraction"] if tied_fraction is None else tied_fraction
+    return float("nan") if tf > SATURATION_LIMIT else round(c["aurc"], AURC_DECIMALS)
+
+
 NO_STORED = ("no stored score arrays: this output was written before the evaluation saved "
              "the exact arrays it ranked on, so its AURC cannot be re-derived exactly (D20)")
 
@@ -244,6 +302,7 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
         out.append(("sweep: AURC at every T re-derived", 1, "PASS" if cov_diff < AURC_TOL
                     else "FAIL", f"max |diff| {cov_diff:.1e}, {len(curves)} curves ranked on "
                     "the stored scores (max softmax and entropy at every T; margin at T = 1)"))
+        out += saturation_checks("sweep", sw["rows"], lg)
     out += threshold_checks(sw, lg, val_lg)
     out += figure_checks(sw, lg)
     return out
@@ -313,13 +372,18 @@ def figure_checks(sw: dict, lg: dict) -> list[Check]:
         return [np.asarray(ln.get_ydata(), float) for ax in fig.axes for ln in ax.get_lines()]
 
     def has(series: list[np.ndarray], want: np.ndarray) -> bool:
-        return any(s.shape == want.shape and np.allclose(s, want, atol=1e-12) for s in series)
+        return any(s.shape == want.shape and np.allclose(s, want, atol=1e-12, equal_nan=True)
+                   for s in series)
 
-    def check(name: str, fig, wants: list[np.ndarray]) -> None:
+    def check(name: str, fig, wants: list[np.ndarray], exact: bool = False) -> None:
+        """exact: the figure plots these series and nothing else."""
         got = plotted(fig)
         miss = sum(not has(got, w) for w in wants)
-        out.append((f"figure {name}: plotted = data", 1, "PASS" if miss == 0 else "FAIL",
-                    f"{len(wants) - miss}/{len(wants)} series found"))
+        extra = len(got) - len(wants) if exact else 0
+        out.append((f"figure {name}: plotted = data", 1,
+                    "PASS" if miss == 0 and extra == 0 else "FAIL",
+                    f"{len(wants) - miss}/{len(wants)} series found"
+                    + (f", {len(got)} plotted (only these may be)" if exact else "")))
         plt.close(fig)
 
     sev = range(6)
@@ -331,12 +395,19 @@ def figure_checks(sw: dict, lg: dict) -> list[Check]:
     check("ece_by_fixed_t", F.ece_by_fixed_t(sw)("paper"),
           [np.array([rows[(c, s)]["temperature"][k]["ece"] for s in sev])
            for c in CORRUPTIONS for k in sw["temperatures"] if k.startswith("T=")])
-    from src.evaluate import AURC_DECIMALS  # the reporting precision (D20), not a statistic
-    check("aurc_by_score (at the reported precision, D20)", F.aurc_by_score(sw)("paper"),
-          [np.round([rows[(c, s)]["scores"][k]["aurc"] for s in sev], AURC_DECIMALS)
-           for c in CORRUPTIONS for k in ("max_softmax", "neg_entropy", "margin")]
-          + [np.round([rows[(c, s)]["temperature"]["T_lbfgs"]["coverage"]["max_softmax"]
-                       ["aurc"] for s in sev], AURC_DECIMALS) for c in CORRUPTIONS])
+    from src.evaluate import REPORTED_AURC  # the declaration of what is reported (D20)
+
+    def shown(c: str, s: int, t: str, k: str) -> float:  # saturation from the stored scores
+        r = rows[(c, s)]
+        cv = r["scores"][k] if t == "scores" else r["temperature"][t]["coverage"][k]
+        st = stored_scores(lg, f"{c}_s{s}", t, k)
+        own = None if st is None else saturation_v2(
+            st, (lg[f"{c}_s{s}"].argmax(1) == y).astype(float))["tied_fraction"]
+        return shown_aurc(cv, own)
+    check("aurc_by_score (reported curves only, 2 decimals, none saturated, D20)",
+          F.aurc_by_score(sw)("paper"),
+          [np.array([shown(c, s, t, k) for s in sev]) for c in CORRUPTIONS
+           for t, k in REPORTED_AURC], exact=True)
     check("coverage_curves (vs independent recomputation)", F.coverage_curves(sw, lg)("paper"),
           [selective_acc(_t1_max(lg, f"{c}_s{s}"), (lg[f"{c}_s{s}"].argmax(1) == y).astype(float))
            for c in CORRUPTIONS for s in sev])
@@ -476,6 +547,7 @@ def sample_method_checks(label: str, method: dict, probs: dict, val_probs: dict,
     out.append((f"{label}: accuracy, ECE, AURC re-derived, every row", 1,
                 "PASS" if not bad else "FAIL", f"{len(method['rows'])} rows"
                 + (f"; {bad[:5]}" if bad else "")))
+    out += saturation_checks(label, method["rows"], probs)
 
     def logs(st: dict) -> dict:
         return {k: (np.log(np.clip(v, 1e-300, None)) if k != "labels" else v)
@@ -485,6 +557,15 @@ def sample_method_checks(label: str, method: dict, probs: dict, val_probs: dict,
     out += [(f"{label} {name}", t, st, det)
             for name, t, st, det in threshold_checks(method, logs(probs), val_logs)]
     return out
+
+
+def _comparison_wants(rows: list[dict]) -> list[np.ndarray]:
+    """The comparison figures' series: accuracy and ECE as plotted, and AURC as the report
+    may show it (shown_aurc: NaN where max softmax saturates, D20)."""
+    import src.figures as F
+    out = [np.array([f(r) for r in rows]) for label, f, _ in F.COMPARISON_METRICS
+           if not label.startswith("AURC")]
+    return out + [np.array([shown_aurc(r["scores"]["max_softmax"]) for r in rows])]
 
 
 def ensemble_checks(ens_path: Path) -> list[Check]:
@@ -529,9 +610,9 @@ def ensemble_checks(ens_path: Path) -> list[Check]:
         for c in CORRUPTIONS:
             rows = sorted((r for r in sw["rows"] if r["corruption"] == c),
                           key=lambda r: r["severity"])
-            wants += [np.array([f(r) for r in rows]) for _, f, _ in F.COMPARISON_METRICS]
-    miss = sum(not any(g.shape == w.shape and np.allclose(g, w, atol=1e-12) for g in got)
-               for w in wants)
+            wants += _comparison_wants(rows)
+    miss = sum(not any(g.shape == w.shape and np.allclose(g, w, atol=1e-12, equal_nan=True)
+                       for g in got) for w in wants)
     out.append(("figure ensemble_vs_single: plotted = data", 1, "PASS" if not miss else "FAIL",
                 f"{len(wants) - miss}/{len(wants)} series found"))
     return out
@@ -581,9 +662,9 @@ def mcdropout_checks(mc_path: Path) -> list[Check]:
         for c in CORRUPTIONS:
             rows = sorted((r for r in sw["rows"] if r["corruption"] == c),
                           key=lambda r: r["severity"])
-            wants += [np.array([f(r) for r in rows]) for _, f, _ in F.COMPARISON_METRICS]
-    miss = sum(not any(g.shape == w.shape and np.allclose(g, w, atol=1e-12) for g in got)
-               for w in wants)
+            wants += _comparison_wants(rows)
+    miss = sum(not any(g.shape == w.shape and np.allclose(g, w, atol=1e-12, equal_nan=True)
+                       for g in got) for w in wants)
     out.append(("figure methods_comparison: plotted = data", 1, "PASS" if not miss else "FAIL",
                 f"{len(wants) - miss}/{len(wants)} series"
                 f"{' (with the ensemble)' if ens else ' (no ensemble run)'}"))
@@ -768,7 +849,47 @@ def generated_checks(gen_dir: Path) -> list[Check]:
                     "; ".join(problems) if problems else
                     f"{len(sources)} source(s)" + (f", {len(pending)} pending" if pending
                                                     else "")))
+        if f.name == "table_sweep.tex" and sources and "\\pending{" not in f.read_text():
+            p = Path(sources[0][0])
+            out.append(sweep_table_aurc_check(f, p if p.is_absolute() else REPO / p))
     return out
+
+
+def sweep_table_aurc_check(table: Path, sweep_path: Path) -> Check:
+    """D20, on the table itself: its AURC column (max softmax, T = 1) shows each condition's
+    AURC to two decimals, and "sat." (no number) wherever the score saturates beyond the
+    limit, judged from the stored scores by this module's own code."""
+    name = "generated table_sweep.tex: AURC only where the score does not saturate"
+    if not sweep_path.exists():
+        return (name, 1, "FAIL", f"source missing: {sweep_path}")
+    from src.degrade import CORRUPTIONS
+    sw = json.loads(sweep_path.read_text())
+    lg = dict(np.load(sweep_path.parent / sweep_path.name.replace("sweep_", "sweep_logits_")
+                      .replace(".json", ".npz")))
+    rows = [next(r for r in sw["rows"] if r["severity"] == 0)] + [
+        r for c in CORRUPTIONS for r in sorted((r for r in sw["rows"] if r["corruption"] == c
+                                                and r["severity"] > 0),
+                                               key=lambda r: r["severity"])]
+    cells = [ln.rstrip().removesuffix("\\\\").rsplit("&", 1)[1].strip()
+             for ln in table.read_text().splitlines()
+             if ln.rstrip().endswith("\\\\") and ln.count("&") >= 7
+             and not ln.startswith(("Corruption", " &"))]
+    if len(cells) != len(rows):
+        return (name, 1, "FAIL", f"{len(cells)} table rows for {len(rows)} conditions")
+    wrong, n_sat = [], 0
+    for r, cell in zip(rows, cells, strict=True):
+        key = f"{r['corruption']}_s{r['severity']}"
+        s = stored_scores(lg, key, "scores", "max_softmax")
+        if s is None:
+            return (name, 1, "FAIL", NO_STORED)
+        tf = saturation_v2(s, (lg[key].argmax(1) == lg["labels"]).astype(float))["tied_fraction"]
+        want = shown_aurc(r["scores"]["max_softmax"], tf)
+        n_sat += bool(np.isnan(want))
+        ok = cell == "sat." if np.isnan(want) else cell == f"{want:.2f}"
+        if not ok:
+            wrong.append(f"{key}: {cell!r}")
+    return (name, 1, "FAIL" if wrong else "PASS",
+            f"{len(rows)} rows, {n_sat} saturated" + (f"; wrong: {wrong[:4]}" if wrong else ""))
 
 
 def main() -> None:

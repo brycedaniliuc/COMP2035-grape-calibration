@@ -10,6 +10,7 @@ Writes into report/generated/ (by default):
   table_audit.tex      leakage of the supplied split
   table_sweep.tex      the degradation sweep
   table_threshold.tex  the threshold, chosen on validation, checked on held-out test
+  table_saturation.tex where each score saturates at T_lbfgs (D20; for the appendix)
   table_plantseg.tex   PlantSeg field leaves (accuracy for black rot only; D16)
 The tables are bare `tabular`s: the caption and the float are the author's.
 
@@ -37,7 +38,12 @@ from typing import Any
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from src.evaluate import AURC_DECIMALS, report_aurc, wilson_ci  # noqa: E402  (repo on sys.path first)
+from src.evaluate import (  # noqa: E402  (repo on sys.path first)
+    AURC_DECIMALS,
+    SATURATION_LIMIT,
+    reported_aurc,
+    wilson_ci,
+)
 from src.provenance import not_a_result  # noqa: E402
 
 GENERATOR = Path(__file__).resolve()
@@ -106,9 +112,14 @@ def resolve(arg: str | None, glob: str, fallback: Path | None) -> tuple[Path | N
 
 # ---- formatting ---------------------------------------------------------------------------
 
-def aurc(x: float) -> str:
-    """AURC at the precision it is stable to (DECISIONS.md D20), never more."""
-    return f"{report_aurc(x):.{AURC_DECIMALS}f}"
+SATURATED = "sat."  # an AURC not reported because the score saturates (D20)
+
+
+def aurc(row: dict, t_name: str, score: str) -> str:
+    """AURC at the precision it is stable to, and only from a curve whose score does not
+    saturate (DECISIONS.md D20): reported_aurc refuses anything else."""
+    x = reported_aurc(row, t_name, score)
+    return SATURATED if x is None else f"{x:.{AURC_DECIMALS}f}"
 
 
 def f4(x: float) -> str:
@@ -236,7 +247,7 @@ def sweep_table(sw: dict) -> str:
         t1, tl = r["temperature"]["T=1"], r["temperature"]["T_lbfgs"]
         return (f"{name} & {sev} & {par} & {f4(r['accuracy'])} {ci(*r['accuracy_wilson95'])} & "
                 f"{f4(t1['mean_confidence'])} & {f4(t1['ece'])} {ci(*t1['ece_bootstrap95'])} & "
-                f"{f4(tl['ece'])} & {aurc(r['scores']['max_softmax']['aurc'])}\\\\")
+                f"{f4(tl['ece'])} & {aurc(r, 'scores', 'max_softmax')}\\\\")
 
     # severity 0 is identical for every corruption (asserted in the sweep): one clean row
     clean = next(r for r in sw["rows"] if r["severity"] == 0)
@@ -247,6 +258,75 @@ def sweep_table(sw: dict) -> str:
                  for r in sw["rows"] if r["corruption"] == c and r["severity"] > 0]
     body += ["\\bottomrule", "\\end{tabular}"]
     return "\n".join(body) + "\n"
+
+
+SAT_SCORES = (("T_lbfgs", "max_softmax"), ("T_lbfgs", "neg_entropy"), ("scores", "margin"))
+
+
+def _sat(r: dict, t_name: str, score: str) -> dict:
+    c = r["scores"][score] if t_name == "scores" else r["temperature"][t_name]["coverage"][score]
+    return c["saturation"]
+
+
+def saturation_table(sw: dict) -> str:
+    """At T_lbfgs, for every condition: how many of the n test predictions share the top
+    score of each confidence score, and how many of those are wrong (D20). On the real run
+    max softmax's shared top score is exactly 1.0 in every condition (top_score in the
+    JSON). Margin does not depend on T."""
+    def cell(s: dict) -> str:
+        return f"{s['top_tie']} ({s['top_tie_wrong']})"
+
+    body = ["\\begin{tabular}{llrrrrr}", "\\toprule",
+            "Corruption & Sev. & Errors & \\multicolumn{3}{c}{Sharing the top score "
+            "(of which wrong)} & Max softmax\\\\",
+            " & & & Max softmax & Entropy & Margin & tied\\\\", "\\midrule"]
+
+    def line(r: dict, name: str, sev: str) -> str:
+        cells = " & ".join(cell(_sat(r, t, k)) for t, k in SAT_SCORES)
+        tied = pct(100 * _sat(r, "T_lbfgs", "max_softmax")["tied_fraction"])
+        return f"{name} & {sev} & {r['n'] - r['n_correct']} & {cells} & {tied}\\\\"
+
+    clean = next(r for r in sw["rows"] if r["severity"] == 0)
+    body.append(line(clean, "Clean", "--"))
+    for c, (label, _) in CORR.items():
+        body.append("\\midrule")
+        body += [line(r, label, str(r["severity"]))
+                 for r in sw["rows"] if r["corruption"] == c and r["severity"] > 0]
+    body += ["\\bottomrule", "\\end{tabular}"]
+    return "\n".join(body) + "\n"
+
+
+def saturation_macros(sw: dict) -> list[tuple[str, str, str]]:
+    """The headline case (darkness, severity 5, at T_lbfgs) and the spread (D20)."""
+    rows = {(r["corruption"], r["severity"]): r for r in sw["rows"]}
+    dark = rows[("darkness", 5)]
+    ms = _sat(dark, "T_lbfgs", "max_softmax")
+    # severity 0 is the same images for every corruption: count the clean condition once
+    sat_rows = [r for r in sw["rows"] if r["severity"] > 0] + [
+        next(r for r in sw["rows"] if r["severity"] == 0)]
+    n_sat = sum(_sat(r, "T_lbfgs", "max_softmax")["top_tie"] > 0 for r in sat_rows)
+    lo = min(_sat(r, "T_lbfgs", "max_softmax")["top_tie"] for r in sat_rows)
+    hi = max(_sat(r, "T_lbfgs", "max_softmax")["top_tie"] for r in sat_rows)
+    return [
+        ("satDarkFive", str(ms["top_tie"]),
+         "darkness severity 5, T_lbfgs: predictions with max softmax exactly 1.0"),
+        ("satDarkFiveWrong", str(ms["top_tie_wrong"]), "of those, wrong"),
+        ("satDarkFiveErrors", str(dark["n"] - dark["n_correct"]),
+         "darkness severity 5: all wrong predictions"),
+        ("satDarkFiveEntropy", str(_sat(dark, "T_lbfgs", "neg_entropy")["top_tie"]),
+         "darkness severity 5, T_lbfgs: predictions sharing the top entropy score"),
+        ("satDarkFiveMargin", str(_sat(dark, "scores", "margin")["top_tie"]),
+         "darkness severity 5: predictions sharing the top margin"),
+        ("satConditions", f"{n_sat} of {len(sat_rows)}",
+         "conditions where max softmax at T_lbfgs is exactly 1.0 for more than one prediction"),
+        ("satRange", f"{lo}--{hi}", "fewest and most predictions at max softmax 1.0, T_lbfgs"),
+        ("satLimitPct", pct(100 * SATURATION_LIMIT, 0),
+         "no AURC is reported from a curve with more of its predictions tied (D20)"),
+    ]
+
+
+SAT_NAMES = ["satDarkFive", "satDarkFiveWrong", "satDarkFiveErrors", "satDarkFiveEntropy",
+             "satDarkFiveMargin", "satConditions", "satRange", "satLimitPct"]
 
 
 def threshold_table(sw: dict) -> str:
@@ -457,8 +537,9 @@ def numbers(src: dict | None, sup: dict | None, a: dict | None, sw: dict | None,
                 add(a_name, f4(row["accuracy"]), f"{row['corruption']}, severity 5")
                 add(e_name, f4(row["temperature"]["T=1"]["ece"]),
                     f"{row['corruption']}, severity 5, T = 1")
+        m.extend(saturation_macros(sw))
     else:
-        pend(sweep_names + [x for pair in sev5.values() for x in pair], "sweep")
+        pend(sweep_names + [x for pair in sev5.values() for x in pair] + SAT_NAMES, "sweep")
 
     m += plantseg_macros(ps)
     lines = ["\\usepackage{xspace}",
@@ -545,6 +626,10 @@ def build(source: Path | None, supplied: Path | None, sweep: Path | None, out: P
         write(out, "table_sweep.tex",
               mark(sweep_table(sw)) if sw else pending_tabular(
                   "sweep", "the degradation sweep has not been run yet (HANDOVER.md)"),
+              srcs((sweep, "sweep"))),
+        write(out, "table_saturation.tex",
+              mark(saturation_table(sw)) if sw else pending_tabular(
+                  "saturation", "comes from the degradation sweep (HANDOVER.md)"),
               srcs((sweep, "sweep"))),
         write(out, "table_threshold.tex",
               mark(threshold_table(sw)) if sw else pending_tabular(

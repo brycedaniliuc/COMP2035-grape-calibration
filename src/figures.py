@@ -362,12 +362,18 @@ def degeneracy(sweep: dict) -> Callable[[str], Figure]:
     return build
 
 
+AURC_NOTE = ("No AURC at $T_\\mathrm{LBFGS}$, or wherever a score saturates (a gap): the "
+             "ranking cannot order tied predictions (D20).")
+
+
 def aurc_by_score(sweep: dict) -> Callable[[str], Figure]:
-    """AURC by severity, plotted at the precision it is stable to (D20: 2 decimals)."""
+    """AURC by severity for the curves the report shows (REPORTED_AURC, all at T = 1),
+    plotted at the precision it is stable to (D20: 2 decimals). Not at T_lbfgs: there max
+    softmax saturates and AURC measures input order (D20)."""
     from matplotlib.ticker import FormatStrFormatter
 
     from src.degrade import CORRUPTIONS
-    from src.evaluate import report_aurc
+    from src.evaluate import reported_aurc
     sty = {"max_softmax": (BLUE, "-", "o", "Max softmax, T = 1"),
            "neg_entropy": (RED, "--", "s", "Entropy, T = 1"),
            "margin": (INK, ":", "^", "Logit margin")}
@@ -378,19 +384,15 @@ def aurc_by_score(sweep: dict) -> Callable[[str], Figure]:
             rs = _rows(sweep, c)
             for k, (col, ls, mk, lab) in sty.items():
                 ax.plot([r["severity"] for r in rs],
-                        [report_aurc(r["scores"][k]["aurc"]) for r in rs],
+                        [_or_nan(reported_aurc(r, "scores", k)) for r in rs],
                         color=col, ls=ls, marker=mk, ms=3 if size == "paper" else 7, label=lab)
-            ax.plot([r["severity"] for r in rs],  # the temperature-scaled method (paper §3.2)
-                    [report_aurc(r["temperature"]["T_lbfgs"]["coverage"]["max_softmax"]["aurc"])
-                     for r in rs],
-                    color=BLUE, ls="-.", marker="o", mfc="white",
-                    ms=3 if size == "paper" else 7, label=f"Max softmax, {_t_lbfgs_name(sweep)}")
             ax.set_title(LABEL[c])
             ax.set_xticks(range(6))
             ax.yaxis.set_major_formatter(FormatStrFormatter("%.2f"))
             ax.grid(axis="y")
         _finish(fig, axes, size, "Severity level (0 = clean)", "AURC (lower is better)", 2)
-        fig.suptitle(f"Ranking quality of the confidence scores (n = {sweep['n_test']})")
+        fig.suptitle(f"Ranking quality of the confidence scores (n = {sweep['n_test']}, "
+                     f"$T = 1$)\n{AURC_NOTE}")
         return fig
 
     return build
@@ -430,16 +432,21 @@ def ece_by_fixed_t(sweep: dict) -> Callable[[str], Figure]:
     return build
 
 
-def _report_aurc(x: float) -> float:
-    from src.evaluate import report_aurc
-    return report_aurc(x)
+def _or_nan(x: float | None) -> float:
+    """A saturated curve's AURC is not reported (D20): a gap in the figure, not a number."""
+    return float("nan") if x is None else x
+
+
+def _reported_aurc(r: dict) -> float:
+    from src.evaluate import reported_aurc
+    return _or_nan(reported_aurc(r, "scores", "max_softmax"))
 
 
 COMPARISON_METRICS = (  # (row label, value, 95% interval or None), all at T = 1
     ("Accuracy", lambda r: r["accuracy"], lambda r: r["accuracy_wilson95"]),
     ("ECE ($T{=}1$)", lambda r: r["temperature"]["T=1"]["ece"],
      lambda r: r["temperature"]["T=1"]["ece_bootstrap95"]),
-    ("AURC (max softmax)", lambda r: _report_aurc(r["scores"]["max_softmax"]["aurc"]), None),
+    ("AURC (max softmax)", _reported_aurc, None),
 )
 
 

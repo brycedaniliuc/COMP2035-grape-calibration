@@ -55,6 +55,34 @@ def test_report_aurc_rounds_to_the_stable_precision():
     assert report_aurc(0.0) == 0.0
 
 
+def test_saturation_known_answer():
+    """D20: three predictions tied at the top (one wrong), two more tied lower down."""
+    from src.evaluate import saturation
+    from src.verify import saturation_v2
+    s = np.array([1.0, 1.0, 1.0, 0.9, 0.5, 0.5, 0.2], dtype=np.float32)
+    c = np.array([1, 0, 1, 1, 0, 1, 1], dtype=float)
+    want = {"top_score": 1.0, "top_tie": 3, "top_tie_wrong": 1, "tied_fraction": 5 / 7}
+    assert saturation(s, c) == want and saturation_v2(s, c) == want
+    distinct = saturation(np.array([0.3, 0.2, 0.1]), np.ones(3))
+    assert distinct["top_tie"] == 0 and distinct["tied_fraction"] == 0.0
+
+
+def test_no_aurc_is_reported_from_a_saturated_curve_or_at_t_lbfgs():
+    """D20: reported_aurc is the only way an AURC reaches the report."""
+    from src.evaluate import SATURATION_LIMIT, reported_aurc, risk_coverage
+    y = np.array([1, 0, 1, 1, 0, 1, 1, 1, 1, 1], dtype=float)
+    fine = risk_coverage(np.linspace(1, 0, 10), y)
+    tied = risk_coverage(np.r_[np.ones(5), np.linspace(0.9, 0, 5)], y)
+    assert tied["saturation"]["tied_fraction"] > SATURATION_LIMIT
+    row: dict = {"corruption": "darkness", "severity": 5, "scores": {"max_softmax": fine},
+                 "temperature": {"T_lbfgs": {"coverage": {"max_softmax": fine}}}}
+    assert reported_aurc(row, "scores", "max_softmax") == round(fine["aurc"], 2)
+    with pytest.raises(ValueError, match="not reported"):
+        reported_aurc(row, "T_lbfgs", "max_softmax")  # never, even when it does not saturate
+    row["scores"]["max_softmax"] = tied  # saturated: nothing is reported (sat. / a gap)
+    assert reported_aurc(row, "scores", "max_softmax") is None
+
+
 def test_scores_known_answers():
     logits = np.array([[2.0, 0.5, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]], dtype=np.float32)
     s = scores(logits)

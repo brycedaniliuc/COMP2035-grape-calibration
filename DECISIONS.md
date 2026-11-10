@@ -497,7 +497,7 @@ confidence interval for the true ECE.
 - **The September 2026 runs** pass the rule (ResNet-50, 5 + 25, 9,027 images), so their
   numbers render as they are.
 
-## D20 · AURC: rank on stored scores, report to two decimals — RECORDED (2026-11-10)
+## D20 · AURC: rank on stored scores, two decimals, none at T_lbfgs — RESOLVED (owner, 2026-11-10)
 
 - **What failed.** On the real Colab run (`resnet50_source_20261110-083456`), `src.verify`
   failed one Tier 1 check, "sweep: AURC at every T re-derived": max |diff| 7.1e-3. Every
@@ -550,17 +550,64 @@ confidence interval for the true ECE.
   No macro carries an AURC at present; any future one must use `report_aurc`. The JSON keeps
   full precision for verification. After rounding, one plotted value differs from Colab's
   original: darkness severity 5 at T_lbfgs, 0.19 to 0.18.
-- **Not settled by this: tie order (owner to decide).** With the same stored scores, the
-  order of tied images alone can move AURC by up to:
-  - 0.097: max softmax at T_lbfgs, darkness severity 5
-  - 0.082: darkness severity 4
-  - 0.030: darkness severity 3
+- **Decision: no AURC at T_lbfgs (owner, 2026-11-10).**
+  - **Why.** Where max softmax saturates, AURC measures nothing: the order inside the tied
+    block is arbitrary. With the same stored scores, the order of the tied images alone
+    moves max-softmax AURC at T_lbfgs by up to 0.097 (darkness severity 5), 0.082 (severity
+    4) and 0.030 (severity 3), the gap between ties ordered best-first and worst-first. A
+    captioned number with that much slack would be fake precision, so AURC at T_lbfgs is
+    dropped rather than captioned.
+  - **Removed:** the T_lbfgs line from the AURC figure. No table ever carried it. The figure
+    now says in one line that AURC is not shown at T_lbfgs because max softmax saturates
+    there.
+  - **Kept:** T_lbfgs stays everywhere it is well defined: accuracy, ECE, reliability and
+    confidence distributions.
+- **Reported instead: the saturation statistic.** For every curve, the sweep JSON now holds
+  `saturation`:
+  - `top_tie`: predictions sharing the highest score, when more than one does
+  - `top_tie_wrong`: how many of those are wrong
+  - `top_score`: that highest score
+  - `tied_fraction`: the fraction of all predictions that share their score with another
 
-  These are the gap between ties ordered best-first and worst-first. Every other curve is
-  below 0.01. At such a small T, max softmax no longer separates most of those images, so
-  their AURC partly measures input order. This is larger than the two-decimal precision.
-  The options: say so where the T_lbfgs line is shown, or drop that line for saturated
-  conditions.
+  The real sweep had its stored arrays, so the statistic was added from them, and nothing
+  else changed (`saturation_added` in the JSON). On the real run, at T_lbfgs:
+  - **Max softmax** is exactly 1.0 for more than one prediction in all 21 distinct
+    conditions, for between 28 and 608 of the 610 predictions.
+  - **The headline case is darkness severity 5:** 229 predictions at exactly 1.0, 16 of them
+    wrong, out of 196 errors in that condition.
+  - **Entropy and margin** never share their top score, in any condition.
+
+  Where it appears:
+  - `report/generated/table_saturation.tex`, for the appendix: every condition, all three
+    scores, with the max-softmax tied fraction
+  - the macros `\satDarkFive`, `\satDarkFiveWrong`, `\satDarkFiveErrors`,
+    `\satDarkFiveEntropy`, `\satDarkFiveMargin`, `\satConditions`, `\satRange` and
+    `\satLimitPct`
+- **The guard, so it cannot come back by accident.**
+  - **The registry.** `src.evaluate.REPORTED_AURC` lists the only curves whose AURC is
+    reported: max softmax, entropy and margin, all at T = 1.
+  - **The only route to the report.** Every table, macro, figure and printout gets AURC
+    through `reported_aurc`.
+    - A curve outside the registry is refused (an error).
+    - A curve with more than `SATURATION_LIMIT` = 1% of its predictions tied gives no
+      number: "sat." in a table, a gap in a figure. Omitting rather than stopping keeps a
+      notebook from crashing on a saturated condition. The untrained fixture model saturates
+      even at T = 1.
+  - **Verify fails if a saturated AURC is shown anywhere:**
+    - **The AURC figure:** it must plot the registered curves and nothing else, each at two
+      decimals or as a gap where its score saturates. Saturation is judged by verify's own
+      code on the stored arrays.
+    - **The sweep table:** every AURC cell must be the two-decimal value, or "sat." where
+      the score saturates (also from the stored arrays).
+    - **The comparison figures** (ensemble, MC dropout) are checked the same way.
+    - Separately, every curve's saturation statistic must match its own re-derivation.
+  - **A test** makes `reported_aurc` stop omitting saturated curves on the fixture, and
+    confirms verify then fails on both the figure and the table.
+  - **Why 1%.** On the real run, the reported T = 1 curves reach 2 of 610 tied (0.3%). Every
+    max-softmax curve at T_lbfgs reaches at least 13%.
+  - **T = 0.25 is not reported either.** Its max softmax is rarely exactly 1.0, but up to
+    97% of predictions share one of a few float32 values just below it. The tied-fraction
+    rule covers that case too.
 
 ## Still open (2026-11-10)
 
@@ -568,7 +615,3 @@ confidence interval for the true ECE.
   project's own design. The owner should confirm them, or say so in the report.
 - **D10:** choosing the threshold on degraded validation and checking it on held-out test.
   It is built and everything uses it, but the owner has not yet confirmed it explicitly.
-- **D20 (tie order):** at T_lbfgs, max softmax saturates at 1.0 for many degraded images, so
-  their order is input order. That alone can move AURC by up to 0.097 (darkness severity 5),
-  more than its two-decimal precision. The owner should either state this beside the T_lbfgs
-  line or drop that line for saturated conditions.

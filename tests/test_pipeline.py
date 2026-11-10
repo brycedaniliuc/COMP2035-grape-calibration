@@ -36,7 +36,7 @@ def test_pipeline_runs_and_is_bit_identical(fixture_root, tmp_path):
     assert set(saved["config"]) == set(Config().to_dict())
 
 
-def test_sweep_on_fixture_checkpoint(fixture_root, tmp_path):
+def test_sweep_on_fixture_checkpoint(fixture_root, tmp_path, monkeypatch):
     """Train once, then sweep: severity 0 reproduces the clean run, T is held fixed
     across all 24 rows (both asserted inside sweep), and the threshold analysis exists."""
     from src.degrade import CORRUPTIONS, SEVERITIES
@@ -105,13 +105,47 @@ def test_sweep_on_fixture_checkpoint(fixture_root, tmp_path):
     build(src, None, sweep_path, forced, allow_not_a_result=True)
     assert all(c[2] == "PASS" for c in generated_checks(forced))
     assert "of 24" in (forced / "table_threshold.tex").read_text()
+    sat = (forced / "table_saturation.tex").read_text()  # D20: one row per condition
+    # two header rows, clean, 20 degraded conditions, and the NOT A RESULT banner line
+    assert sat.count("\\\\\n") == 2 + 1 + 20 + 1 and "Sharing the top score" in sat
+    assert "\\pending{saturation}" in (gen / "table_saturation.tex").read_text()
+    assert "\\newcommand{\\satDarkFive}{\\notaresult{" in (forced / "numbers.tex").read_text()
     assert "NOT A RESULT" in (forced / "table_threshold.tex").read_text()
     assert "\\notaresult{" in (forced / "numbers.tex").read_text()
     # AURC is reported at the precision it is stable to (D20): two decimals, never more
     from src.evaluate import report_aurc
     lines = [ln for ln in (forced / "table_sweep.tex").read_text().splitlines()
              if ln.endswith("\\\\") and "&" in ln and not ln.startswith(("Corruption", " &"))]
-    assert lines and all(len(ln[:-2].rsplit("&", 1)[1].strip().split(".")[1]) == 2
-                         for ln in lines)
-    want = report_aurc(clean[0]["scores"]["max_softmax"]["aurc"])
-    assert lines[0][:-2].rsplit("&", 1)[1].strip() == f"{want:.2f}"
+    cells = [ln[:-2].rsplit("&", 1)[1].strip() for ln in lines]
+    assert cells and all(c == "sat." or len(c.split(".")[1]) == 2 for c in cells)
+    c0 = clean[0]["scores"]["max_softmax"]
+    from src.evaluate import SATURATION_LIMIT
+    want = ("sat." if c0["saturation"]["tied_fraction"] > SATURATION_LIMIT
+            else f"{report_aurc(c0['aurc']):.2f}")
+    assert cells[0] == want
+
+    # D20: the untrained fixture model gives the same max softmax to most test images, so
+    # its AURC is saturated and must not be reported. If reported_aurc stopped omitting it,
+    # verify would fail on the figure and on the table
+    import src.evaluate as ev
+    from src.verify import figure_checks, generated_checks
+    lg_all = dict(np.load(tmp_path / f"sweep_logits_{res['run_id']}.npz"))
+    sw_json = json.loads(sweep_path.read_text())
+    assert any(r["scores"]["max_softmax"]["saturation"]["tied_fraction"] > SATURATION_LIMIT
+               for r in sw_json["rows"]), "the fixture no longer saturates: test needs data"
+
+    def fig_ok() -> bool:
+        return all(c[2] == "PASS" for c in figure_checks(sw_json, lg_all) if "aurc" in c[0])
+
+    def table_ok(d) -> bool:
+        return all(c[2] == "PASS" for c in generated_checks(d) if "AURC" in c[0])
+    assert fig_ok() and table_ok(forced)
+    leaky = tmp_path / "leaky"
+    import tools.make_tables as mt
+
+    def leak(row: dict, t: str, k: str) -> float:
+        return ev.report_aurc(ev.curve(row, t, k)["aurc"])
+    monkeypatch.setattr(ev, "reported_aurc", leak)  # read by the figures at call time
+    monkeypatch.setattr(mt, "reported_aurc", leak)  # imported by name into the tables
+    build(src, None, sweep_path, leaky, allow_not_a_result=True)
+    assert not fig_ok() and not table_ok(leaky)

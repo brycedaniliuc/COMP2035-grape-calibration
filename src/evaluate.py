@@ -101,9 +101,58 @@ def scores(logits: np.ndarray, temperature: float = 1.0) -> dict[str, np.ndarray
 AURC_DECIMALS = 2
 
 
+# A score saturates when it can no longer tell predictions apart: at a small T, max softmax
+# is exactly 1.0 (or one of a few float32 values just below it) for much of the test set, and
+# the order within such a tie is input order, so AURC measures nothing there (D20). No AURC
+# is reported from a curve where more than this fraction of predictions share their score
+# with another prediction. On the real run the reported T = 1 curves reach 2 of 610 (0.3%);
+# every max-softmax curve at T_lbfgs has at least 80 of 610 (13%).
+SATURATION_LIMIT = 0.01
+
+# The only AURC curves the report shows, as (temperature or "scores" for T = 1, score). AURC
+# at T_lbfgs is not among them: max softmax saturates there (D20). src.verify fails if any of
+# these saturates beyond SATURATION_LIMIT.
+REPORTED_AURC = (("scores", "max_softmax"), ("scores", "neg_entropy"), ("scores", "margin"))
+
+
 def report_aurc(x: float) -> float:
     """AURC rounded for reporting (D20). The JSON keeps full precision for verification."""
     return round(float(x), AURC_DECIMALS)
+
+
+def curve(row: dict, t_name: str, score: str) -> dict:
+    """One coverage curve of a sweep row: t_name "scores" is the T = 1 block with margin."""
+    return row["scores"][score] if t_name == "scores" else \
+        row["temperature"][t_name]["coverage"][score]
+
+
+def reported_aurc(row: dict, t_name: str, score: str) -> float | None:
+    """The only way an AURC reaches a table, macro, figure or printout (D20). A curve not in
+    REPORTED_AURC is refused (ValueError). A curve whose score saturates beyond
+    SATURATION_LIMIT gives None: the report shows "sat." or a gap there, never a number."""
+    if (t_name, score) not in REPORTED_AURC:
+        raise ValueError(f"AURC of {t_name}/{score} is not reported (REPORTED_AURC, D20)")
+    c = curve(row, t_name, score)
+    sat = c.get("saturation")
+    if sat is None:
+        raise ValueError(f"AURC of {t_name}/{score}: no saturation statistic (a sweep from "
+                         "before D20; src.evaluate --rescore adds it)")
+    return None if sat["tied_fraction"] > SATURATION_LIMIT else report_aurc(c["aurc"])
+
+
+def saturation(score: np.ndarray, correct: np.ndarray) -> dict:
+    """How far a score fails to order the predictions (D20).
+    top_tie: predictions sharing the highest score, when more than one does (0 otherwise);
+    a ranking cannot order them. top_tie_wrong: how many of those are wrong. top_score: that
+    highest score (exactly 1.0 for a saturated max softmax). tied_fraction: the fraction of
+    all predictions that share their score with at least one other."""
+    top = score.max()
+    at_top = score == top
+    n_top = int(at_top.sum())
+    _, inverse, counts = np.unique(score, return_inverse=True, return_counts=True)
+    return {"top_score": float(top), "top_tie": n_top if n_top > 1 else 0,
+            "top_tie_wrong": int((correct[at_top] == 0).sum()) if n_top > 1 else 0,
+            "tied_fraction": float((counts[inverse] > 1).mean())}
 
 
 def ranked_key(condition: str, t_name: str, score: str) -> str:
@@ -133,7 +182,8 @@ def risk_coverage(score: np.ndarray, correct: np.ndarray) -> dict:
         m = max(1, int(math.ceil(c * n)))
         grid[f"{c:.1f}"] = float(cum_correct[m - 1] / m)
     return {"aurc": float(risk.mean()), "accuracy_at_coverage": grid,
-            "n_distinct_scores": int(np.unique(score).size)}
+            "n_distinct_scores": int(np.unique(score).size),
+            "saturation": saturation(score, correct)}
 
 
 def threshold_table(conf: np.ndarray, correct: np.ndarray,
@@ -487,6 +537,50 @@ def _normal(x: object) -> object:
     return json.loads(json.dumps(_json_safe(x), allow_nan=False))
 
 
+def _render_aurc_figure(sw: dict, d: Path, rid: str, originals: dict[str, str]) -> None:
+    """Re-render the AURC figure in the run's figure folder (if it is here), first recording
+    the sha256 of any file it replaces that has not been recorded yet."""
+    import hashlib
+    fig_dir = d / f"figures_{rid}"
+    if not fig_dir.is_dir():
+        return
+    from src.figures import aurc_by_score, provenance, render
+    for size, ext in (("paper", "pdf"), ("slide", "png")):
+        p = fig_dir / f"aurc_by_score_{size}_{rid}.{ext}"
+        if p.exists():
+            originals.setdefault(f"{fig_dir.name}/{p.name}",
+                                 hashlib.sha256(p.read_bytes()).hexdigest())
+    render(aurc_by_score(sw), "aurc_by_score", fig_dir, rid, provenance(sw))
+
+
+def _add_saturation(sweep_path: Path, sw: dict, store: dict) -> None:
+    """A sweep that has its stored score arrays but predates the saturation statistic (D20):
+    add it to every curve from those arrays. Nothing else in the JSON changes; the AURC
+    figure is re-rendered without the T_lbfgs line."""
+    from datetime import datetime
+    y, n = store["labels"], 0
+    for r in sw["rows"]:
+        key = f"{r['corruption']}_s{r['severity']}"
+        correct = (store[key].argmax(1) == y).astype(float)
+        blocks = [(name, cond["coverage"]) for name, cond in r["temperature"].items()]
+        for name, block in blocks + [("scores", r["scores"])]:
+            for k, c in block.items():
+                if "saturation" not in c:
+                    c["saturation"] = saturation(store[f"{key}__{name}__{k}"], correct)
+                    n += 1
+    if not n:
+        return
+    sw["saturation_added"] = {
+        "why": "D20: the saturation statistic was added after this sweep was written; it was "
+               "computed from the stored score arrays, and nothing else changed.",
+        "date": datetime.now().isoformat(timespec="seconds"), "curves": n}
+    rid = sweep_path.stem.removeprefix("sweep_")
+    originals = sw.setdefault("rescored", {}).setdefault("originals_sha256", {})
+    _render_aurc_figure(sw, sweep_path.parent, rid, originals)
+    sweep_path.write_text(json.dumps(_json_safe(sw), indent=1, allow_nan=False))
+    print(f"added the saturation statistic to {n} curves of {sweep_path.name} (D20)")
+
+
 def rescore(sweep_path: str | Path) -> dict:
     """For a sweep written before the evaluation stored the exact score arrays it ranked on
     (DECISIONS.md D20). From the sweep's saved logits, which are never changed, recompute on
@@ -505,6 +599,7 @@ def rescore(sweep_path: str | Path) -> dict:
     sw = json.loads(sweep_path.read_text())
     store = dict(np.load(lg_path))
     if any("__" in k for k in store):
+        _add_saturation(sweep_path, sw, store)
         return sw.get("rescored", {})
 
     def sha(p: Path) -> str:
@@ -527,11 +622,12 @@ def rescore(sweep_path: str | Path) -> dict:
                 new = _normal(risk_coverage(s, correct))
                 assert isinstance(new, dict)
                 n_curves += 1
-                fields = sorted(f for f in new if new[f] != block[k].get(f))
+                # fields this version adds (saturation) are not changes to old values
+                fields = sorted(f for f in new if f in block[k] and new[f] != block[k][f])
                 if fields:
                     changed.append({"curve": f"{key}/{name}/{k}", "fields": fields,
                                     "aurc_before": block[k]["aurc"], "aurc_after": new["aurc"]})
-                    block[k] = new
+                block[k] = new
         new_t = _normal(threshold_table(scores(lg)["max_softmax"], correct))
         if new_t != r["thresholds_max_softmax_T1"]:
             tables_changed.append(key)
@@ -561,14 +657,7 @@ def rescore(sweep_path: str | Path) -> dict:
     np.savez(lg_path, **store, **ranked_store)  # type: ignore[arg-type]
     after = dict(np.load(lg_path))
     assert all(np.array_equal(after[k], v) for k, v in store.items()), "logits changed"
-    fig_dir = d / f"figures_{rid}"
-    if fig_dir.is_dir():
-        from src.figures import aurc_by_score, provenance, render
-        names = [f"aurc_by_score_{size}_{rid}.{ext}" for size, ext in (("paper", "pdf"),
-                                                                      ("slide", "png"))]
-        record["originals_sha256"].update({f"{fig_dir.name}/{n}": sha(fig_dir / n)
-                                           for n in names if (fig_dir / n).exists()})
-        render(aurc_by_score(sw), "aurc_by_score", fig_dir, rid, provenance(sw))
+    _render_aurc_figure(sw, d, rid, record["originals_sha256"])
     sweep_path.write_text(json.dumps(_json_safe(sw), indent=1, allow_nan=False))
     other = [c for c in changed if "aurc" not in c["fields"]]
     print(f"re-scored {sweep_path.name} (D20): {n_curves} curves; AURC changed in "
