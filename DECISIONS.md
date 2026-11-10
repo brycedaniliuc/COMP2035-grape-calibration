@@ -497,9 +497,78 @@ confidence interval for the true ECE.
 - **The September 2026 runs** pass the rule (ResNet-50, 5 + 25, 9,027 images), so their
   numbers render as they are.
 
+## D20 · AURC: rank on stored scores, report to two decimals — RECORDED (2026-11-10)
+
+- **What failed.** On the real Colab run (`resnet50_source_20261110-083456`), `src.verify`
+  failed one Tier 1 check, "sweep: AURC at every T re-derived": max |diff| 7.1e-3. Every
+  other check passed.
+- **The cause, as diagnosed.** The verification code was not at fault. On one machine,
+  verify's float32 scores (`scores32`) are bit-identical to the sweep's (`evaluate.scores`),
+  and the two ranking codes give identical AURC on the same scores. The difference came from
+  the machine: the same float32 softmax and entropy, computed on Colab's x86 CPU and on an
+  arm64 laptop, differ by about one ulp. That reorders scores only where they are tied or
+  nearly tied, and the sweep breaks ties by input order. The worst curve, darkness severity
+  5 at T_lbfgs = 0.17, has max softmax saturated to exactly 1.0 for 229 of 610 images (16 of
+  them wrong): 276 distinct scores, not 610. One ulp moves an image into or out of that tied
+  group.
+- **Fix 1: rank on the exact arrays.** The sweep, the ensemble and MC dropout now store the
+  exact score arrays each coverage curve was ranked on: in `sweep_logits_<run>.npz` beside
+  the logits, under the keys `<condition>__<T>__<score>`. `src.verify` checks each array
+  against its own float64 score (max |diff| 2.4e-7 on the real run), then ranks on it with
+  its own code. AURC_TOL stays at 1e-9; on the real run the difference is now 0 over 360
+  curves. An output without the arrays fails with an explicit message: nothing is
+  recomputed and nothing is guessed.
+- **The real run was re-scored on the laptop (owner's choice, 2026-11-10).** The other choice
+  was to re-run notebook 02.
+  - `src.evaluate.rescore` recomputed the arrays from Colab's saved logits, which were not
+    changed (asserted), and re-derived every curve, the threshold tables and the threshold.
+  - Everything that moved is in the sweep JSON under `"rescored"`, before and after: 17 AURCs
+    out of 360 curves, max 7.1e-3; 59 more curves differ only in their count of distinct
+    scores. Also recorded are the machine and the sha256 of each Drive original.
+  - The threshold and its tables did not change.
+  - `tools/import_colab.py` does this as step 1b, and a later import still recognises the
+    re-scored files as the Drive files they came from. Notebook 03 re-scores a reused sweep
+    the same way.
+- **Fix 2: the precision AURC is stable to.** This was measured over all 288 sweep curves
+  (max softmax and entropy, at 6 temperatures, in 24 conditions). Recomputing the scores in
+  float32 on another machine moved AURC by:
+
+  | T | max softmax | entropy |
+  |---|---|---|
+  | 0.25 | 2.8e-4 | 1.0e-4 |
+  | 0.5, 1, 2, 4 | 0 | 0 |
+  | T_lbfgs (0.17) | **7.1e-3** | 1.1e-4 |
+
+  271 of the 288 were exactly unchanged, and so were all 72 T = 1 curves, margin included.
+  The worst movement is under 1e-2, so **every reported AURC is rounded to two decimals**
+  (`src.evaluate.AURC_DECIMALS`):
+  - the sweep table (`tools/make_tables.py`)
+  - the AURC figure and the AURC row of the method comparisons (`src/figures.py`), plotted
+    at that precision with two-decimal axes
+  - the ensemble's printed table
+
+  No macro carries an AURC at present; any future one must use `report_aurc`. The JSON keeps
+  full precision for verification. After rounding, one plotted value differs from Colab's
+  original: darkness severity 5 at T_lbfgs, 0.19 to 0.18.
+- **Not settled by this: tie order (owner to decide).** With the same stored scores, the
+  order of tied images alone can move AURC by up to:
+  - 0.097: max softmax at T_lbfgs, darkness severity 5
+  - 0.082: darkness severity 4
+  - 0.030: darkness severity 3
+
+  These are the gap between ties ordered best-first and worst-first. Every other curve is
+  below 0.01. At such a small T, max softmax no longer separates most of those images, so
+  their AURC partly measures input order. This is larger than the two-decimal precision.
+  The options: say so where the T_lbfgs line is shown, or drop that line for saturated
+  conditions.
+
 ## Still open (2026-11-10)
 
 - **D7:** two of the four corruptions (darkening, occlusion) and their severities are this
   project's own design. The owner should confirm them, or say so in the report.
 - **D10:** choosing the threshold on degraded validation and checking it on held-out test.
   It is built and everything uses it, but the owner has not yet confirmed it explicitly.
+- **D20 (tie order):** at T_lbfgs, max softmax saturates at 1.0 for many degraded images, so
+  their order is input order. That alone can move AURC by up to 0.097 (darkness severity 5),
+  more than its two-decimal precision. The owner should either state this beside the T_lbfgs
+  line or drop that line for saturated conditions.

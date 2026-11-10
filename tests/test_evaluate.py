@@ -47,6 +47,14 @@ def test_risk_coverage_known_answer():
     assert rc["n_distinct_scores"] == 4
 
 
+def test_report_aurc_rounds_to_the_stable_precision():
+    """D20: reported AURC has two decimals; the JSON keeps full precision."""
+    from src.evaluate import AURC_DECIMALS, report_aurc
+    assert AURC_DECIMALS == 2
+    assert report_aurc(0.186396) == 0.19 and report_aurc(0.179281) == 0.18
+    assert report_aurc(0.0) == 0.0
+
+
 def test_scores_known_answers():
     logits = np.array([[2.0, 0.5, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]], dtype=np.float32)
     s = scores(logits)

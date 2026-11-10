@@ -37,7 +37,7 @@ from typing import Any
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
-from src.evaluate import wilson_ci  # noqa: E402  (needs the repo on sys.path first)
+from src.evaluate import AURC_DECIMALS, report_aurc, wilson_ci  # noqa: E402  (repo on sys.path first)
 from src.provenance import not_a_result  # noqa: E402
 
 GENERATOR = Path(__file__).resolve()
@@ -105,6 +105,11 @@ def resolve(arg: str | None, glob: str, fallback: Path | None) -> tuple[Path | N
 
 
 # ---- formatting ---------------------------------------------------------------------------
+
+def aurc(x: float) -> str:
+    """AURC at the precision it is stable to (DECISIONS.md D20), never more."""
+    return f"{report_aurc(x):.{AURC_DECIMALS}f}"
+
 
 def f4(x: float) -> str:
     return f"{x:.4f}"
@@ -231,7 +236,7 @@ def sweep_table(sw: dict) -> str:
         t1, tl = r["temperature"]["T=1"], r["temperature"]["T_lbfgs"]
         return (f"{name} & {sev} & {par} & {f4(r['accuracy'])} {ci(*r['accuracy_wilson95'])} & "
                 f"{f4(t1['mean_confidence'])} & {f4(t1['ece'])} {ci(*t1['ece_bootstrap95'])} & "
-                f"{f4(tl['ece'])} & {f4(r['scores']['max_softmax']['aurc'])}\\\\")
+                f"{f4(tl['ece'])} & {aurc(r['scores']['max_softmax']['aurc'])}\\\\")
 
     # severity 0 is identical for every corruption (asserted in the sweep): one clean row
     clean = next(r for r in sw["rows"] if r["severity"] == 0)

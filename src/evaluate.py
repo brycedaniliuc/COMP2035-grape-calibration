@@ -95,6 +95,29 @@ def scores(logits: np.ndarray, temperature: float = 1.0) -> dict[str, np.ndarray
 
 # ---- coverage (Stage 5) ----------------------------------------------------------------
 
+# AURC as reported (tables, macros, figures) is rounded to the precision it is stable to.
+# Recomputing the same float32 scores on another machine (Colab x86 against an arm64 laptop)
+# moved AURC by up to 7.1e-3 across the 288 sweep curves of the real run (DECISIONS.md D20).
+AURC_DECIMALS = 2
+
+
+def report_aurc(x: float) -> float:
+    """AURC rounded for reporting (D20). The JSON keeps full precision for verification."""
+    return round(float(x), AURC_DECIMALS)
+
+
+def ranked_key(condition: str, t_name: str, score: str) -> str:
+    """npz key of the exact score array a coverage curve was ranked on: t_name is a key of
+    the temperatures (e.g. "T=1", "T_lbfgs"), or "scores" for the T = 1 block with margin."""
+    return f"{condition}__{t_name}__{score}"
+
+
+def ranked_scores(store: dict, condition: str, t_name: str, score: str) -> np.ndarray | None:
+    """The stored array a curve was ranked on, or None for an output written before they
+    were stored."""
+    return store.get(ranked_key(condition, t_name, score))
+
+
 def risk_coverage(score: np.ndarray, correct: np.ndarray) -> dict:
     """Selective classification (Geifman & El-Yaniv 2017): accept the most confident
     predictions first. Returns the full risk-coverage curve, accuracy at coverage 1.0 ... 0.1,
@@ -128,7 +151,11 @@ def threshold_table(conf: np.ndarray, correct: np.ndarray,
 # ---- one condition ----------------------------------------------------------------------
 
 def evaluate_logits(logits: np.ndarray, labels: np.ndarray, classes: list[str],
-                    temps: dict[str, float], n_bins: int, seed: int) -> dict:
+                    temps: dict[str, float], n_bins: int, seed: int,
+                    ranked: dict[str, np.ndarray] | None = None) -> dict:
+    """Every statistic for one condition. If `ranked` is given, it receives each exact score
+    array a coverage curve was ranked on, keyed "<t_name>__<score>" (see ranked_key), so
+    verification can rank on the same numbers rather than a recomputation (D20)."""
     _, preds, _, correct = softmax_outputs(logits, labels)
     n, k = labels.size, int(correct.sum())
     lo, hi = wilson_ci(k, n)
@@ -141,6 +168,7 @@ def evaluate_logits(logits: np.ndarray, labels: np.ndarray, classes: list[str],
         _, preds_t, conf_t, correct_t = softmax_outputs(logits, labels, t)
         assert np.array_equal(preds, preds_t), f"T={t} changed a prediction"
         ece, bins = ece_and_bins(conf_t, correct_t, n_bins)
+        ranked_t = {k: s for k, s in scores(logits, t).items() if k != "margin"}
         out["temperature"][name] = {
             "T": t, "mean_confidence": float(conf_t.mean()), "ece": ece,
             "ece_bootstrap95": list(bootstrap_ece_ci(conf_t, correct_t, n_bins, seed)),
@@ -149,12 +177,16 @@ def evaluate_logits(logits: np.ndarray, labels: np.ndarray, classes: list[str],
                                           for i, c in enumerate(classes)},
             # T can reorder images by max softmax or entropy, so each T has its own coverage
             # curve. Margin / T ranks exactly as margin, so its T = 1 curve (in "scores") holds.
-            "coverage": {k: risk_coverage(s, correct_t)
-                         for k, s in scores(logits, t).items() if k != "margin"},
+            "coverage": {k: risk_coverage(s, correct_t) for k, s in ranked_t.items()},
         }
-    for name, s in scores(logits).items():
+        if ranked is not None:
+            ranked.update({f"{name}__{k}": s for k, s in ranked_t.items()})
+    t1 = scores(logits)
+    for name, s in t1.items():
         out["scores"][name] = risk_coverage(s, correct)
-    out["thresholds_max_softmax_T1"] = threshold_table(scores(logits)["max_softmax"], correct)
+        if ranked is not None:
+            ranked[f"scores__{name}"] = s
+    out["thresholds_max_softmax_T1"] = threshold_table(t1["max_softmax"], correct)
     return out
 
 
@@ -236,14 +268,17 @@ def sweep(results_path: str | Path, data_root: str | None = None,
     test_y = np.array([cls2idx[r.cls] for r in splits.test])
     rows: list[dict] = []
     logits_store: dict[str, np.ndarray] = {"labels": test_y}
+    ranked_store: dict[str, np.ndarray] = {}  # the exact arrays each curve was ranked on
     for corruption in CORRUPTIONS:
         for severity in SEVERITIES:
             lg, y = logits_for(splits.test, corruption, severity)
             assert np.array_equal(y, test_y), "test label order drifted"
             logits_store[f"{corruption}_s{severity}"] = lg
+            ranked: dict[str, np.ndarray] = {}
             row = {"corruption": corruption, "severity": severity,
                    "parameter": severity_parameter(corruption, severity),
-                   **evaluate_logits(lg, y, classes, temps, cfg.n_bins, cfg.seed)}
+                   **evaluate_logits(lg, y, classes, temps, cfg.n_bins, cfg.seed, ranked)}
+            ranked_store.update({f"{corruption}_s{severity}__{k}": v for k, v in ranked.items()})
             rows.append(row)
             t1 = row["temperature"]["T=1"]
             print(f"  {corruption:<14} s{severity}  acc {row['accuracy']:.4f} "
@@ -303,8 +338,10 @@ def sweep(results_path: str | Path, data_root: str | None = None,
     sweep_path = out_dir / f"sweep_{run_id}.json"
     sweep_path.write_text(json.dumps(_json_safe(sweep_res), indent=1, allow_nan=False))
     logits_path = out_dir / f"sweep_logits_{run_id}.npz"
+    # The logits, and beside them (keys "<condition>__<T>__<score>") the exact score arrays
+    # every coverage curve was ranked on, so src.verify ranks on the same numbers (D20).
     # numpy stubs type **kwds against the allow_pickle: bool keyword; the call is correct
-    np.savez(logits_path, **logits_store)  # type: ignore[arg-type]
+    np.savez(logits_path, **logits_store, **ranked_store)  # type: ignore[arg-type]
     val_path = out_dir / f"sweep_val_logits_{run_id}.npz"
     np.savez(val_path, **val_store)  # type: ignore[arg-type]
     print(f"written -> {sweep_path}\nwritten -> {logits_path}\nwritten -> {val_path}")
@@ -380,7 +417,7 @@ THRESHOLD_LIMITS = (
 def _conditions(store: dict[str, np.ndarray], score: str) -> dict:
     y = store["labels"]
     return {k: (scores(lg)[score], (lg.argmax(1) == y).astype(float))
-            for k, lg in store.items() if k != "labels"}
+            for k, lg in store.items() if k != "labels" and "__" not in k}
 
 
 def threshold_analysis(test_store: dict[str, np.ndarray],
@@ -443,14 +480,124 @@ def print_threshold(th: dict) -> None:
         print("  -", s)
 
 
+# ---- re-scoring an older sweep (D20) -----------------------------------------------------
+
+def _normal(x: object) -> object:
+    """As it reads back from the JSON, so before and after compare exactly."""
+    return json.loads(json.dumps(_json_safe(x), allow_nan=False))
+
+
+def rescore(sweep_path: str | Path) -> dict:
+    """For a sweep written before the evaluation stored the exact score arrays it ranked on
+    (DECISIONS.md D20). From the sweep's saved logits, which are never changed, recompute on
+    this machine every array a coverage curve is ranked on; re-derive every curve, the
+    threshold tables and the threshold from them; store the arrays beside the logits; and
+    record in the JSON every value that moved, the machine, and the sha256 of each original
+    file. Re-renders the AURC figure (now rounded, D20) if the run's figure folder is here.
+    Does nothing if the arrays are already stored. Returns the record."""
+    import hashlib
+    import platform
+    from datetime import datetime
+
+    sweep_path = Path(sweep_path)
+    d, rid = sweep_path.parent, sweep_path.stem.removeprefix("sweep_")
+    lg_path, val_path = d / f"sweep_logits_{rid}.npz", d / f"sweep_val_logits_{rid}.npz"
+    sw = json.loads(sweep_path.read_text())
+    store = dict(np.load(lg_path))
+    if any("__" in k for k in store):
+        return sw.get("rescored", {})
+
+    def sha(p: Path) -> str:
+        return hashlib.sha256(p.read_bytes()).hexdigest()
+
+    originals = {p.name: sha(p) for p in (sweep_path, lg_path)}
+    y, ranked_store = store["labels"], {}
+    changed, n_curves, tables_changed = [], 0, []
+    for r in sw["rows"]:
+        key = f"{r['corruption']}_s{r['severity']}"
+        lg = store[key]
+        _, _, _, correct = softmax_outputs(lg, y)
+        blocks = [(name, cond["T"], cond["coverage"]) for name, cond in r["temperature"].items()]
+        blocks.append(("scores", 1.0, r["scores"]))
+        for name, t, block in blocks:
+            for k, s in scores(lg, t).items():
+                if k not in block:  # margin has no per-T curve (it ranks as at T = 1)
+                    continue
+                ranked_store[f"{key}__{name}__{k}"] = s
+                new = _normal(risk_coverage(s, correct))
+                assert isinstance(new, dict)
+                n_curves += 1
+                fields = sorted(f for f in new if new[f] != block[k].get(f))
+                if fields:
+                    changed.append({"curve": f"{key}/{name}/{k}", "fields": fields,
+                                    "aurc_before": block[k]["aurc"], "aurc_after": new["aurc"]})
+                    block[k] = new
+        new_t = _normal(threshold_table(scores(lg)["max_softmax"], correct))
+        if new_t != r["thresholds_max_softmax_T1"]:
+            tables_changed.append(key)
+            r["thresholds_max_softmax_T1"] = new_t
+    new_th = _normal(threshold_analysis(store, dict(np.load(val_path))))
+    threshold_unchanged = new_th == sw["threshold"]
+    record = {
+        "why": "D20: this sweep was written before the evaluation stored the exact score "
+               "arrays it ranked on. They were recomputed here from the saved logits (not "
+               "changed), and every curve and the threshold re-derived from them.",
+        "machine": f"{platform.system()} {platform.machine()}", "python": platform.python_version(),
+        "torch": torch.__version__, "numpy": np.__version__,
+        "date": datetime.now().isoformat(timespec="seconds"),
+        "originals_sha256": originals,
+        "curves": n_curves,
+        "aurc_changed": sum("aurc" in c["fields"] for c in changed),
+        "curves_changed": changed,  # any field: AURC, accuracy at coverage, distinct scores
+        "max_abs_aurc_change": max((abs(c["aurc_after"] - c["aurc_before"]) for c in changed),
+                                   default=0.0),
+        "threshold_tables_changed": tables_changed,
+        "threshold_unchanged": threshold_unchanged,
+    }
+    if not threshold_unchanged:
+        sw["threshold_before_rescore"] = sw["threshold"]
+        sw["threshold"] = new_th
+    sw["rescored"] = record
+    np.savez(lg_path, **store, **ranked_store)  # type: ignore[arg-type]
+    after = dict(np.load(lg_path))
+    assert all(np.array_equal(after[k], v) for k, v in store.items()), "logits changed"
+    fig_dir = d / f"figures_{rid}"
+    if fig_dir.is_dir():
+        from src.figures import aurc_by_score, provenance, render
+        names = [f"aurc_by_score_{size}_{rid}.{ext}" for size, ext in (("paper", "pdf"),
+                                                                      ("slide", "png"))]
+        record["originals_sha256"].update({f"{fig_dir.name}/{n}": sha(fig_dir / n)
+                                           for n in names if (fig_dir / n).exists()})
+        render(aurc_by_score(sw), "aurc_by_score", fig_dir, rid, provenance(sw))
+    sweep_path.write_text(json.dumps(_json_safe(sw), indent=1, allow_nan=False))
+    other = [c for c in changed if "aurc" not in c["fields"]]
+    print(f"re-scored {sweep_path.name} (D20): {n_curves} curves; AURC changed in "
+          f"{record['aurc_changed']} (max |change| {record['max_abs_aurc_change']:.1e}); "
+          f"{len(other)} more differ only in "
+          f"{sorted({f for c in other for f in c['fields']}) or 'nothing'}; threshold tables "
+          f"changed in {len(tables_changed)} conditions; threshold "
+          f"{'unchanged' if threshold_unchanged else 'CHANGED'}; logits unchanged")
+    for c in changed:
+        if "aurc" in c["fields"]:
+            print(f"   {c['curve']:<38} AURC {c['aurc_before']:.6f} -> {c['aurc_after']:.6f}")
+    return record
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--results", required=True, help="results_<run_id>.json from src.train")
+    ap.add_argument("--results", help="results_<run_id>.json from src.train")
+    ap.add_argument("--rescore", help="sweep_<run_id>.json written before D20: store its "
+                    "ranked score arrays (see rescore)")
     ap.add_argument("--data-root", help="override the data root recorded in the run")
     ap.add_argument("--batch-size", type=int)
     ap.add_argument("--num-workers", type=int)
     a = ap.parse_args()
+    if a.rescore:
+        rescore(a.rescore)
+        return
+    if not a.results:
+        ap.error("give --results or --rescore")
     print_threshold(sweep(a.results, a.data_root, a.batch_size, a.num_workers)["threshold"])
 
 

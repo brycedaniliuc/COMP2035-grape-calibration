@@ -63,9 +63,31 @@ def test_sweep_on_fixture_checkpoint(fixture_root, tmp_path):
             assert set(cond["coverage"]) == {"max_softmax", "neg_entropy"}
     assert sw["clean_check"]["max_abs_logit_diff_test"] == 0.0
     npz = np.load(tmp_path / f"sweep_logits_{res['run_id']}.npz")
-    assert len(npz.files) == 1 + len(CORRUPTIONS) * len(SEVERITIES)
+    logit_keys = [k for k in npz.files if "__" not in k]
+    assert len(logit_keys) == 1 + len(CORRUPTIONS) * len(SEVERITIES)
+    # beside the logits, the exact arrays every curve was ranked on (D20): max softmax and
+    # entropy at every T, and the T = 1 block with margin
+    assert len(npz.files) - len(logit_keys) == len(CORRUPTIONS) * len(SEVERITIES) * (
+        2 * len(sw["temperatures"]) + 3)
     val = np.load(tmp_path / f"sweep_val_logits_{res['run_id']}.npz")
-    assert set(val.files) == set(npz.files) and val["labels"].size == sw["n_val"]
+    assert set(val.files) == set(logit_keys) and val["labels"].size == sw["n_val"]
+
+    # verify ranks on those arrays and the AURC agreement is exact; without them (an output
+    # from before D20) the check fails rather than recomputing scores and guessing
+    from src.verify import tier1
+    run_path = tmp_path / f"results_{res['run_id']}.json"
+    aurc = {c[0]: c for c in tier1(run_path, require_sweep=True)}
+    assert aurc["sweep: AURC at every T re-derived"][2] == "PASS"
+    assert aurc["sweep: stored scores = float64 softmax, entropy, margin"][2] == "PASS"
+    old = tmp_path / "old"
+    old.mkdir()
+    for f in tmp_path.glob(f"*{res['run_id']}*"):
+        if f.is_file():
+            (old / f.name).write_bytes(f.read_bytes())
+    np.savez(old / f"sweep_logits_{res['run_id']}.npz", **{k: npz[k] for k in logit_keys})
+    aurc = {c[0]: c for c in tier1(old / run_path.name, require_sweep=True)}
+    assert aurc["sweep: AURC at every T re-derived"][2] == "FAIL"
+    assert "no stored score arrays" in aurc["sweep: AURC at every T re-derived"][3]
 
     # report tables and macros: a fixture run is not a result (D19), so by default every
     # number is pending; only the test flag lets it through, labelled NOT A RESULT
@@ -85,3 +107,11 @@ def test_sweep_on_fixture_checkpoint(fixture_root, tmp_path):
     assert "of 24" in (forced / "table_threshold.tex").read_text()
     assert "NOT A RESULT" in (forced / "table_threshold.tex").read_text()
     assert "\\notaresult{" in (forced / "numbers.tex").read_text()
+    # AURC is reported at the precision it is stable to (D20): two decimals, never more
+    from src.evaluate import report_aurc
+    lines = [ln for ln in (forced / "table_sweep.tex").read_text().splitlines()
+             if ln.endswith("\\\\") and "&" in ln and not ln.startswith(("Corruption", " &"))]
+    assert lines and all(len(ln[:-2].rsplit("&", 1)[1].strip().split(".")[1]) == 2
+                         for ln in lines)
+    want = report_aurc(clean[0]["scores"]["max_softmax"]["aurc"])
+    assert lines[0][:-2].rsplit("&", 1)[1].strip() == f"{want:.2f}"

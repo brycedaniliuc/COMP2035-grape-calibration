@@ -30,7 +30,14 @@ import numpy as np
 
 from src.config import Config
 from src.degrade import CORRUPTIONS, SEVERITIES
-from src.evaluate import evaluate_logits, risk_coverage, sweep, threshold_analysis
+from src.evaluate import (
+    evaluate_logits,
+    report_aurc,
+    rescore,
+    risk_coverage,
+    sweep,
+    threshold_analysis,
+)
 from src.provenance import not_a_result
 from src.train import _json_safe, run
 
@@ -91,6 +98,7 @@ def ensure_sweep(results_path: str | Path, data_root: str | None = None) -> Path
              d / f"sweep_val_logits_{run_id}.npz"]
     if all(f.exists() for f in files):
         print(f"{run_id}: reusing its sweep")
+        rescore(files[0])  # a sweep from before D20 gets its ranked score arrays
     else:
         sweep(results_path, data_root=data_root)
     return files[0]
@@ -160,8 +168,11 @@ def evaluate_samples(test: dict[str, list[np.ndarray]], val: dict[str, list[np.n
             probs[f"{key}__{u}"] = c[u]
         val_probs[key] = combine(val[key])["mean"]
         corruption, severity = key.rsplit("_s", 1)
+        ranked: dict[str, np.ndarray] = {}
         row = {"corruption": corruption, "severity": int(severity), "parameter": parameter[key],
-               **evaluate_logits(log_probs(c["mean"]), y, classes, {"T=1": 1.0}, n_bins, seed)}
+               **evaluate_logits(log_probs(c["mean"]), y, classes, {"T=1": 1.0}, n_bins, seed,
+                                 ranked)}
+        probs.update({f"{key}__{k}": v for k, v in ranked.items()})  # D20
         correct = (c["mean"].argmax(1) == y).astype(float)
         row["scores"]["neg_mutual_info"] = risk_coverage(-c["mutual_info"], correct)
         row["uncertainty"] = {f"mean_{u}": float(c[u].mean()) for u in UNCERTAINTY}
@@ -232,6 +243,7 @@ def ensemble_sweep(member_results: Sequence[str | Path], stamp: str | None = Non
         print(f"{r['corruption'] + ' s' + str(r['severity']):<18}{s['accuracy']:>11.4f}"
               f"{r['accuracy']:>10.4f}{s['temperature']['T=1']['ece']:>12.4f}"
               f"{r['temperature']['T=1']['ece']:>10.4f}"
-              f"{s['scores']['max_softmax']['aurc']:>13.4f}{r['scores']['max_softmax']['aurc']:>10.4f}")
+              f"{report_aurc(s['scores']['max_softmax']['aurc']):>13.2f}"
+              f"{report_aurc(r['scores']['max_softmax']['aurc']):>10.2f}")  # D20
     print(f"written -> {out_dir / f'ensemble_{ens_id}.json'}")
     return out

@@ -244,15 +244,19 @@ def _selective_accuracy(score: np.ndarray, correct: np.ndarray
 
 def coverage_curves(sweep: dict, logits: dict) -> Callable[[str], Figure]:
     from src.degrade import CORRUPTIONS, SEVERITIES
-    from src.evaluate import scores
+    from src.evaluate import ranked_scores, scores
     y = logits["labels"]
+
+    def t1_max(key: str) -> np.ndarray:  # the array the sweep ranked on, where stored (D20)
+        s = ranked_scores(logits, key, "scores", "max_softmax")
+        return scores(logits[key])["max_softmax"] if s is None else s
 
     def build(size: str) -> Figure:
         fig, axes = _panels(size)
         for ax, c in zip(axes, CORRUPTIONS, strict=True):
             for s in SEVERITIES:
                 lg = logits[f"{c}_s{s}"]
-                cov, acc = _selective_accuracy(scores(lg)["max_softmax"],
+                cov, acc = _selective_accuracy(t1_max(f"{c}_s{s}"),
                                                (lg.argmax(1) == y).astype(float))
                 ax.plot(cov, acc, color=_sev_colour(s), lw=1.0 if size == "paper" else 2.2,
                         label="clean" if s == 0 else f"severity {s}")
@@ -359,7 +363,11 @@ def degeneracy(sweep: dict) -> Callable[[str], Figure]:
 
 
 def aurc_by_score(sweep: dict) -> Callable[[str], Figure]:
+    """AURC by severity, plotted at the precision it is stable to (D20: 2 decimals)."""
+    from matplotlib.ticker import FormatStrFormatter
+
     from src.degrade import CORRUPTIONS
+    from src.evaluate import report_aurc
     sty = {"max_softmax": (BLUE, "-", "o", "Max softmax, T = 1"),
            "neg_entropy": (RED, "--", "s", "Entropy, T = 1"),
            "margin": (INK, ":", "^", "Logit margin")}
@@ -369,14 +377,17 @@ def aurc_by_score(sweep: dict) -> Callable[[str], Figure]:
         for ax, c in zip(axes, CORRUPTIONS, strict=True):
             rs = _rows(sweep, c)
             for k, (col, ls, mk, lab) in sty.items():
-                ax.plot([r["severity"] for r in rs], [r["scores"][k]["aurc"] for r in rs],
+                ax.plot([r["severity"] for r in rs],
+                        [report_aurc(r["scores"][k]["aurc"]) for r in rs],
                         color=col, ls=ls, marker=mk, ms=3 if size == "paper" else 7, label=lab)
             ax.plot([r["severity"] for r in rs],  # the temperature-scaled method (paper §3.2)
-                    [r["temperature"]["T_lbfgs"]["coverage"]["max_softmax"]["aurc"] for r in rs],
+                    [report_aurc(r["temperature"]["T_lbfgs"]["coverage"]["max_softmax"]["aurc"])
+                     for r in rs],
                     color=BLUE, ls="-.", marker="o", mfc="white",
                     ms=3 if size == "paper" else 7, label=f"Max softmax, {_t_lbfgs_name(sweep)}")
             ax.set_title(LABEL[c])
             ax.set_xticks(range(6))
+            ax.yaxis.set_major_formatter(FormatStrFormatter("%.2f"))
             ax.grid(axis="y")
         _finish(fig, axes, size, "Severity level (0 = clean)", "AURC (lower is better)", 2)
         fig.suptitle(f"Ranking quality of the confidence scores (n = {sweep['n_test']})")
@@ -419,11 +430,16 @@ def ece_by_fixed_t(sweep: dict) -> Callable[[str], Figure]:
     return build
 
 
+def _report_aurc(x: float) -> float:
+    from src.evaluate import report_aurc
+    return report_aurc(x)
+
+
 COMPARISON_METRICS = (  # (row label, value, 95% interval or None), all at T = 1
     ("Accuracy", lambda r: r["accuracy"], lambda r: r["accuracy_wilson95"]),
     ("ECE ($T{=}1$)", lambda r: r["temperature"]["T=1"]["ece"],
      lambda r: r["temperature"]["T=1"]["ece_bootstrap95"]),
-    ("AURC (max softmax)", lambda r: r["scores"]["max_softmax"]["aurc"], None),
+    ("AURC (max softmax)", lambda r: _report_aurc(r["scores"]["max_softmax"]["aurc"]), None),
 )
 
 
@@ -457,6 +473,9 @@ def method_comparison(methods: list[tuple[str, dict]], title: str) -> Callable[[
                     ax.set_title(LABEL[c])
                 if j == 0:
                     ax.set_ylabel(label)
+                if label.startswith("AURC"):  # plotted at its stable precision (D20)
+                    from matplotlib.ticker import FormatStrFormatter
+                    ax.yaxis.set_major_formatter(FormatStrFormatter("%.2f"))
                 ax.set_xticks(range(6))
                 ax.grid(axis="y")
         fig.supxlabel("Severity level (0 = clean)", fontsize=FONT[size])

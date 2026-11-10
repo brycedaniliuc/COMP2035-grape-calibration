@@ -34,7 +34,7 @@ SEPTEMBER = REPO / "results" / "source" / "results_resnet50_source.json"
 SEPTEMBER_AUDIT = REPO / "results" / "source" / "audit.json"
 LEAF = re.compile(r"([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})___")
 ECE_TOL, PROB_TOL = 1e-5, 1e-5
-AURC_TOL = 1e-9  # ranking runs on the same float32 scores (see scores32)
+AURC_TOL = 1e-9  # ranking runs on the exact score arrays the evaluation ranked on (D20)
 SCORE_TOL = 1e-5  # float32 scores vs this module's float64 softmax
 
 Check = tuple[str, int, str, str]  # (name, tier, PASS / FAIL / PENDING COLAB, detail)
@@ -137,11 +137,12 @@ def tier1(run_path: Path, require_sweep: bool = False) -> list[Check]:
 
 
 def scores32(logits: np.ndarray, t: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
-    """(max softmax, minus entropy) in float32, the numbers the evaluation code ranks by.
-    Confidences can sit closer together than float32 rounding, so ranking on a float64
-    recomputation can order near-ties differently and change a curve without any bug.
-    Every check therefore ranks on these, after checking they agree with this module's own
-    float64 softmax (score_agreement); the ranking and counting code stays separate."""
+    """(max softmax, minus entropy) in float32, as the evaluation code computes them.
+    Used where no stored score array exists (the threshold checks at T = 1, and old outputs).
+    Confidences can sit closer together than float32 rounding: ranking on a float64
+    recomputation, or on float32 computed on another machine, can order near-ties
+    differently and change a curve without any bug (D20). AURC is therefore checked on the
+    stored arrays (stored_scores) wherever they exist."""
     import torch
     z = torch.as_tensor(np.asarray(logits), dtype=torch.float32)
     p = torch.softmax(z / t, 1)
@@ -161,12 +162,39 @@ def aurc_v2(score: np.ndarray, correct: np.ndarray) -> float:
     return float(np.mean(1 - selective_acc(score, correct)))
 
 
+def stored_scores(store: dict, condition: str, t_name: str, score: str) -> np.ndarray | None:
+    """The exact array the evaluation ranked a curve on ("<condition>__<T>__<score>"; T is
+    "scores" for the T = 1 block with margin), or None if the output predates D20. Ranking
+    is only reproducible on these: recomputing float32 scores on another machine can move
+    near-tied and saturated scores by one ulp and reorder them (D20)."""
+    return store.get(f"{condition}__{t_name}__{score}")
+
+
+def _t1_max(lg: dict, key: str) -> np.ndarray:
+    s = stored_scores(lg, key, "scores", "max_softmax")
+    return scores32(lg[key])[0] if s is None else s
+
+
+def own_score(logits: np.ndarray, t: float, score: str) -> np.ndarray:
+    """This module's float64 version of a score, to check a stored array is that score."""
+    if score == "margin":
+        top2 = np.sort(np.asarray(logits, dtype=np.float64), 1)[:, -2:]
+        return top2[:, 1] - top2[:, 0]
+    p = softmax64(logits, t)
+    return p.max(1) if score == "max_softmax" else (p * np.log(np.clip(p, 1e-12, None))).sum(1)
+
+
+NO_STORED = ("no stored score arrays: this output was written before the evaluation saved "
+             "the exact arrays it ranked on, so its AURC cannot be re-derived exactly (D20)")
+
+
 def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
                 val_lg: dict) -> list[Check]:
     out: list[Check] = []
     nb = sw["config"]["n_bins"]
     y = lg["labels"]
     bad_acc, bad_ece, bad_pred, bad_t, cov_diff, agree = [], [], [], [], 0.0, 0.0
+    curves: list[tuple[str, str, str, float, float]] = []
     for r in sw["rows"]:
         key = f"{r['corruption']}_s{r['severity']}"
         logits = lg[key]
@@ -181,11 +209,20 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
                 bad_ece.append(f"{key}/{name}")
             if cond["T"] != sw["temperatures"][name]:
                 bad_t.append(f"{key}/{name}")
-            agree = max(agree, score_agreement(logits, cond["T"]))
-            for k, s in zip(("max_softmax", "neg_entropy"), scores32(logits, cond["T"]),
-                            strict=True):
-                cov_diff = max(cov_diff, abs(aurc_v2(s, correct)
-                                             - cond["coverage"][k]["aurc"]))
+            for k in ("max_softmax", "neg_entropy"):
+                curves.append((key, name, k, cond["T"], cond["coverage"][k]["aurc"]))
+        curves += [(key, "scores", k, 1.0, r["scores"][k]["aurc"]) for k in r["scores"]]
+    # AURC: rank the exact arrays the sweep ranked on, after checking each one is the score
+    # it claims to be against this module's own float64 version
+    missing = 0
+    for key, name, k, t, want in curves:
+        s = stored_scores(lg, key, name, k)
+        if s is None:
+            missing += 1
+            continue
+        y_ok = (softmax64(lg[key]).argmax(1) == y).astype(float)
+        agree = max(agree, float(np.abs(s - own_score(lg[key], t, k)).max()))
+        cov_diff = max(cov_diff, abs(aurc_v2(s, y_ok) - want))
     n = len(sw["rows"])
     out.append(("sweep: accuracy re-derived, every row", 1, "PASS" if not bad_acc else "FAIL",
                 f"{n} rows" + (f"; mismatched {bad_acc}" if bad_acc else "")))
@@ -198,11 +235,15 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
     same = all(np.array_equal(lg[k], test_logits) for k in s0)
     out.append(("severity 0 = clean logits, bit-identical", 1, "PASS" if same else "FAIL",
                 f"{len(s0)} corruptions"))
-    out.append(("sweep: float32 scores = float64 softmax and entropy", 1,
-                "PASS" if agree < SCORE_TOL else "FAIL", f"max |diff| {agree:.1e}"))
-    out.append(("sweep: AURC at every T re-derived", 1, "PASS" if cov_diff < AURC_TOL
-                else "FAIL", f"max |diff| {cov_diff:.1e}, {n * len(sw['temperatures']) * 2} "
-                "curves (max softmax, entropy)"))
+    if missing:
+        out.append(("sweep: AURC at every T re-derived", 1, "FAIL",
+                    f"{missing} of {len(curves)} curves: {NO_STORED}"))
+    else:
+        out.append(("sweep: stored scores = float64 softmax, entropy, margin", 1,
+                    "PASS" if agree < SCORE_TOL else "FAIL", f"max |diff| {agree:.1e}"))
+        out.append(("sweep: AURC at every T re-derived", 1, "PASS" if cov_diff < AURC_TOL
+                    else "FAIL", f"max |diff| {cov_diff:.1e}, {len(curves)} curves ranked on "
+                    "the stored scores (max softmax and entropy at every T; margin at T = 1)"))
     out += threshold_checks(sw, lg, val_lg)
     out += figure_checks(sw, lg)
     return out
@@ -214,7 +255,7 @@ def threshold_checks(sw: dict, lg: dict, val_lg: dict) -> list[Check]:
     conditions below target are as reported. Scores are first checked against this module's
     own float64 softmax; the counting is then exact (no tolerance band, which near-tied
     confidences would make meaningless)."""
-    keys = [k for k in lg if k != "labels"]
+    keys = [k for k in lg if k != "labels" and "__" not in k]
     stores = (("v", val_lg), ("t", lg))
     conf = {s: {k: scores32(st[k])[0] for k in keys} for s, st in stores}
     agree = max(score_agreement(st[k]) for s, st in stores for k in keys)
@@ -290,14 +331,14 @@ def figure_checks(sw: dict, lg: dict) -> list[Check]:
     check("ece_by_fixed_t", F.ece_by_fixed_t(sw)("paper"),
           [np.array([rows[(c, s)]["temperature"][k]["ece"] for s in sev])
            for c in CORRUPTIONS for k in sw["temperatures"] if k.startswith("T=")])
-    check("aurc_by_score", F.aurc_by_score(sw)("paper"),
-          [np.array([rows[(c, s)]["scores"][k]["aurc"] for s in sev])
+    from src.evaluate import AURC_DECIMALS  # the reporting precision (D20), not a statistic
+    check("aurc_by_score (at the reported precision, D20)", F.aurc_by_score(sw)("paper"),
+          [np.round([rows[(c, s)]["scores"][k]["aurc"] for s in sev], AURC_DECIMALS)
            for c in CORRUPTIONS for k in ("max_softmax", "neg_entropy", "margin")]
-          + [np.array([rows[(c, s)]["temperature"]["T_lbfgs"]["coverage"]["max_softmax"]
-                       ["aurc"] for s in sev]) for c in CORRUPTIONS])
+          + [np.round([rows[(c, s)]["temperature"]["T_lbfgs"]["coverage"]["max_softmax"]
+                       ["aurc"] for s in sev], AURC_DECIMALS) for c in CORRUPTIONS])
     check("coverage_curves (vs independent recomputation)", F.coverage_curves(sw, lg)("paper"),
-          [selective_acc(scores32(lg[f"{c}_s{s}"])[0],
-                         (lg[f"{c}_s{s}"].argmax(1) == y).astype(float))
+          [selective_acc(_t1_max(lg, f"{c}_s{s}"), (lg[f"{c}_s{s}"].argmax(1) == y).astype(float))
            for c in CORRUPTIONS for s in sev])
     check("temperature_degeneracy", F.degeneracy(sw)("paper"),
           [np.array(sw["degeneracy"]["val_nll"])])
@@ -426,8 +467,11 @@ def sample_method_checks(label: str, method: dict, probs: dict, val_probs: dict,
             bad.append(f"{key}/ece")
         if abs(aurc_v2(-mi, correct) - r["scores"]["neg_mutual_info"]["aurc"]) >= AURC_TOL:
             bad.append(f"{key}/aurc_mutual_info")
-        if abs(aurc_v2(scores32(np.log(np.clip(p, 1e-300, None)))[0], correct)
-               - r["scores"]["max_softmax"]["aurc"]) >= AURC_TOL:
+        s = stored_scores(probs, key, "scores", "max_softmax")
+        if s is None:
+            bad.append(f"{key}/{NO_STORED}")
+        elif (np.abs(s - p.max(1)).max() >= SCORE_TOL
+              or abs(aurc_v2(s, correct) - r["scores"]["max_softmax"]["aurc"]) >= AURC_TOL):
             bad.append(f"{key}/aurc_max_softmax")
     out.append((f"{label}: accuracy, ECE, AURC re-derived, every row", 1,
                 "PASS" if not bad else "FAIL", f"{len(method['rows'])} rows"

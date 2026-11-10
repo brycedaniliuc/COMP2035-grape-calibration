@@ -208,6 +208,9 @@ It does every step that used to be manual:
 - **Copies** every output, except the `.pt` checkpoints, which stay in Drive, into
   `results/colab_<date>/`. It never overwrites: a different file already there stops the
   import.
+- **Re-scores** any sweep written before the evaluation stored the exact score arrays it
+  ranked on (DECISIONS.md D20). The logits are never changed; every AURC that moves is
+  printed and recorded in the sweep JSON.
 - **Regenerates** every number in the report (`tools/make_tables.py`) from the seed 42 run,
   its sweep, its PlantSeg analysis and the supplied run.
 - **Runs `src.verify`** on every run, ensemble, PlantSeg and MC dropout output, and on the

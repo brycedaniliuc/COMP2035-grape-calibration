@@ -4,7 +4,11 @@
 
 1. Copies every output in the Drive folder into results/colab_<date>/, except checkpoints
    (*.pt, which stay in Drive). A file already there with different contents stops the
-   import: nothing is ever overwritten.
+   import: nothing is ever overwritten. A file re-scored here (step 1b) still counts as the
+   Drive file it came from: its sweep JSON records the original's sha256.
+1b. Re-scores any sweep written before the evaluation stored the exact score arrays it
+   ranked on (src.evaluate.rescore, DECISIONS.md D20). The logits are never changed; every
+   AURC that moves is listed, before and after, in the sweep JSON.
 2. Regenerates every number in the report (tools/make_tables.py) from the seed 42 source run,
    its sweep and its PlantSeg analysis, and the supplied run. Anything that is not a result
    (src/provenance.py) renders as [pending: ...].
@@ -18,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import filecmp
+import hashlib
 import json
 import re
 import shutil
@@ -28,6 +33,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
+from src.evaluate import rescore  # noqa: E402
 from src.provenance import not_a_result  # noqa: E402
 from tools.make_tables import build  # noqa: E402
 
@@ -47,22 +53,47 @@ def outputs(drive: Path) -> list[Path]:
     return keep
 
 
-def copy(src: Path, dst: Path) -> str:
+def sha256(p: Path) -> str:
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def origins(folder: Path) -> dict[str, str]:
+    """Path (relative to the folder) -> sha256 of the original, for every file re-scored
+    after it was written (D20). Read from the "rescored" record in each sweep JSON."""
+    out: dict[str, str] = {}
+    for p in folder.glob("sweep_*.json"):
+        out.update(json.loads(p.read_text()).get("rescored", {}).get("originals_sha256", {}))
+    return out
+
+
+def _same(src: Path, dst: Path, rel: str, src_orig: dict, dst_orig: dict) -> str | None:
+    """"already here" if identical; "re-scored" if dst was re-scored from the same original;
+    None if they differ."""
+    if filecmp.cmp(src, dst, shallow=False):
+        return "already here"
+    if rel in dst_orig and dst_orig[rel] == src_orig.get(rel, sha256(src)):
+        return "already here (re-scored, D20)"
+    return None
+
+
+def copy(src: Path, dst: Path, src_orig: dict | None = None, dst_orig: dict | None = None
+         ) -> str:
+    src_orig, dst_orig = src_orig or {}, dst_orig or {}
     if dst.exists():
         if src.is_dir():
-            return "kept (folder exists)" if _same_tree(src, dst) else "CONFLICT"
-        return "already here" if filecmp.cmp(src, dst, shallow=False) else "CONFLICT"
+            fa = sorted(p.relative_to(src) for p in src.rglob("*") if p.is_file())
+            fb = sorted(p.relative_to(dst) for p in dst.rglob("*") if p.is_file())
+            same = [_same(src / f, dst / f, f"{src.name}/{f}", src_orig, dst_orig) for f in fa]
+            if fa != fb or None in same:
+                return "CONFLICT"
+            return "kept (folder exists)" + (", re-scored (D20)" if any(
+                x and "re-scored" in x for x in same) else "")
+        return _same(src, dst, src.name, src_orig, dst_orig) or "CONFLICT"
     if src.is_dir():
         shutil.copytree(src, dst)
     else:
         shutil.copy2(src, dst)
     return "copied"
-
-
-def _same_tree(a: Path, b: Path) -> bool:
-    fa = sorted(p.relative_to(a) for p in a.rglob("*") if p.is_file())
-    fb = sorted(p.relative_to(b) for p in b.rglob("*") if p.is_file())
-    return fa == fb and all(filecmp.cmp(a / f, b / f, shallow=False) for f in fa)
 
 
 def seed42_source(d: Path) -> Path | None:
@@ -111,8 +142,9 @@ def main(argv: list[str] | None = None) -> int:
     dest.mkdir(parents=True, exist_ok=True)
     print(f"1. copying {len(found)} outputs from {drive}\n   into {dest}")
     conflicts = []
+    src_orig, dst_orig = origins(drive), origins(dest)
     for p in found:
-        status = copy(p, dest / p.name)
+        status = copy(p, dest / p.name, src_orig, dst_orig)
         if status == "CONFLICT":
             conflicts.append(p.name)
         print(f"   {status:<20} {p.name}")
@@ -120,6 +152,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"\nSTOP: {len(conflicts)} file(s) already in {dest} with different contents: "
               f"{conflicts}. Nothing was overwritten. Use another --date, or check by hand.")
         return 1
+
+    print("\n1b. re-scoring sweeps written before the ranked score arrays were stored (D20)")
+    for p in sorted(dest.glob("sweep_*.json")):
+        before = "rescored" in json.loads(p.read_text())
+        rec = rescore(p)
+        if before:
+            print(f"   already re-scored on {rec['date']}: {p.name}")
+        elif not rec:
+            print(f"   nothing to do (arrays stored by the sweep itself): {p.name}")
 
     base = seed42_source(dest)
     supplied = newest(dest, "results_*_supplied_*.json")
