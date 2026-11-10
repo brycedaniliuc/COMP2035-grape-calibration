@@ -4,6 +4,7 @@
     python -m src.verify --generated report/generated   # report numbers not stale
     python -m src.verify --ensemble <run_dir>/ensemble_<ens_id>.json
     python -m src.verify --plantseg <run_dir>/plantseg_<run_id>.json
+    python -m src.verify --mcdropout <run_dir>/mcdropout_<mc_id>.json
 
 Deliberately does NOT import src.calibrate, src.evaluate's statistics or src.data's filename
 parsing: softmax, accuracy, ECE binning, coverage and leaf identity are written again here,
@@ -385,6 +386,63 @@ def determinism(data_root: str) -> list[Check]:
              "PASS" if same else "FAIL", f"{len(outs[0])} arrays")]
 
 
+def _entropy64(p: np.ndarray) -> np.ndarray:
+    return -(p * np.log(np.clip(p, 1e-300, None))).sum(-1)
+
+
+def sample_method_checks(label: str, method: dict, probs: dict, val_probs: dict,
+                         test_samples: dict, val_samples: dict, n_bins: int) -> list[Check]:
+    """A method that averages S samples (ensemble members, MC dropout passes), re-derived
+    from the samples' own logits: the mean softmax, the uncertainty split (D13), every row's
+    accuracy, ECE and AURC (max softmax and mutual information), and the threshold."""
+    out: list[Check] = []
+    mean_diff, unc_diff = 0.0, 0.0
+    for store, samples in ((probs, test_samples), (val_probs, val_samples)):
+        for key, zs in samples.items():
+            p = np.stack([softmax64(z) for z in zs])
+            m = p.mean(0)
+            mean_diff = max(mean_diff, float(np.abs(m - store[key]).max()))
+            if store is probs:
+                total, expected = _entropy64(m), _entropy64(p).mean(0)
+                own = {"total_entropy": total, "expected_entropy": expected,
+                       "mutual_info": total - expected,
+                       "variance": ((p - m) ** 2).mean(0).mean(1)}
+                for u, v in own.items():
+                    unc_diff = max(unc_diff, float(np.abs(v - store[f"{key}__{u}"]).max()))
+    n_s = {len(zs) for zs in test_samples.values()}
+    out.append((f"{label}: mean softmax re-derived from the samples' logits", 1,
+                "PASS" if mean_diff < PROB_TOL else "FAIL",
+                f"{n_s.pop() if len(n_s) == 1 else n_s} samples; max |diff| {mean_diff:.1e}"))
+    out.append((f"{label}: total entropy, aleatoric part, mutual information, variance", 1,
+                "PASS" if unc_diff < PROB_TOL else "FAIL", f"max |diff| {unc_diff:.1e}"))
+    y, bad = probs["labels"], []
+    for r in method["rows"]:
+        key = f"{r['corruption']}_s{r['severity']}"
+        p, mi = probs[key], probs[f"{key}__mutual_info"]
+        correct = (p.argmax(1) == y).astype(float)
+        if correct.mean() != r["accuracy"]:
+            bad.append(f"{key}/accuracy")
+        if abs(ece_v2(p.max(1), correct, n_bins)[0] - r["temperature"]["T=1"]["ece"]) >= ECE_TOL:
+            bad.append(f"{key}/ece")
+        if abs(aurc_v2(-mi, correct) - r["scores"]["neg_mutual_info"]["aurc"]) >= AURC_TOL:
+            bad.append(f"{key}/aurc_mutual_info")
+        if abs(aurc_v2(scores32(np.log(np.clip(p, 1e-300, None)))[0], correct)
+               - r["scores"]["max_softmax"]["aurc"]) >= AURC_TOL:
+            bad.append(f"{key}/aurc_max_softmax")
+    out.append((f"{label}: accuracy, ECE, AURC re-derived, every row", 1,
+                "PASS" if not bad else "FAIL", f"{len(method['rows'])} rows"
+                + (f"; {bad[:5]}" if bad else "")))
+
+    def logs(st: dict) -> dict:
+        return {k: (np.log(np.clip(v, 1e-300, None)) if k != "labels" else v)
+                for k, v in st.items() if "__" not in k}
+    val_logs = logs(val_probs)
+    val_logs["labels"] = val_probs["labels"]
+    out += [(f"{label} {name}", t, st, det)
+            for name, t, st, det in threshold_checks(method, logs(probs), val_logs)]
+    return out
+
+
 def ensemble_checks(ens_path: Path) -> list[Check]:
     """The deep ensemble, re-derived from each member's saved sweep logits with this
     module's own softmax, ECE, variance and coverage code."""
@@ -407,49 +465,13 @@ def ensemble_checks(ens_path: Path) -> list[Check]:
 
     probs = dict(np.load(d / f"ensemble_probs_{ens['ens_id']}.npz"))
     val_probs = dict(np.load(d / f"ensemble_val_probs_{ens['ens_id']}.npz"))
-    stores = {"test": ("sweep_logits", probs), "val": ("sweep_val_logits", val_probs)}
     member = {k: [dict(np.load(d / f"{prefix}_{r['run_id']}.npz")) for r in res]
-              for k, (prefix, _) in stores.items()}
-    max_diff, var_diff = 0.0, 0.0
-    for k, (_, stored) in stores.items():
-        for key in stored:
-            if key == "labels" or key.endswith("__disagreement"):
-                continue
-            p = np.stack([softmax64(m[key]) for m in member[k]])
-            max_diff = max(max_diff, float(np.abs(p.mean(0) - stored[key]).max()))
-            if k == "test":
-                v = ((p - p.mean(0)) ** 2).mean(0).mean(1)
-                var_diff = max(var_diff, float(np.abs(v - stored[f"{key}__disagreement"]).max()))
-    out.append(("ensemble: mean softmax re-derived from member logits", 1,
-                "PASS" if max_diff < PROB_TOL else "FAIL", f"max |diff| {max_diff:.1e}"))
-    out.append(("ensemble: member variance re-derived", 1,
-                "PASS" if var_diff < PROB_TOL else "FAIL", f"max |diff| {var_diff:.1e}"))
-
-    y, nb = probs["labels"], res[0]["config"]["n_bins"]
-    bad = []
-    for r in ens["rows"]:
-        key = f"{r['corruption']}_s{r['severity']}"
-        p, dis = probs[key], probs[f"{key}__disagreement"]
-        correct = (p.argmax(1) == y).astype(float)
-        if correct.mean() != r["accuracy"]:
-            bad.append(f"{key}/accuracy")
-        if abs(ece_v2(p.max(1), correct, nb)[0] - r["temperature"]["T=1"]["ece"]) >= ECE_TOL:
-            bad.append(f"{key}/ece")
-        if abs(aurc_v2((-dis).astype(np.float64), correct)
-               - r["scores"]["neg_member_variance"]["aurc"]) >= AURC_TOL:
-            bad.append(f"{key}/aurc_variance")
-        if abs(aurc_v2(scores32(np.log(np.clip(p, 1e-300, None)))[0], correct)
-               - r["scores"]["max_softmax"]["aurc"]) >= AURC_TOL:
-            bad.append(f"{key}/aurc_max_softmax")
-    out.append(("ensemble: accuracy, ECE, AURC re-derived, every row", 1,
-                "PASS" if not bad else "FAIL", f"{len(ens['rows'])} rows"
-                + (f"; {bad[:5]}" if bad else "")))
-
-    def logs(st: dict) -> dict:
-        return {k: (np.log(np.clip(v, 1e-300, None)) if k != "labels" else v)
-                for k, v in st.items() if not k.endswith("__disagreement")}
-    out += [(f"ensemble {name}", t, st, det)
-            for name, t, st, det in threshold_checks(ens, logs(probs), logs(val_probs))]
+              for k, prefix in (("test", "sweep_logits"), ("val", "sweep_val_logits"))}
+    keys = [k for k in probs if "__" not in k and k != "labels"]
+    out += sample_method_checks(
+        "ensemble", ens, probs, val_probs,
+        {k: [m[k] for m in member["test"]] for k in keys},
+        {k: [m[k] for m in member["val"]] for k in keys}, res[0]["config"]["n_bins"])
 
     import matplotlib.pyplot as plt
     F.style("paper")
@@ -468,6 +490,59 @@ def ensemble_checks(ens_path: Path) -> list[Check]:
                for w in wants)
     out.append(("figure ensemble_vs_single: plotted = data", 1, "PASS" if not miss else "FAIL",
                 f"{len(wants) - miss}/{len(wants)} series found"))
+    return out
+
+
+def mcdropout_checks(mc_path: Path) -> list[Check]:
+    """MC dropout, re-derived from the saved logits of every stochastic pass."""
+    import matplotlib.pyplot as plt
+    import torch
+
+    from src import figures as F
+    mc = json.loads(mc_path.read_text())
+    d, mid = mc_path.parent, mc["mc_id"]
+    probs = dict(np.load(d / f"mcdropout_probs_{mid}.npz"))
+    val_probs = dict(np.load(d / f"mcdropout_val_probs_{mid}.npz"))
+    tp = dict(np.load(d / f"mcdropout_passes_{mid}.npz"))
+    vp = dict(np.load(d / f"mcdropout_val_passes_{mid}.npz"))
+    keys = [k for k in probs if "__" not in k and k != "labels"]
+    base = json.loads((d / f"results_{mc['base_run_id']}.json").read_text())
+    out = sample_method_checks("mc dropout", mc, probs, val_probs,
+                               {k: list(tp[k]) for k in keys}, {k: list(vp[k]) for k in keys},
+                               base["config"]["n_bins"])
+    clean = tp[keys[0]]
+    differ = clean.shape[0] == mc["n_passes"] and not all(
+        np.array_equal(clean[0], clean[s]) for s in range(1, clean.shape[0]))
+    out.append(("mc dropout: passes stored and different (dropout active)", 1,
+                "PASS" if differ else "FAIL", f"{clean.shape[0]} passes of {mc['n_passes']}"))
+    head = d / mc["training"]["head"]
+    if head.exists():
+        state = torch.load(head, map_location="cpu", weights_only=True)
+        only_head = set(state) == {"1.weight", "1.bias"}
+        out.append(("mc dropout: only the head retrained (backbone = seed 42 run)", 1,
+                    "PASS" if only_head else "FAIL", f"saved: {sorted(state)}"))
+    else:
+        out.append(("mc dropout: only the head retrained (backbone = seed 42 run)", 1,
+                    "SKIPPED", f"{head.name} not here (checkpoints stay in Drive)"))
+
+    F.style("paper")
+    single = json.loads((d / mc["single_model"]["sweep"]).read_text())
+    ens = F.ensemble_for(mc["base_run_id"], d)
+    fig = F.three_methods(single, ens, mc)("paper")
+    got = [np.asarray(ln.get_ydata(), float) for ax in fig.axes for ln in ax.get_lines()]
+    plt.close(fig)
+    from src.degrade import CORRUPTIONS
+    wants = []
+    for sw in [single] + ([ens] if ens else []) + [mc]:
+        for c in CORRUPTIONS:
+            rows = sorted((r for r in sw["rows"] if r["corruption"] == c),
+                          key=lambda r: r["severity"])
+            wants += [np.array([f(r) for r in rows]) for _, f, _ in F.COMPARISON_METRICS]
+    miss = sum(not any(g.shape == w.shape and np.allclose(g, w, atol=1e-12) for g in got)
+               for w in wants)
+    out.append(("figure methods_comparison: plotted = data", 1, "PASS" if not miss else "FAIL",
+                f"{len(wants) - miss}/{len(wants)} series"
+                f"{' (with the ensemble)' if ens else ' (no ensemble run)'}"))
     return out
 
 
@@ -539,9 +614,12 @@ def plantseg_checks(ps_path: Path, filter_csv: Path | None = None) -> list[Check
             bad.append(f"{key}/wilson")
         if abs(p.max(1).mean() - a["mean_confidence"]) > PROB_TOL:
             bad.append(f"{key}/mean_confidence")
-        if abs(ece_v2(p.max(1), correct, 15)[0] - a["ece"]) > ECE_TOL:
-            bad.append(f"{key}/ece")
-    out.append(("plantseg: black rot accuracy, Wilson, confidence, ECE re-derived", 1,
+        if "ece" in a:  # D17: not estimable at this n
+            bad.append(f"{key}/ece reported")
+        own = ece_v2(scores32(lg["black_rot"][sel])[0].astype(np.float64), correct, 15)[1]
+        if a["bin_occupancy"]["counts"] != [int(c) for c in own]:
+            bad.append(f"{key}/bin_occupancy")
+    out.append(("plantseg: black rot accuracy, Wilson, confidence, bin occupancy (no ECE)", 1,
                 "PASS" if not bad else "FAIL", f"n = {ps['black_rot']['n']}, sensitivity "
                 f"n = {ps['black_rot_usual_framing']['n']}" + (f"; {bad}" if bad else "")))
 
@@ -594,7 +672,7 @@ def plantseg_checks(ps_path: Path, filter_csv: Path | None = None) -> list[Check
 
 
 GENERATOR = REPO / "tools" / "make_tables.py"
-HEADER = re.compile(r"% (generator-sha256|source|pending|body-sha256): (.*)")
+HEADER = re.compile(r"% (generator-sha256|source|pending|excluded|body-sha256): (.*)")
 
 
 def _sha(data: bytes) -> str:
@@ -655,6 +733,7 @@ def main() -> None:
     ap.add_argument("--run", help="results_<run_id>.json")
     ap.add_argument("--ensemble", metavar="JSON", help="ensemble_<ens_id>.json to verify")
     ap.add_argument("--plantseg", metavar="JSON", help="plantseg_<run_id>.json to verify")
+    ap.add_argument("--mcdropout", metavar="JSON", help="mcdropout_<mc_id>.json to verify")
     ap.add_argument("--generated", metavar="DIR",
                     help="check that the report's generated numbers and tables are current "
                          "(re-run tools/make_tables.py if not)")
@@ -663,8 +742,9 @@ def main() -> None:
     ap.add_argument("--determinism", metavar="DATA_ROOT",
                     help="also train + sweep twice on DATA_ROOT (the fixture) and compare")
     a = ap.parse_args()
-    if not (a.run or a.generated or a.ensemble or a.plantseg):
-        ap.error("give at least one of --run, --ensemble, --plantseg, --generated")
+    if not (a.run or a.generated or a.ensemble or a.plantseg or a.mcdropout):
+        ap.error("give at least one of --run, --ensemble, --plantseg, --mcdropout, "
+                 "--generated")
     checks: list[Check] = []
     if a.run:
         run_path = Path(a.run)
@@ -676,6 +756,8 @@ def main() -> None:
         checks += ensemble_checks(Path(a.ensemble))
     if a.plantseg:
         checks += plantseg_checks(Path(a.plantseg))
+    if a.mcdropout:
+        checks += mcdropout_checks(Path(a.mcdropout))
     if a.generated:
         checks += generated_checks(Path(a.generated))
     w = max(len(c[0]) for c in checks)

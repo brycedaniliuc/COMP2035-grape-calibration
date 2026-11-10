@@ -33,6 +33,7 @@ from src.calibrate import ece_and_bins, lbfgs_temperature, softmax_outputs
 from src.config import Config
 from src.data import class_list, index_dataset, make_splits
 from src.degrade import CORRUPTIONS, SEVERITIES, DegradedDataset, severity_parameter
+from src.provenance import not_a_result
 from src.train import (
     _json_safe,
     build_model,
@@ -284,7 +285,8 @@ def sweep(results_path: str | Path, data_root: str | None = None,
           f", max |logit diff| test {clean_diff:.2e}, val {val_diff:.2e}")
 
     sweep_res = {
-        "run_id": run_id, "config": cfg.to_dict(), "classes": classes,
+        "run_id": run_id, "not_a_result": not_a_result(res), "config": cfg.to_dict(),
+        "classes": classes,
         "n_test": int(logits_store["labels"].size), "n_val": int(val_y.size),
         "temperatures": temps, "t_lbfgs": t_fit, "t_lbfgs_label": lbfgs_label,
         "degeneracy": degeneracy(val_logits, val_y, cfg),

@@ -67,12 +67,21 @@ def test_sweep_on_fixture_checkpoint(fixture_root, tmp_path):
     val = np.load(tmp_path / f"sweep_val_logits_{res['run_id']}.npz")
     assert set(val.files) == set(npz.files) and val["labels"].size == sw["n_val"]
 
-    # report tables and macros from this run, with the supplied run absent
+    # report tables and macros: a fixture run is not a result (D19), so by default every
+    # number is pending; only the test flag lets it through, labelled NOT A RESULT
     from src.verify import generated_checks
     from tools.make_tables import build
+    assert sw["not_a_result"].startswith("NOT A RESULT")
+    src = tmp_path / f"results_{res['run_id']}.json"
+    sweep_path = tmp_path / f"sweep_{res['run_id']}.json"
     gen = tmp_path / "generated"
-    build(tmp_path / f"results_{res['run_id']}.json", None,
-          tmp_path / f"sweep_{res['run_id']}.json", gen)
+    build(src, None, sweep_path, gen)
     assert all(c[2] == "PASS" for c in generated_checks(gen))
-    assert "of 24" in (gen / "table_threshold.tex").read_text()
-    assert "\\pending{run}" in (gen / "table_results.tex").read_text()  # supplied absent
+    assert "\\pending{threshold}" in (gen / "table_threshold.tex").read_text()
+    assert "% excluded: source" in (gen / "numbers.tex").read_text()
+    forced = tmp_path / "forced"
+    build(src, None, sweep_path, forced, allow_not_a_result=True)
+    assert all(c[2] == "PASS" for c in generated_checks(forced))
+    assert "of 24" in (forced / "table_threshold.tex").read_text()
+    assert "NOT A RESULT" in (forced / "table_threshold.tex").read_text()
+    assert "\\notaresult{" in (forced / "numbers.tex").read_text()

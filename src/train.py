@@ -43,6 +43,7 @@ from src.data import (
     make_splits,
     save_split_lists,
 )
+from src.provenance import not_a_result
 
 
 def select_device() -> torch.device:
@@ -310,6 +311,9 @@ def run(cfg: Config, stamp: str | None = None) -> dict:
                       "splits": splits_path.name},
     }
     assert set(results["config"]) == {f.name for f in fields(Config)}, "config not fully recorded"
+    results["not_a_result"] = not_a_result(results)  # None only for the protocol run
+    if results["not_a_result"]:
+        print(results["not_a_result"])
     res_path = out / f"results_{run_id}.json"
     res_path.write_text(json.dumps(_json_safe(results), indent=2, allow_nan=False))
 

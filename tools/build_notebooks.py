@@ -213,7 +213,7 @@ Three ResNet-50 members on the same leak-free split, differing only in training 
 **42 is the notebook 01 baseline, reused**; 43 and 44 are trained here (about 26 min each).
 The ensemble predicts the mean softmax of the members. It goes through the same sweep as the
 single model (4 corruptions × severities 0–5; Wilson and bootstrap intervals; coverage and
-AURC for max softmax, entropy, margin, and the members' disagreement), and one figure
+AURC for max softmax, entropy, margin, and the members' mutual information), and one figure
 compares it with the single model at every severity.
 
 **Needs:** notebook 01 finished (its seed 42 run in `OUT`). Notebook 02 is not needed; its
@@ -329,13 +329,62 @@ print(f"total elapsed {(time.time() - T0) / 60:.1f} min")"""),
 ])
 
 
+NB5 = notebook([
+    md("""# 05 · MC dropout (OPTIONAL, run last, Colab T4)
+
+**Optional.** Run it only if notebooks 01–04 went cleanly. The project is complete without it.
+
+Takes the seed 42 ResNet-50 from notebook 01, keeps its backbone exactly as trained, puts a
+dropout layer (p = 0.5) before the final layer and retrains that head (5 epochs). Then 20
+stochastic passes per image: the mean softmax is the prediction, the spread the uncertainty
+(predictive variance, and mutual information as the fourth score). Same sweep as the single
+model and the ensemble, and one figure comparing all three methods (DECISIONS.md D18).
+
+**Needs:** notebooks 01 and 02 (the seed 42 run and its sweep). The ensemble from 03 is
+optional; without it the figure compares two methods and says so. **After a disconnect:**
+run all again; a finished head or sweep in Drive is reused."""),
+    code(SETTINGS),
+    code(SETUP),
+    code(DATA),
+    md("## The seed 42 run (notebook 01) and its sweep (notebook 02)"),
+    code("""from src.ensemble import find_run
+BASE = find_run(OUT, seed=42)
+assert BASE, f"no finished resnet50 source run in {OUT}: run notebook 01 first"
+RUN_ID = json.loads(BASE.read_text())["run_id"]
+assert (BASE.parent / f"sweep_{RUN_ID}.json").exists(), "no sweep: run notebook 02 first"
+print("model:", BASE.name)"""),
+    md("## Retrain the head with dropout, then 20 passes in every condition (about 10 min)"),
+    code("""from src.evaluate import print_threshold
+from src.mcdropout import mc_dropout
+MC = mc_dropout(BASE, data_root=DATA_ROOT)
+MC_PATH = f"{OUT}/mcdropout_{MC['mc_id']}.json"
+print_threshold(MC["threshold"])
+print(f"elapsed {(time.time() - T0) / 60:.1f} min")"""),
+    md("## Single model vs ensemble vs MC dropout at every severity, to Drive"),
+    code("""from src.figures import render_methods
+paths = render_methods(MC_PATH, f"{OUT}/figures_{RUN_ID}", tag=RUN_ID)
+print(len(paths), "files ->", f"{OUT}/figures_{RUN_ID}")"""),
+    md("## Verify (Tier 1 must pass)"),
+    code("""r = subprocess.run([sys.executable, "-m", "src.verify", "--mcdropout", MC_PATH],
+                   capture_output=True, text=True)
+print(r.stdout[-6000:], r.stderr[-3000:])
+assert r.returncode == 0, "a Tier 1 check failed: stop and investigate"
+print(f"total elapsed {(time.time() - T0) / 60:.1f} min")"""),
+    md("## Everything this notebook wrote to Drive"),
+    code("""for p in sorted(Path(OUT).rglob("*")):
+    if p.is_file() and ("mcdropout" in p.name or "methods_comparison" in p.name):
+        print(f"{p.stat().st_size / 1e6:9.2f} MB  {p.relative_to(OUT)}")"""),
+])
+
+
 def main() -> None:
     import json
     warnings.simplefilter("error")  # any nbformat validator warning fails the build
     for name, nb in (("01_baseline_calibration.ipynb", NB1),
                      ("02_degradation_study.ipynb", NB2),
                      ("03_deep_ensemble.ipynb", NB3),
-                     ("04_plantseg_field.ipynb", NB4)):
+                     ("04_plantseg_field.ipynb", NB4),
+                     ("05_mc_dropout.ipynb", NB5)):
         path = OUT / name
         path.write_text(json.dumps(nb, indent=1, ensure_ascii=False) + "\n")
         # check the file as written: raw JSON, sources joined with ""

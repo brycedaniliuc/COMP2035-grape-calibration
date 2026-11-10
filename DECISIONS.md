@@ -81,7 +81,9 @@ removing it from history is not.
 
 **Recommendation.** The owner decides. It must be decided before anything is pushed (Gate 8).
 
-## D6 · Fixture leaks are real, not relocated — OPEN (low stakes)
+## D6 · Fixture leaks are real, not relocated — CLOSED (2026-11-10)
+
+**Closed:** this records how the fixture was built and needs no decision. The fixture has been used unchanged by every test since Stage 1.
 
 **Observation.** `BRIEF.md` asks for leaves whose copies are "deliberately placed" to create a
 leak. The fixture instead *selects* 8 leaves (2 per class) that really do span `train/` and
@@ -196,7 +198,9 @@ review), LDD has no public download URL and no licence. This repo implements the
 contingency. PlantSeg (Wei et al. 2026) is the owner's candidate substitute for real field
 images; it is an upgrade after Stage 9 and is not done.
 
-## D12 · Reference [19] (Wei et al. 2026, PlantSeg) is listed but never cited — OPEN (owner)
+## D12 · Reference [19] (Wei et al. 2026, PlantSeg) — RESOLVED (owner, 2026-11-10)
+
+**Ruling:** PlantSeg is used (D14–D16), so it is cited, and reference [19] stays in `report/refs.bib`. The record below is kept for the history.
 
 The submitted paper's reference list has 20 entries; [19] (Wei et al., "A Large-Scale
 In-the-wild Dataset for Plant Disease Segmentation", Scientific Data 13, 205) is never cited
@@ -215,7 +219,9 @@ noted above each entry in `report/refs.bib`:
 - [1] Canoski et al. and [15] Noyan are arXiv preprints with no published version listed;
   both entries say "Preprint".
 
-## D13 · Deep ensemble design (upgrade 1) — DONE in code, owner to confirm
+## D13 · Deep ensemble design (upgrade 1) — RESOLVED (owner, 2026-11-10)
+
+**Ruling: the disagreement score is mutual information.** That is the entropy of the mean distribution minus the mean of the members' entropies, ranked by `neg_mutual_info`. Total predictive entropy and its aleatoric part (the mean member entropy) are reported alongside it, per image and per row, so the aleatoric/epistemic split is visible. The variance across members stays as a reported statistic. The same code serves MC dropout (D18). The text below records the first design; where it says "variance as the fourth score", this ruling replaces it.
 
 - **Members share one split.** `Config.seed` sets the split, so a member trained with seed 43
   would get a new split: another member's test leaves would land in its training set, and
@@ -240,7 +246,7 @@ noted above each entry in `report/refs.bib`:
 - **Reuse after a disconnect:** notebook 03 reuses any finished member or sweep in Drive. A
   member whose results JSON is missing (a disconnect mid-training) is trained again. Tested.
 
-## D14 · PlantSeg (upgrade 2): version, licence, and what its grape classes are — phase A done, phase B OPEN (owner decides)
+## D14 · PlantSeg (upgrade 2): version, licence, and what its grape classes are — RESOLVED (phase B decided and built, D15, D16)
 
 **Exact source.** Zenodo record 16665770, DOI 10.5281/zenodo.16665770: version 6 of 7 of
 concept 13293890 (published 2025-07-31). "A Large-Scale In-the-wild Dataset for Plant
@@ -395,9 +401,8 @@ the results.
   `Black_rot`.
   - **Reported:** accuracy with a Wilson 95% interval, mean confidence, the confidence
     distribution and the classes assigned.
-  - **ECE without an interval.** ECE is noisy and biased upward at this n, and the first
-    real-image run showed its percentile bootstrap interval failing to contain its own
-    estimate. Wilson is valid at any n.
+  - **No ECE (D17, owner's ruling).** At n = 25 over 15 bins it is not estimable. The bin
+    occupancy is reported instead, to show why. Wilson is valid at any n.
   - **Sensitivity check:** the same without the eight close-ups, wide views and shoots
     (D15; selected by the reason text), n = 17.
   - **n is printed with every number.**
@@ -430,7 +435,16 @@ the results.
   EfficientNet-B0, not a result). The real numbers come from notebook 04 after notebooks 01
   and 02.
 
-## D17 · Bootstrap intervals on small ECE values in the main sweep — OPEN (owner decides)
+## D17 · ECE intervals at small n and near zero — RESOLVED (owner, 2026-11-10)
+
+**Ruling.**
+- **PlantSeg black rot subset (n = 25):** no ECE at all. With 15 bins it is not estimable.
+  Each run reports the bin occupancy instead, to show why: how many bins are occupied, and
+  how many of those hold fewer than 5 images. What is reported is accuracy with its Wilson
+  interval and the confidence distribution. `src.verify` fails if an ECE appears there.
+- **Main sweep (n = 610):** the bootstrap intervals stay. Every figure that shows them
+  carries one line: "ECE is biased upward, so its intervals near zero are conservative."
+- The original note follows.
 
 Found while building B2. ECE is biased upward, so when it is resampled its percentile
 bootstrap distribution sits above a small point estimate. In the real-image smoke sweep
@@ -447,3 +461,45 @@ confidence interval for the true ECE.
   3. Replace them with a bias-corrected ECE estimator. That is a method change, and its
      reference would need checking before it is used.
 - **Recommendation:** 1. It changes no code and is honest.
+
+## D18 · MC dropout design (upgrade 3) — RECORDED (owner asked for it, 2026-11-10)
+
+- **Where the dropout goes:** a dropout layer, p = 0.5, before the final linear layer. 0.5 is
+  the usual rate for a dropout layer in front of a fully connected classifier. It is a
+  design choice, not taken from the submitted plan.
+- **Only the head is retrained.** The seed 42 run's backbone is frozen with BatchNorm in
+  evaluation mode, so it stays exactly the trained model. Only the head's weights are
+  saved, and `src.verify` checks that the saved file holds nothing else. The head starts
+  from the trained final layer and is retrained for the protocol's 5 head epochs, with the
+  same optimiser, schedule, loss and augmentation, keeping the epoch with the lowest
+  validation loss.
+- **20 stochastic passes**, as the owner asked. Each image's features are computed once per
+  condition, and 20 seeded dropout masks are applied to them. Because the backbone is
+  deterministic, that is exactly 20 full passes. The same masks are used in every condition,
+  which reduces the noise in comparisons across severities.
+- **Reported:** the mean softmax as the prediction, the predictive variance, and mutual
+  information as the fourth score (D13). It goes through the same sweep as the single model
+  and the ensemble, with the threshold chosen on validation (D10).
+- **Status:** optional. Notebook 05 runs last, only if 01–04 went cleanly. The project is
+  complete without it.
+
+## D19 · Nothing that is not a result can become a paper number — RECORDED (2026-11-10)
+
+- **The rule.** Every output is labelled from its run's own record by
+  `src/provenance.py`. A result is the protocol run on the full dataset: ResNet-50 with
+  ImageNet weights, 5 + 25 epochs, the 9,027 images. Anything else gets
+  `"not_a_result": "NOT A RESULT: <why>"` in its JSON, and a red watermark with the reason
+  on its figures. Outputs older than the label are treated as not results.
+- **What `tools/make_tables.py` does with them.** Such sources are treated as missing: the
+  macros render `[pending: ...]`, and the generated file's header says what was excluded and
+  why. The tests can force those numbers through, and then each renders as
+  `[NOT A RESULT: ...]`.
+- **The September 2026 runs** pass the rule (ResNet-50, 5 + 25, 9,027 images), so their
+  numbers render as they are.
+
+## Still open (2026-11-10)
+
+- **D7:** two of the four corruptions (darkening, occlusion) and their severities are this
+  project's own design. The owner should confirm them, or say so in the report.
+- **D10:** choosing the threshold on degraded validation and checking it on held-out test.
+  It is built and everything uses it, but the owner has not yet confirmed it explicitly.

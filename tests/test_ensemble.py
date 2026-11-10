@@ -12,12 +12,23 @@ from src.train import parse_config, run
 from src.verify import ensemble_checks
 
 
-def test_mean_softmax_and_disagreement_known_answer():
+def test_mean_softmax_and_uncertainty_split_known_answer():
     """Member A: logits (0, 0) -> (0.5, 0.5). Member B: (log 3, 0) -> (0.75, 0.25).
-    Mean (0.625, 0.375). Variance across members of each class probability: 0.015625 for
-    both classes, so the mean over classes is 0.015625."""
-    p, var = combine([np.array([[0.0, 0.0]]), np.array([[np.log(3.0), 0.0]])])
-    assert np.allclose(p, [[0.625, 0.375]]) and np.allclose(var, [0.015625])
+    Mean (0.625, 0.375). Total entropy H(0.625, 0.375); aleatoric part the mean of
+    H(0.5, 0.5) = ln 2 and H(0.75, 0.25); mutual information their difference (D13).
+    Variance of each class probability across members: 0.015625."""
+    def h(*p):
+        return -sum(x * np.log(x) for x in p)
+    c = combine([np.array([[0.0, 0.0]]), np.array([[np.log(3.0), 0.0]])])
+    total, aleatoric = h(0.625, 0.375), (np.log(2) + h(0.75, 0.25)) / 2
+    assert np.allclose(c["mean"], [[0.625, 0.375]])
+    assert np.allclose(c["total_entropy"], total)
+    assert np.allclose(c["expected_entropy"], aleatoric)
+    assert np.allclose(c["mutual_info"], total - aleatoric)
+    assert abs(total - aleatoric - 0.03382) < 1e-5
+    assert np.allclose(c["variance"], [0.015625])
+    same = combine([np.array([[1.0, 0.0]])] * 3)  # members that agree: no epistemic part
+    assert np.allclose(same["mutual_info"], 0)
 
 
 def test_default_config_trains_with_the_split_seed():
@@ -57,9 +68,11 @@ def test_ensemble_sweep_and_verification(members):
     ens = ensemble_sweep(paths)
     assert len(ens["rows"]) == 24 and ens["n_members"] == 3
     for r in ens["rows"]:
-        assert set(r["scores"]) == {"max_softmax", "neg_entropy", "margin",
-                                    "neg_member_variance"}
-        assert r["disagreement"]["mean_member_variance"] >= 0
+        assert set(r["scores"]) == {"max_softmax", "neg_entropy", "margin", "neg_mutual_info"}
+        u = r["uncertainty"]
+        assert u["mean_mutual_info"] >= 0 and u["mean_variance"] >= 0
+        assert abs(u["mean_total_entropy"] - u["mean_expected_entropy"]
+                   - u["mean_mutual_info"]) < 1e-9
         assert [m["training_seed"] for m in r["members"]] == [42, 43, 44]
     assert set(ens["threshold"]["by_score"]) == {"max_softmax", "neg_entropy", "margin"}
     checks = ensemble_checks(out / f"ensemble_{ens['ens_id']}.json")

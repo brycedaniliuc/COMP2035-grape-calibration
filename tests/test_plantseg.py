@@ -75,7 +75,9 @@ def test_two_analyses_never_merged(setup):
     _, ps, _ = setup
     br = ps["black_rot"]
     assert br["n"] == 3 and 0 <= br["accuracy"] <= 1 and len(br["accuracy_wilson95"]) == 2
-    assert "ece_bootstrap95" not in br and br["ece_note"]  # no interval at small n
+    assert "ece" not in br  # D17: not estimable at this n; the occupancy says why
+    occ = br["bin_occupancy"]
+    assert sum(occ["counts"]) == 3 and occ["occupied"] == sum(c > 0 for c in occ["counts"])
     assert ps["black_rot_usual_framing"]["ids"] == ["BR-001", "BR-003"]  # close-up left out
     assert set(ps["out_of_distribution"]) == {"downy_mildew", "leaf_spot", "leafroll"}
     assert not _has_accuracy(ps["out_of_distribution"])  # MUST NOT report accuracy

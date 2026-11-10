@@ -23,8 +23,8 @@ threshold can and cannot be trusted.
 | Figures, independent verification | **Built and tested; not yet run on the real model** | `src/figures.py`, `src/verify.py` |
 | The real degradation run | **Pending**: one Colab session | [`HANDOVER.md`](HANDOVER.md) |
 | Prediction + confidence + warning tool | **Built and tested on the fixture**; its real threshold comes from the Colab run | `src/predict.py` |
-| Deep ensemble (3 members) through the same degradation sweep, compared with the single model | **Built and tested on the fixture; not yet run on the real model** (notebook 03) | `src/ensemble.py` |
-| MC dropout | Parked by the owner. The submitted plan allowed it to be dropped if the schedule slipped | — |
+| Deep ensemble (3 members) through the same degradation sweep, compared with the single model; mutual information as the disagreement score | **Built and tested on the fixture; not yet run on the real model** (notebook 03) | `src/ensemble.py` |
+| MC dropout (dropout before the final layer, head retrained, 20 passes) through the same sweep; one figure comparing single model, ensemble and MC dropout | **Built and tested on the fixture; optional, not yet run on the real model** (notebook 05) | `src/mcdropout.py` |
 | Field images (LDD in the submitted plan) | Not used. This repo runs the plan's §3.4 contingency instead: degraded held-out PlantVillage | `DECISIONS.md` D11 |
 | Field photographs: PlantSeg v6 grape leaves (black rot accuracy, n = 25; the other three classes as out-of-distribution confidence only) | **Leaf filter done** (564 images tagged by eye against a stated rule); **analysis built and tested, real run pending** (notebook 04) | `results/plantseg/`, `src/plantseg.py`, D14–D16 |
 
@@ -254,14 +254,17 @@ src/            config, data (indexing, splits), audit, train, calibrate, degrad
                 predict (prediction + confidence + warning), ensemble (deep ensemble),
                 plantseg (field photographs)
 tests/          pytest suite; fixture/ = 80 real images, MANIFEST.md, build_fixture.py
-notebooks/      01 and 02 for Colab; archive/ holds the September 2026 notebook
+notebooks/      01-05 for Colab (RUNSHEET.md); archive/ holds the September 2026 notebook
 tools/          build_notebooks.py (generates and validates the notebooks),
-                make_tables.py (report tables and number macros from the results JSON)
+                make_tables.py (report tables and number macros from the results JSON),
+                import_colab.py (brings the Colab outputs home and checks them),
+                plantseg_contact_sheets.py (the PlantSeg leaf-filter sheets)
 report/         the final report: main.tex (ACM sigconf skeleton), refs.bib, generated/
 results/        the September 2026 runs: results JSON, audit, reliability diagrams
 figures/        the corruption protocol figure (sweep figures follow the Colab run)
 DECISIONS.md    every design choice not fixed by the submitted plan, with the reasoning
-HANDOVER.md     how to run the real experiment in Colab
+RUNSHEET.md     the Colab day, step by step
+HANDOVER.md     the reference behind it: every cell, every file
 ```
 
 ---

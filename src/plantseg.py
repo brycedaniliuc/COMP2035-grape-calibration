@@ -7,9 +7,10 @@ photograph counted once: tag "leaf", no `duplicate_of`, no `label_conflict_with`
 analyses, never merged:
 
 A. **Black rot leaves.** The one PlantSeg class that is also one of the model's four
-   (Black_rot). Accuracy with a Wilson interval, mean confidence, ECE with a bootstrap
-   interval, and the confidence distribution. n is small and goes with every number. A
-   sensitivity check repeats it without the close-ups, wide views and shoots (D15).
+   (Black_rot). Accuracy with a Wilson interval, mean confidence and the confidence
+   distribution. n is small and goes with every number. No ECE: at n = 25 over 15 bins it is
+   not estimable, and the bin occupancy is reported to show why (D17). A sensitivity check
+   repeats it without the close-ups, wide views and shoots (D15).
 B. **Downy mildew, leaf spot and leafroll leaves.** The true disease is none of the model's
    four classes, so a prediction can never be correct and **no accuracy is computed**. Only
    the confidence distribution, and which of the four classes the model assigns:
@@ -40,6 +41,7 @@ from PIL import Image
 from src.calibrate import ece_and_bins
 from src.evaluate import scores, wilson_ci
 from src.predict import Predictor
+from src.provenance import not_a_result
 from src.train import _json_safe
 
 REPO = Path(__file__).resolve().parent.parent
@@ -57,12 +59,9 @@ MAPS_TO = "Black_rot"  # the model's class for PlantSeg's "grape black rot"
 UNUSUAL_FRAMING = re.compile(r"close-up|wide view|shoot", re.IGNORECASE)
 SPLIT_DIR = {"Training": "train", "Validation": "val", "Test": "test"}
 N_BOOT = 1000
-# Found on the first real-data run: at n = 25 the percentile bootstrap of ECE did not even
-# contain its own point estimate (0.118 vs [0.120, 0.358]). ECE is biased upward when
-# resampled at small n, so that interval would mislead. It is not reported here.
-ECE_NOTE = ("ECE with 15 bins at this n is very noisy and biased upward; no interval is "
-            "given, because a percentile bootstrap of ECE is not valid at this sample size. "
-            "Read the accuracy interval and the confidence distribution instead.")
+# D17 (owner, 2026-11-10): no ECE for the black rot subset. At n = 25 over 15 bins it is not
+# estimable: the bin occupancy below is the justification, reported with every run. (The
+# first real-image run showed it: the bootstrap interval missed its own estimate.)
 
 
 def selection(filter_csv: str | Path = FILTER) -> dict[str, list[dict]]:
@@ -126,11 +125,20 @@ def black_rot_analysis(logits: np.ndarray, ids: list[str], classes: list[str], n
     conf = scores(logits)["max_softmax"]
     correct = (logits.argmax(1) == target).astype(float)
     n, k = int(correct.size), int(correct.sum())
-    ece, bins = ece_and_bins(conf, correct, n_bins)
+    bins = ece_and_bins(conf, correct, n_bins)[1]
+    counts = [b["n"] for b in bins]
+    occupied = [c for c in counts if c]
+    occupancy = {"n_bins": n_bins, "counts": counts, "occupied": len(occupied),
+                 "largest": max(occupied), "occupied_with_fewer_than_5":
+                 sum(c < 5 for c in occupied),
+                 "why_no_ece": f"{n} images over {n_bins} bins: {len(occupied)} occupied, "
+                               f"{sum(c < 5 for c in occupied)} of them by fewer than 5 "
+                               "images. A bin's accuracy from so few images is not an "
+                               "estimate, so ECE is not reported (D17)."}
     return {"label": f"PlantSeg grape black rot leaves -> model class {MAPS_TO}",
             "ids": ids, "n": n, "n_correct": k, "accuracy": k / n,
             "accuracy_wilson95": list(wilson_ci(k, n)), "mean_confidence": float(conf.mean()),
-            "ece": ece, "ece_note": ECE_NOTE, "reliability_bins": bins,
+            "bin_occupancy": occupancy,
             "mean_confidence_when_correct": float(conf[correct == 1].mean()) if k else None,
             "mean_confidence_when_wrong": float(conf[correct == 0].mean()) if k < n else None,
             "confidence": confidence_summary(conf, threshold, seed),
@@ -198,7 +206,8 @@ def plantseg_eval(results_path: str | Path, zip_path: str | Path,
     ids = {g: [r["id"] for r in rows] for g, rows in sel.items()}
     usual = [i for i, r in enumerate(sel["black_rot"]) if not UNUSUAL_FRAMING.search(r["reason"])]
     out = {
-        "run_id": run_id, "source": SOURCE, "classes": classes, "temperature": 1.0,
+        "run_id": run_id, "not_a_result": not_a_result(res), "source": SOURCE,
+        "classes": classes, "temperature": 1.0,
         "transform": "resize 256, centre crop 224 (the evaluation transform)",
         "selection": "results/plantseg/leaf_filter.csv: tag leaf, no duplicate_of, no "
                      "label_conflict_with (DECISIONS.md D15)",
@@ -233,8 +242,8 @@ def print_report(ps: dict) -> None:
         print(f"\n{a['label']}\n  n = {a['n']}  <- small: read the interval, not the point")
         print(f"  accuracy {a['accuracy']:.3f}  (Wilson 95% [{lo:.3f}, {hi:.3f}]), "
               f"{a['n_correct']} of {a['n']}")
-        print(f"  mean confidence {a['mean_confidence']:.3f}; ECE {a['ece']:.3f} (no interval: "
-              f"see ece_note)")
+        print(f"  mean confidence {a['mean_confidence']:.3f}; no ECE: "
+              f"{a['bin_occupancy']['why_no_ece']}")
         print(f"  predicted: {a['predicted_class']}")
     print("\nOUT-OF-DISTRIBUTION CONFIDENCE (no accuracy: the true disease is not one of the "
           "model's classes)")

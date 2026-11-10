@@ -22,6 +22,7 @@ chosen on degraded validation images and checked on the held-out test images (D1
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
 
@@ -30,6 +31,7 @@ import numpy as np
 from src.config import Config
 from src.degrade import CORRUPTIONS, SEVERITIES
 from src.evaluate import evaluate_logits, risk_coverage, sweep, threshold_analysis
+from src.provenance import not_a_result
 from src.train import _json_safe, run
 
 MEMBER_SEEDS = (42, 43, 44)
@@ -100,11 +102,38 @@ def softmax64(logits: np.ndarray) -> np.ndarray:
     return e / e.sum(1, keepdims=True)
 
 
-def combine(member_logits: list[np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
-    """(mean softmax, disagreement): disagreement[i] is the variance across members of each
-    class probability for image i, averaged over the classes."""
-    p = np.stack([softmax64(z) for z in member_logits])  # members x images x classes
-    return p.mean(0), p.var(0).mean(1)
+def entropy(p: np.ndarray) -> np.ndarray:
+    return -(p * np.log(np.clip(p, 1e-300, None))).sum(-1)
+
+
+def combine(sample_logits: list[np.ndarray]) -> dict[str, np.ndarray]:
+    """S samples of logits (ensemble members, or MC dropout passes), per image:
+    mean: the mean softmax, the prediction.
+    total_entropy: entropy of the mean, the total predictive uncertainty.
+    expected_entropy: mean of the samples' own entropies, the aleatoric part.
+    mutual_info: total minus expected, the epistemic part: how much the samples disagree
+        (D13). Never negative in exact arithmetic; float rounding is clipped at 0.
+    variance: variance across samples of each class probability, mean over the classes."""
+    p = np.stack([softmax64(z) for z in sample_logits])  # samples x images x classes
+    mean = p.mean(0)
+    total = entropy(mean)
+    expected = entropy(p).mean(0)
+    return {"mean": mean, "total_entropy": total, "expected_entropy": expected,
+            "mutual_info": np.clip(total - expected, 0, None), "variance": p.var(0).mean(1)}
+
+
+UNCERTAINTY = ("total_entropy", "expected_entropy", "mutual_info", "variance")
+UNCERTAINTY_NOTE = ("per image: total_entropy = H[mean softmax]; expected_entropy = mean of the "
+                    "samples' entropies (aleatoric); mutual_info = total - expected (epistemic, "
+                    "the disagreement score, D13); variance = variance across samples of each "
+                    "class probability, mean over classes. Fourth score: neg_mutual_info.")
+
+
+def pseudo_logits(probs: dict, val_probs: dict) -> tuple[dict, dict]:
+    """Test and validation stores as log probabilities, for threshold_analysis."""
+    def conv(st: dict) -> dict:
+        return {k: (log_probs(v) if k != "labels" else v) for k, v in st.items() if "__" not in k}
+    return conv(probs), conv(val_probs)
 
 
 def log_probs(p: np.ndarray) -> np.ndarray:
@@ -112,11 +141,38 @@ def log_probs(p: np.ndarray) -> np.ndarray:
     return np.log(np.clip(p, 1e-300, None))
 
 
-def entropy(p: np.ndarray) -> np.ndarray:
-    return -(p * np.log(np.clip(p, 1e-300, None))).sum(1)
+def evaluate_samples(test: dict[str, list[np.ndarray]], val: dict[str, list[np.ndarray]],
+                     y: np.ndarray, classes: list[str], n_bins: int, seed: int,
+                     parameter: dict[str, float]) -> tuple[list[dict], dict, dict]:
+    """The single model's sweep statistics for a method that averages S samples, in every
+    condition: accuracy (Wilson), ECE (bootstrap) and coverage at T = 1 on the mean softmax;
+    AURC for max softmax, entropy, margin and the fourth score, mutual information
+    (`neg_mutual_info`, higher = samples agree more); the threshold chosen on the validation
+    images and checked on test (by the caller, through pseudo_logits). Returns (rows, test
+    store, validation store)."""
+    probs: dict[str, np.ndarray] = {"labels": y}
+    val_probs: dict[str, np.ndarray] = {}
+    rows = []
+    for key in test:
+        c = combine(test[key])
+        probs[key] = c["mean"]
+        for u in UNCERTAINTY:
+            probs[f"{key}__{u}"] = c[u]
+        val_probs[key] = combine(val[key])["mean"]
+        corruption, severity = key.rsplit("_s", 1)
+        row = {"corruption": corruption, "severity": int(severity), "parameter": parameter[key],
+               **evaluate_logits(log_probs(c["mean"]), y, classes, {"T=1": 1.0}, n_bins, seed)}
+        correct = (c["mean"].argmax(1) == y).astype(float)
+        row["scores"]["neg_mutual_info"] = risk_coverage(-c["mutual_info"], correct)
+        row["uncertainty"] = {f"mean_{u}": float(c[u].mean()) for u in UNCERTAINTY}
+        rows.append(row)
+    s0 = [probs[k] for k in test if k.endswith("_s0")]
+    assert all(np.array_equal(s0[0], x) for x in s0[1:]), "severity 0 differs by corruption"
+    assert all(np.allclose(probs[k].sum(1), 1) for k in test)
+    return rows, probs, val_probs
 
 
-def ensemble_sweep(member_results: list[str | Path], stamp: str | None = None,
+def ensemble_sweep(member_results: Sequence[str | Path], stamp: str | None = None,
                    data_root: str | None = None) -> dict:
     paths = [Path(p) for p in member_results]
     res = [json.loads(p.read_text()) for p in paths]
@@ -139,31 +195,16 @@ def ensemble_sweep(member_results: list[str | Path], stamp: str | None = None,
     classes = res[0]["classes"]
     y, y_val = test[0]["labels"], val[0]["labels"]
     keys = [f"{c}_s{s}" for c in CORRUPTIONS for s in SEVERITIES]
-    probs: dict[str, np.ndarray] = {"labels": y}
-    val_probs: dict[str, np.ndarray] = {"labels": y_val}
-    rows = []
-    for key in keys:
-        p, disagree = combine([t[key] for t in test])
-        probs[key], probs[f"{key}__disagreement"] = p, disagree
-        val_probs[key] = combine([v[key] for v in val])[0]
-        corruption, severity = key.rsplit("_s", 1)
-        member_rows = [next(r for r in s["rows"] if f"{r['corruption']}_s{r['severity']}" == key)
-                       for s in sw]
-        row = {"corruption": corruption, "severity": int(severity),
-               "parameter": member_rows[0]["parameter"],
-               **evaluate_logits(log_probs(p), y, classes, {"T=1": 1.0}, cfg.n_bins,
-                                 cfg.seed)}
-        correct = (p.argmax(1) == y).astype(float)
-        row["scores"]["neg_member_variance"] = risk_coverage(-disagree, correct)
-        row["disagreement"] = {"mean_member_variance": float(disagree.mean()),
-                               "mean_predictive_entropy": float(entropy(p).mean())}
+    member_rows = {k: [next(r for r in s["rows"] if f"{r['corruption']}_s{r['severity']}" == k)
+                       for s in sw] for k in keys}
+    rows, probs, val_probs = evaluate_samples(
+        {k: [t[k] for t in test] for k in keys}, {k: [v[k] for v in val] for k in keys}, y,
+        classes, cfg.n_bins, cfg.seed, {k: member_rows[k][0]["parameter"] for k in keys})
+    val_probs["labels"] = y_val
+    for row, k in zip(rows, keys, strict=True):
         row["members"] = [{"run_id": r["run_id"], "training_seed": s, "accuracy": m["accuracy"],
                            "ece_T1": m["temperature"]["T=1"]["ece"]}
-                          for r, s, m in zip(res, seeds, member_rows, strict=True)]
-        rows.append(row)
-    s0 = [probs[f"{c}_s0"] for c in CORRUPTIONS]
-    assert all(np.array_equal(s0[0], x) for x in s0[1:]), "severity 0 differs by corruption"
-    assert all(np.allclose(probs[k].sum(1), 1) for k in keys)
+                          for r, s, m in zip(res, seeds, member_rows[k], strict=True)]
 
     base = next((i for i, s in enumerate(seeds) if s == 42), 0)
     stamp = stamp or datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -175,16 +216,12 @@ def ensemble_sweep(member_results: list[str | Path], stamp: str | None = None,
                             "sweep": f"sweep_{res[base]['run_id']}.json"},
            "n_test": int(y.size), "n_val": int(y_val.size),
            "prediction": "mean softmax across members, T = 1",
-           "disagreement": "variance across members of each class probability, mean over "
-                           "classes (score neg_member_variance: higher = members agree more)",
-           "rows": rows, "threshold": threshold_analysis(
-               {k: (log_probs(v) if k != "labels" else v) for k, v in probs.items()
-                if not k.endswith("__disagreement")},
-               {k: (log_probs(v) if k != "labels" else v) for k, v in val_probs.items()})}
+           "uncertainty": UNCERTAINTY_NOTE, "not_a_result": not_a_result(res[0]),
+           "rows": rows, "threshold": threshold_analysis(*pseudo_logits(probs, val_probs))}
     (out_dir / f"ensemble_{ens_id}.json").write_text(
         json.dumps(_json_safe(out), indent=1, allow_nan=False))
-    np.savez(out_dir / f"ensemble_probs_{ens_id}.npz", **probs)  # type: ignore[arg-type]
-    np.savez(out_dir / f"ensemble_val_probs_{ens_id}.npz", **val_probs)  # type: ignore[arg-type]
+    np.savez(out_dir / f"ensemble_probs_{ens_id}.npz", **probs)
+    np.savez(out_dir / f"ensemble_val_probs_{ens_id}.npz", **val_probs)
     single = sw[base]
     print(f"ensemble {ens_id}: members {seeds}; single model = seed {seeds[base]}")
     print(f"{'condition':<18}{'acc single':>11}{'ensemble':>10}{'ECE single':>12}{'ensemble':>10}"

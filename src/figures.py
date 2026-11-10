@@ -38,16 +38,34 @@ def style(size: str) -> None:
     })
 
 
-def render(build: Callable[[str], Figure], name: str, out: str | Path, tag: str = ""
-           ) -> list[Path]:
+UNLABELLED = "NOT A RESULT: made before outputs were labelled (2026-11-10); treated as not a result"
+
+
+def provenance(obj: dict) -> str | None:
+    """The output's own "not a result" label; outputs older than the label count as one."""
+    return obj["not_a_result"] if "not_a_result" in obj else UNLABELLED
+
+
+def _watermark(fig: Figure, warning: str) -> None:
+    fig.text(0.5, 0.5, "NOT A RESULT", rotation=25, ha="center", va="center",
+             fontsize=48, color="#d00000", alpha=0.22, weight="bold", zorder=100)
+    fig.text(0.5, 0.995, warning, ha="center", va="bottom", fontsize=6.5, color="#d00000",
+             wrap=True)
+
+
+def render(build: Callable[[str], Figure], name: str, out: str | Path, tag: str = "",
+           warning: str | None = None) -> list[Path]:
     """Build the figure at both sizes and save paper PDF + slide PNG. Returns the paths.
-    `tag` (e.g. the run id) is appended to every filename so runs never overwrite."""
+    `tag` (e.g. the run id) is appended to every filename so runs never overwrite.
+    `warning` (a "NOT A RESULT: ..." label) puts a watermark and the reason on the figure."""
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     paths = []
     for size, ext, dpi in (("paper", "pdf", None), ("slide", "png", 300)):
         style(size)
         fig = build(size)
+        if warning:
+            _watermark(fig, warning)
         p = out / f"{name}_{size}{'_' + tag if tag else ''}.{ext}"
         fig.savefig(p, bbox_inches="tight", dpi=dpi if dpi is not None else "figure")
         plt.close(fig)
@@ -110,6 +128,9 @@ def corruption_grid(data_root: str, filename: str | None = None) -> Callable[[st
 # ---- sweep figures ---------------------------------------------------------------------
 # Inputs: the sweep JSON and sweep logits written by src.evaluate. Every number plotted
 # comes from those two files; nothing is recomputed from images here.
+
+# D17: printed with every figure that shows bootstrap intervals on ECE.
+ECE_NOTE = "ECE is biased upward, so its intervals near zero are conservative."
 
 LABEL = {"gaussian_blur": "Gaussian blur", "brightness": "Brighten",
          "darkness": "Darken", "occlusion": "Occlusion"}
@@ -207,7 +228,8 @@ def ece_vs_severity(sweep: dict) -> Callable[[str], Figure]:
             ax.grid(axis="y")
         _finish(fig, axes, size, "Severity level (0 = clean)",
                 "ECE, 15 bins (bands: bootstrap 95% CI)", 1 if size == "paper" else 2)
-        fig.suptitle(f"Calibration error under corruption (n = {sweep['n_test']} test images)")
+        fig.suptitle(f"Calibration error under corruption (n = {sweep['n_test']} test images)"
+                     f"\n{ECE_NOTE}")
         return fig
 
     return build
@@ -405,13 +427,15 @@ COMPARISON_METRICS = (  # (row label, value, 95% interval or None), all at T = 1
 )
 
 
-def ensemble_comparison(single: dict, ens: dict) -> Callable[[str], Figure]:
-    """Single model vs deep ensemble at every severity (the comparison of Ovadia et al. 2019):
-    accuracy, calibration and ranking, with 95% intervals shaded where they exist. Paper size
-    is full text width (a figure* in the two-column ACM layout)."""
+METHOD_STYLE = ((BLUE, "-", "o"), (RED, "--", "s"), (INK, ":", "^"))
+
+
+def method_comparison(methods: list[tuple[str, dict]], title: str) -> Callable[[str], Figure]:
+    """Methods side by side at every severity (the comparison of Ovadia et al. 2019): accuracy,
+    calibration and ranking, with 95% intervals shaded where they exist, all at T = 1. Paper
+    size is full text width (a figure* in the two-column ACM layout)."""
     from src.degrade import CORRUPTIONS
-    who = ((single, BLUE, "-", "o", "Single model"),
-           (ens, RED, "--", "s", f"Deep ensemble ({ens['n_members']} members)"))
+    n_test = methods[0][1]["n_test"] if "n_test" in methods[0][1] else None
 
     def build(size: str) -> Figure:
         figsize = (7.0, 4.4) if size == "paper" else SIZES["slide"]
@@ -421,7 +445,7 @@ def ensemble_comparison(single: dict, ens: dict) -> Callable[[str], Figure]:
         for j, c in enumerate(CORRUPTIONS):
             for i, (label, value, interval) in enumerate(COMPARISON_METRICS):
                 ax = axes[i, j]
-                for sw, col, ls, mk, name in who:
+                for (name, sw), (col, ls, mk) in zip(methods, METHOD_STYLE, strict=False):
                     rs = _rows(sw, c)
                     x = [r["severity"] for r in rs]
                     ax.plot(x, [value(r) for r in rs], color=col, ls=ls, marker=mk, ms=ms,
@@ -437,20 +461,55 @@ def ensemble_comparison(single: dict, ens: dict) -> Callable[[str], Figure]:
                 ax.grid(axis="y")
         fig.supxlabel("Severity level (0 = clean)", fontsize=FONT[size])
         h, lab = axes[0, 0].get_legend_handles_labels()
-        fig.legend(h, lab, loc="upper center", bbox_to_anchor=(0.5, 0.0), ncol=2,
+        fig.legend(h, lab, loc="upper center", bbox_to_anchor=(0.5, 0.0), ncol=len(methods),
                    frameon=False)
-        fig.suptitle(f"Single model vs deep ensemble under corruption "
-                     f"(n = {ens['n_test']}, $T = 1$, shaded: 95% interval)")
+        n = f"n = {n_test}, " if n_test else ""
+        fig.suptitle(f"{title} ({n}$T = 1$, shaded: 95% interval)\n{ECE_NOTE}")
         return fig
 
     return build
+
+
+def ensemble_comparison(single: dict, ens: dict) -> Callable[[str], Figure]:
+    """Single model vs deep ensemble at every severity."""
+    return method_comparison([("Single model", {**single, "n_test": ens["n_test"]}),
+                              (f"Deep ensemble ({ens['n_members']} members)", ens)],
+                             "Single model vs deep ensemble under corruption")
+
+
+def three_methods(single: dict, ens: dict | None, mc: dict) -> Callable[[str], Figure]:
+    """Single model, deep ensemble and MC dropout at every severity. Without notebook 03 the
+    ensemble is left out, and the title says so."""
+    methods = [("Single model", {**single, "n_test": mc["n_test"]})]
+    if ens is not None:
+        methods.append((f"Deep ensemble ({ens['n_members']} members)", ens))
+    methods.append((f"MC dropout ({mc['n_passes']} passes, p = {mc['p_drop']})", mc))
+    title = ("Single model, deep ensemble and MC dropout under corruption" if ens is not None
+             else "Single model and MC dropout under corruption (no ensemble run)")
+    return method_comparison(methods, title)
+
+
+def ensemble_for(base_run_id: str, d: Path) -> dict | None:
+    """The newest ensemble in d whose members include this run, if notebook 03 ran."""
+    found = [e for e in (json.loads(p.read_text()) for p in sorted(d.glob("ensemble_*.json")))
+             if base_run_id in [m["run_id"] for m in e["members"]]]
+    return found[-1] if found else None
+
+
+def render_methods(mc_path: str | Path, out: str | Path, tag: str = "") -> list[Path]:
+    mc_path = Path(mc_path)
+    mc = json.loads(mc_path.read_text())
+    single = json.loads((mc_path.parent / mc["single_model"]["sweep"]).read_text())
+    return render(three_methods(single, ensemble_for(mc["base_run_id"], mc_path.parent), mc),
+                  "methods_comparison", out, tag, provenance(mc))
 
 
 def render_ensemble(ens_path: str | Path, out: str | Path, tag: str = "") -> list[Path]:
     ens_path = Path(ens_path)
     ens = json.loads(ens_path.read_text())
     single = json.loads((ens_path.parent / ens["single_model"]["sweep"]).read_text())
-    return render(ensemble_comparison(single, ens), "ensemble_vs_single", out, tag)
+    return render(ensemble_comparison(single, ens), "ensemble_vs_single", out, tag,
+                  provenance(ens))
 
 
 def survival(conf: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -555,9 +614,10 @@ def plantseg_confidences(ps_path: Path) -> dict[str, np.ndarray]:
 def render_plantseg(ps_path: str | Path, out: str | Path, tag: str = "") -> list[Path]:
     ps_path = Path(ps_path)
     ps = json.loads(ps_path.read_text())
+    w = provenance(ps)
     return (render(plantseg_confidence(ps, plantseg_confidences(ps_path)),
-                   "plantseg_confidence", out, tag)
-            + render(plantseg_predicted_class(ps), "plantseg_predicted_class", out, tag))
+                   "plantseg_confidence", out, tag, w)
+            + render(plantseg_predicted_class(ps), "plantseg_predicted_class", out, tag, w))
 
 
 SWEEP_FIGURES = {
@@ -579,7 +639,7 @@ def render_sweep(sweep_path: str | Path, out: str | Path, tag: str = "") -> list
                       .replace(".json", ".npz")))
     paths = []
     for name, make in SWEEP_FIGURES.items():
-        paths += render(make(sweep, lg), name, out, tag)
+        paths += render(make(sweep, lg), name, out, tag, provenance(sweep))
     return paths
 
 

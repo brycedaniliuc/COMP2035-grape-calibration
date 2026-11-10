@@ -97,7 +97,7 @@
 % calibration, ECE, temperature scaling, MC dropout, deep ensembles, dataset shift (Guo, Gal &
 % Ghahramani, Lakshminarayanan, Ovadia); uncertainty in plant disease (Hernandez & Lopez,
 % Ergun et al.); selective classification (Geifman & El-Yaniv). End with the gap this project
-% fills. Reference [19] Wei et al. (PlantSeg) is uncited: cite it or drop it (DECISIONS.md).
+% fills. Reference [19] Wei et al. (PlantSeg) is the field dataset used here: cite it (D12).
 \budget{7}
 
 \section{Method}
@@ -131,6 +131,13 @@
 %    (generated/table_sweep.tex; accuracy_vs_severity, ece_vs_severity figures).
 %  - Coverage curves and AURC by score (coverage_curves, aurc_by_score figures).
 %  - The threshold: value, held-out conditions met, referral cost (generated/table_threshold.tex).
+%  - Upgrades, only those that ran (notebooks 03-05): single model vs deep ensemble vs MC
+%    dropout at every severity (methods_comparison or ensemble_vs_single figure); mutual
+%    information as the fourth score, with total entropy beside it (D13, D18).
+%  - PlantSeg field leaves (generated/table_plantseg.tex; plantseg_confidence and
+%    plantseg_predicted_class figures): black rot accuracy with its Wilson interval and n = 25
+%    stated; the other three classes as out-of-distribution confidence only, never accuracy
+%    (D16). No ECE for the black rot subset: the bin occupancy says why (D17).
 %  - Label preliminary or pending results as such. September numbers vs the re-run: say which.
 \budget{14}
 
@@ -145,10 +152,12 @@
 
 \section{Limitations and Future Work}
 % BUDGET: 0.375 page. Criterion: Discussion and Analysis.
-% Belongs here: laboratory images only (LDD not used: the submitted plan's §3.4 contingency,
-% D11); synthetic corruptions; one model and one seed; small test set (610 leaves); MC dropout
-% and deep ensembles not done (allowed by the plan's §3.3-3.4); field data (PlantSeg) as
-% future work. The warning cannot recognise out-of-scope images.
+% Belongs here: laboratory training images (LDD not used: the submitted plan's §3.4
+% contingency, D11); synthetic corruptions; one model and one seed (the ensemble, if run, is
+% the exception); small test set (610 leaves); PlantSeg is web-collected, its field test is
+% small (25 black rot leaves) and three of its classes are outside the model (D14-D16); any
+% upgrade that did not run (notebooks 03-05). The warning cannot recognise out-of-scope
+% images.
 \budget{3}
 
 \section{Conclusion}

@@ -1,14 +1,18 @@
 # HANDOVER — running the real experiment in Google Colab
 
+**For the day itself, follow `RUNSHEET.md`:** one page of numbered steps. This file is the
+reference behind it: what each cell does, what lands in Drive, and why.
+
 This is the one step that needs a GPU, and the step where the September checkpoint and logits
-were lost. Follow it exactly. Every output goes to Google Drive **as it is produced**, under
-run-tagged filenames, so nothing depends on downloading from the Colab session.
+were lost. Every output goes to Google Drive **as it is produced**, under run-tagged
+filenames, so nothing depends on downloading from the Colab session.
 
 ## The notebooks: order, dependencies, and what is essential
 
 Run them in this order. **01 and 02 are essential**: together they are the complete core
 project (the leak-free baseline, the degradation study, coverage curves, the threshold, every
-core figure). **03 and 04 are upgrades**, and 05 is parked. Each upgrade is a separate
+core figure). **03 and 04 are upgrades**, and **05 is optional**, run last and only if 01–04
+went cleanly. Each upgrade is a separate
 notebook that saves to Drive as it goes, so a disconnect costs at most the notebook it
 happens in. If the session runs out after 02, the project is still complete. 03 and 04 do
 not depend on each other: run them in either order, or only one.
@@ -22,7 +26,7 @@ CPU run of the same code on this machine, and "estimate" is neither.
 | 02 | `02_degradation_study` | **essential** | 01's seed 42 source run | about 10 min (estimate: sweep about 6 min, see §2) |
 | 03 | `03_deep_ensemble` | upgrade | 01's seed 42 source run (02 optional) | about 70 min (estimate: 2 × 26 min training + 3 sweeps) |
 | 04 | `04_plantseg_field` | upgrade | 01's seed 42 run **and** 02's sweep (no PlantVillage zip needed) | about 5 min (estimate: a 1.7 GB download, then 334 images; measured locally: 95 s on CPU for the analysis) |
-| 05 | MC dropout | **parked** (owner, 2026-11-10) | — | — |
+| 05 | `05_mc_dropout` | **optional, last** | 01's seed 42 run and 02's sweep (03 optional) | about 15 min (estimate: 5 head epochs, then features in 24 conditions) |
 
 If a session dies in an upgrade notebook, re-run that notebook: anything it already finished
 in Drive (a trained member, a sweep) is reused, not repeated.
@@ -131,6 +135,19 @@ match. **No PlantSeg image is written to Drive.**
 Executed locally, cell by cell, on the real PlantSeg zip with a stand-in model; not yet run
 on Colab.
 
+## 2d · Notebook 05 — `notebooks/05_mc_dropout.ipynb` (optional, run last)
+
+Needs notebook 01's seed 42 run and notebook 02's sweep, and the PlantVillage zip (it
+retrains the head and degrades images). It keeps the backbone exactly as trained, puts
+dropout (p = 0.5) before the final layer, retrains the head for 5 epochs, then makes 20
+stochastic passes in every condition (D18). If notebook 03 ran, its figure compares all
+three methods; otherwise two, and the title says so. A finished head or sweep is reused.
+
+**Check in Drive after 05:** `mcdropout_<run_id>_mcdropout.json`, `mcdropout_head_*.pt`
+(head only, small), `mcdropout_probs_*`, `mcdropout_val_probs_*`, `mcdropout_passes_*`,
+`mcdropout_val_passes_*`, `mcdropout_train_*.json`, and `methods_comparison_*` in
+`figures_<run_id>/`. The verify cell must show Tier 1 with 0 failed.
+
 ## 3 · Files that must be in Drive afterwards (`MyDrive/COMP2035_runs/`)
 
 `<run_id>` is `<model>_<split>_<YYYYmmdd-HHMMSS>`. Nothing is ever overwritten: a run refuses
@@ -179,23 +196,27 @@ And `src.verify` must print **Tier 1: N passed, 0 failed**. The notebooks stop i
   to make a number match.
 - **No GPU.** Cell 2 prints `!! NO GPU`. Fix the runtime type and run all again.
 
-## 6 · After the run
+## 6 · After the run: one command
 
-Copy into `results/colab_<date>/` in the repo, for each run, **every file except the `.pt`
-checkpoint**: `results_`, `logits_`, `splits_`, `sweep_`, `sweep_logits_` and
-`sweep_val_logits_` (`verify` reads them side by side). Also copy `audit_<stamp>.json`, and
-from notebook 03 the `ensemble_`, `ensemble_probs_` and `ensemble_val_probs_` files and both
-members' files, and from notebook 04 the `plantseg_` and `plantseg_logits_` files. Copy the figures into `figures/`. Check the ensemble with
-`.venv/bin/python -m src.verify --ensemble results/colab_<date>/ensemble_<ens_id>.json` and
-`.venv/bin/python -m src.verify --plantseg results/colab_<date>/plantseg_<run_id>.json`.
-The checkpoints stay in Drive; `*.pt` is gitignored. Then repeat every check from the copied
-files:
-`.venv/bin/python -m src.verify --run results/colab_<date>/results_<run_id>.json`
+Download the `COMP2035_runs` folder from Drive (right-click → Download), unzip it, then:
 
-Then regenerate every number in the report from the new files, and check them:
-`.venv/bin/python tools/make_tables.py` (it picks the newest `results/colab_*` runs) and
-`.venv/bin/python -m src.verify --generated report/generated`. Until the sweep is copied in,
-its tables and macros print `[pending: sweep]`.
+```
+.venv/bin/python tools/import_colab.py ~/Downloads/COMP2035_runs
+```
+
+It does every step that used to be manual:
+- **Copies** every output, except the `.pt` checkpoints, which stay in Drive, into
+  `results/colab_<date>/`. It never overwrites: a different file already there stops the
+  import.
+- **Regenerates** every number in the report (`tools/make_tables.py`) from the seed 42 run,
+  its sweep, its PlantSeg analysis and the supplied run.
+- **Runs `src.verify`** on every run, ensemble, PlantSeg and MC dropout output, and on the
+  regenerated numbers.
+- **Prints one pass/fail table.** It must end in `ALL PASS`, then prints the `git add ...`
+  line to run.
+
+Anything that is not a protocol result (D19) renders as `[pending: ...]` in the report, never
+as a number.
 
 To run the prediction + warning tool on the real model, download its `best_<run_id>.pt` from
 Drive into the same folder as its `results_` file (it stays gitignored), then:
