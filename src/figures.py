@@ -517,9 +517,9 @@ def three_methods(single: dict, ens: dict | None, mc: dict) -> Callable[[str], F
 
 def ensemble_for(base_run_id: str, d: Path) -> dict | None:
     """The newest ensemble in d whose members include this run, if notebook 03 ran."""
-    found = [e for e in (json.loads(p.read_text()) for p in sorted(d.glob("ensemble_*.json")))
-             if base_run_id in [m["run_id"] for m in e["members"]]]
-    return found[-1] if found else None
+    from src.ensemble import find_ensemble
+    p = find_ensemble(d, base_run_id)
+    return json.loads(p.read_text()) if p else None
 
 
 def render_methods(mc_path: str | Path, out: str | Path, tag: str = "") -> list[Path]:

@@ -31,8 +31,17 @@ from torch.utils.data import DataLoader
 from src.config import Config
 from src.data import build_transforms, class_list, index_dataset, make_loader, make_splits
 from src.degrade import CORRUPTIONS, SEVERITIES, DegradedDataset, severity_parameter
-from src.ensemble import UNCERTAINTY_NOTE, evaluate_samples, find_run, pseudo_logits
-from src.evaluate import threshold_analysis
+from src.ensemble import (
+    UNCERTAINTY_NOTE,
+    StaleResult,
+    current_sweep,
+    evaluate_samples,
+    find_ensemble,
+    find_run,
+    pseudo_logits,
+    require_current,
+)
+from src.evaluate import pre_d20, threshold_analysis
 from src.provenance import not_a_result
 from src.train import (
     _json_safe,
@@ -170,6 +179,37 @@ def passes(feats_x: torch.Tensor, linear: nn.Linear, n: int = N_PASSES) -> np.nd
     return np.stack(out).astype(np.float32)
 
 
+def preflight(results_path: Path) -> bool:
+    """Before any GPU time: every cached input of notebook 05 is current (D20), or it stops
+    here naming the file and the fix, not at the figure step. The single-model sweep is
+    brought up to date from its saved logits (current_sweep); an ensemble from before D20
+    stops it (notebook 03 recomputes it); a cached MC dropout result from before D20 is
+    recomputed (the trained head, which D20 does not touch, is reused). Returns True if a
+    current MC dropout result can be reused."""
+    d = results_path.parent
+    rid = json.loads(results_path.read_text())["run_id"]
+    if current_sweep(results_path) is None:
+        raise StaleResult(f"sweep_{rid}.json and its logits are missing: run notebook 02 first")
+    ens = find_ensemble(d, rid)
+    if ens is not None:
+        eid = ens.stem.removeprefix("ensemble_")
+        require_current(ens, d / f"ensemble_probs_{eid}.npz",
+                        "The comparison figure plots it. Delete every file with "
+                        f"{eid} in its name (and the figures_{eid} folder) from Drive, then run "
+                        "notebook 03 again: its members and their sweeps are reused, so no "
+                        "training, and only the ensemble is recomputed.")
+    out_path = d / f"mcdropout_{mc_id(rid)}.json"
+    if not out_path.exists():
+        return False
+    probs = d / f"mcdropout_probs_{mc_id(rid)}.npz"
+    why = pre_d20(json.loads(out_path.read_text()),
+                  list(np.load(probs).files) if probs.exists() else [])
+    if why is None:
+        return True
+    print(f"{out_path.name}: {why}. Recomputing it; the trained head is reused.")
+    return False
+
+
 def mc_dropout(results_path: str | Path, data_root: str | None = None) -> dict:
     """Train the head if needed, then the MC dropout sweep. Reused if already finished."""
     results_path = Path(results_path)
@@ -177,7 +217,7 @@ def mc_dropout(results_path: str | Path, data_root: str | None = None) -> dict:
     res0 = json.loads(results_path.read_text())
     mid = mc_id(res0["run_id"])
     out_path = d / f"mcdropout_{mid}.json"
-    if out_path.exists():
+    if preflight(results_path):
         print(f"{mid}: reusing the finished MC dropout sweep")
         return json.loads(out_path.read_text())
     trained = json.loads(train_head(results_path, data_root).read_text())

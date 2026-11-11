@@ -140,3 +140,19 @@ def test_derive_threshold_vacuous_when_only_rejecting_everything_works():
     r = derive_threshold(conds, 0.95)
     # 0.9 accepts only the wrong one; 0.8 accepts both (50%): no candidate satisfies it
     assert r["found"] is False and r["threshold"] is None
+
+
+def test_pre_d20_known_answers():
+    """D20: a cached result is current only with the saturation statistic on every curve
+    and, when its score store is given, the ranked arrays stored."""
+    from src.evaluate import pre_d20
+    y = np.array([1, 0, 1, 1], dtype=float)
+    c = risk_coverage(np.array([0.9, 0.8, 0.7, 0.6]), y)
+    row = {"scores": {"max_softmax": c}, "temperature": {"T=1": {"coverage": {"m": dict(c)}}}}
+    assert pre_d20({"rows": [row]}) is None
+    assert pre_d20({"rows": [row]}, ["labels", "clean_s0", "clean_s0__scores__margin"]) is None
+    assert "ranked score arrays" in str(pre_d20({"rows": [row]}, ["labels", "clean_s0"]))
+    del row["temperature"]["T=1"]["coverage"]["m"]["saturation"]
+    assert pre_d20({"rows": [row]}) == ("1 of 2 coverage curves have no saturation statistic "
+                                        "(written before D20)")
+    assert pre_d20({"rows": []}) == "no coverage curves"

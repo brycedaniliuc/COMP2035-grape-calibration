@@ -224,10 +224,14 @@ is already in Drive is reused, so only unfinished work is repeated."""),
     code(SETUP),
     code(DATA),
     md("## The seed 42 baseline from notebook 01"),
-    code('''from src.ensemble import ensemble_sweep, ensure_member, ensure_sweep, find_run
+    code('''from src.ensemble import check_cached, ensemble_sweep, ensure_member, ensure_sweep
+from src.ensemble import find_run
 BASE = find_run(OUT, seed=42)
 assert BASE, f"no finished resnet50 source run in {OUT}: run notebook 01 first"
-print("baseline:", BASE.name)'''),
+print("baseline:", BASE.name)
+# before any training: a cached member sweep from before D20 is brought up to date from its
+# saved logits (CPU only), or this stops with the reason
+check_cached(BASE, MEMBER_SEEDS)'''),
     md("""## Members (about 26 min for each one trained)
 
 A member already in Drive is reused. Each checkpoint is saved to Drive as it improves."""),

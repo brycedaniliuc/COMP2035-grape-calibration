@@ -169,7 +169,10 @@ earlier version of this entry, which quoted the ID while describing the problem.
 - A local backup branch, `backup/pre-id-rewrite`, holds the original history. It is never
   pushed, and is deleted once the pushed repo has been checked.
 
-## D10 · Where the threshold is chosen — CHANGED IN STAGE 9 (owner to confirm)
+## D10 · Where the threshold is chosen — RESOLVED (owner, 2026-11-11)
+
+**RESOLVED 2026-11-11 (owner):** the threshold is chosen on degraded validation images and
+checked on held-out degraded test images. That is the protocol, and the reported numbers use it.
 
 **Found in the Stage 9 review.** The threshold was chosen on the 610 test images and its
 accuracy reported on the same 610 images, so "every condition reaches 95%" held by
@@ -608,10 +611,26 @@ confidence interval for the true ECE.
   - **T = 0.25 is not reported either.** Its max softmax is rarely exactly 1.0, but up to
     97% of predictions share one of a few float32 values just below it. The tied-fraction
     rule covers that case too.
+- **Cached results (2026-11-11).** Notebooks 03 and 05 reuse finished work in Drive. A
+  cached result from before D20 used to be reused as it was, and failed only at the figure
+  step. Notebook 05 failed this way on the real run. Now `src.evaluate.pre_d20` checks
+  every cached result before any GPU time is spent. A result is current only if every
+  coverage curve carries the saturation statistic and its score store holds the ranked
+  arrays.
+  - **Notebook 05** (`src.mcdropout.preflight`, the first step of `mc_dropout`):
+    - A stale single-model sweep is re-scored from its saved logits (CPU only, recorded in
+      the JSON).
+    - A stale ensemble stops the notebook, naming the file and the fix: delete it and run
+      notebook 03 again.
+    - A stale MC dropout result is recomputed; the trained head, which D20 does not touch,
+      is reused.
+  - **Notebook 03** (`src.ensemble.check_cached`, before any member is trained): each
+    member sweep already in Drive is re-scored if stale, or the notebook stops with the
+    reason.
+  - **Tested on the fixture:** each stale case is built and caught. For the ensemble, the
+    test fails if head training or model loading starts first.
 
-## Still open (2026-11-10)
+## Still open (2026-11-11)
 
 - **D7:** two of the four corruptions (darkening, occlusion) and their severities are this
   project's own design. The owner should confirm them, or say so in the report.
-- **D10:** choosing the threshold on degraded validation and checking it on held-out test.
-  It is built and everything uses it, but the owner has not yet confirmed it explicitly.

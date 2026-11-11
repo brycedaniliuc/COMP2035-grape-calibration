@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
@@ -138,6 +139,29 @@ def reported_aurc(row: dict, t_name: str, score: str) -> float | None:
         raise ValueError(f"AURC of {t_name}/{score}: no saturation statistic (a sweep from "
                          "before D20; src.evaluate --rescore adds it)")
     return None if sat["tied_fraction"] > SATURATION_LIMIT else report_aurc(c["aurc"])
+
+
+def pre_d20(result: dict, store_keys: Iterable[str] | None = None) -> str | None:
+    """Why a cached sweep, ensemble or MC dropout result was written before D20 and cannot
+    be reported, or None if it is current. Current means every coverage curve carries the
+    saturation statistic and, given the keys of its score store (sweep_logits_*.npz,
+    ensemble_probs_*.npz, mcdropout_probs_*.npz), the exact arrays the curves were ranked on
+    are stored ("__" keys). Checked before reusing a cached result, so a stale one is
+    caught before any GPU time is spent, not at the figure step."""
+    curves = []
+    for row in result.get("rows", []):
+        curves += list(row.get("scores", {}).values())
+        for cond in row.get("temperature", {}).values():
+            curves += list(cond.get("coverage", {}).values())
+    if not curves:
+        return "no coverage curves"
+    missing = sum("saturation" not in c for c in curves)
+    if missing:
+        return (f"{missing} of {len(curves)} coverage curves have no saturation statistic "
+                "(written before D20)")
+    if store_keys is not None and not any("__" in k for k in store_keys):
+        return "its score store has no ranked score arrays (written before D20)"
+    return None
 
 
 def saturation(score: np.ndarray, correct: np.ndarray) -> dict:

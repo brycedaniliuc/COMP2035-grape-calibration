@@ -41,3 +41,87 @@ def test_mc_dropout_on_the_stand_in_folder(colab_drive):
     # finished work is reused, not repeated (a re-run after a disconnect)
     again = mc_dropout(colab_drive / f"results_{mc['base_run_id']}.json")
     assert again["rows"] == mc["rows"]
+
+
+def _make_pre_d20(json_path, store_path) -> None:
+    """Turn a result into one written before D20: no saturation statistic on any curve, and
+    no ranked score arrays beside the logits or probabilities."""
+    res = json.loads(json_path.read_text())
+    for row in res["rows"]:
+        curves = list(row["scores"].values())
+        for cond in row["temperature"].values():
+            curves += list(cond["coverage"].values())
+        for c in curves:
+            c.pop("saturation", None)
+    res.pop("rescored", None)
+    res.pop("saturation_added", None)
+    json_path.write_text(json.dumps(res))
+    store = dict(np.load(store_path))
+    np.savez(store_path, **{k: v for k, v in store.items() if "__" not in k})
+
+
+def test_a_cached_result_from_before_d20_is_caught_before_any_gpu_time(colab_drive, tmp_path,
+                                                                        monkeypatch, capsys):
+    """Notebook 05 (D20): a stale MC dropout result is recomputed, a stale single-model sweep
+    is re-scored from its logits, and a stale ensemble stops it with the file and the fix,
+    all in the preflight, before the head is trained or a pass is run."""
+    import shutil
+
+    import pytest
+
+    import src.mcdropout as M
+    from src.ensemble import StaleResult, find_ensemble, find_run
+    from src.evaluate import pre_d20
+    d = tmp_path / "drive"
+    shutil.copytree(colab_drive, d)
+    base = find_run(d, 42, "efficientnet_b0")  # the seed 42 run, not an ensemble member
+    assert base is not None
+    rid = json.loads(base.read_text())["run_id"]
+    mid = M.mc_id(rid)
+    want = json.loads((d / f"mcdropout_{mid}.json").read_text())
+
+    # 1. stale MC dropout result: recomputed (the head is reused), identical to the original
+    _make_pre_d20(d / f"mcdropout_{mid}.json", d / f"mcdropout_probs_{mid}.npz")
+    assert pre_d20(json.loads((d / f"mcdropout_{mid}.json").read_text()))
+    M.mc_dropout(base)
+    assert "Recomputing it; the trained head is reused" in capsys.readouterr().out
+    again = json.loads((d / f"mcdropout_{mid}.json").read_text())
+    assert again["rows"] == want["rows"] and pre_d20(again) is None
+
+    # 2. stale single-model sweep: re-scored from its saved logits (CPU), then current
+    _make_pre_d20(d / f"sweep_{rid}.json", d / f"sweep_logits_{rid}.npz")
+    assert M.preflight(base) is True
+    assert pre_d20(json.loads((d / f"sweep_{rid}.json").read_text()),
+                   np.load(d / f"sweep_logits_{rid}.npz").files) is None
+
+    # 3. stale ensemble: stops before any GPU time, naming the file and the fix
+    def no_gpu(*a, **k):
+        raise AssertionError("GPU work started before the stale input was caught")
+    monkeypatch.setattr(M, "train_head", no_gpu)
+    monkeypatch.setattr(M, "load_base", no_gpu)
+    ens = find_ensemble(d, rid)
+    assert ens is not None
+    eid = ens.stem.removeprefix("ensemble_")
+    _make_pre_d20(ens, d / f"ensemble_probs_{eid}.npz")
+    (d / f"mcdropout_{mid}.json").unlink()  # even with nothing to reuse, nothing starts
+    with pytest.raises(StaleResult, match=f"ensemble_{eid}.json: .*before D20.*notebook 03"):
+        M.mc_dropout(base)
+
+
+def test_notebook_03_brings_cached_member_sweeps_up_to_date_before_training(colab_drive,
+                                                                            tmp_path):
+    import shutil
+
+    from src.ensemble import MEMBER_SEEDS, check_cached, find_run
+    from src.evaluate import pre_d20
+    d = tmp_path / "drive"
+    shutil.copytree(colab_drive, d)
+    base = find_run(d, 42, "efficientnet_b0")
+    assert base is not None
+    members = [find_run(d, s, "efficientnet_b0") for s in MEMBER_SEEDS]
+    rid = json.loads(members[1].read_text())["run_id"]  # type: ignore[union-attr]
+    _make_pre_d20(d / f"sweep_{rid}.json", d / f"sweep_logits_{rid}.npz")
+    check_cached(base, MEMBER_SEEDS)
+    sw = json.loads((d / f"sweep_{rid}.json").read_text())
+    assert pre_d20(sw, np.load(d / f"sweep_logits_{rid}.npz").files) is None
+    assert "rescored" in sw  # recorded, never silent

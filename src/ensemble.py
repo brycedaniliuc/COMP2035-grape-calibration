@@ -32,6 +32,7 @@ from src.config import Config
 from src.degrade import CORRUPTIONS, SEVERITIES
 from src.evaluate import (
     evaluate_logits,
+    pre_d20,
     reported_aurc,
     rescore,
     risk_coverage,
@@ -89,19 +90,66 @@ def ensure_member(base_results: str | Path, seed: int, data_root: str | None = N
     return base_results.parent / f"results_{res['run_id']}.json"
 
 
-def ensure_sweep(results_path: str | Path, data_root: str | None = None) -> Path:
-    """The run's sweep (test and validation logits for every condition), run if missing."""
-    results_path = Path(results_path)
+class StaleResult(RuntimeError):
+    """A cached result written before D20 that cannot be brought up to date here."""
+
+
+def require_current(json_path: Path, store_path: Path, fix: str) -> None:
+    """Stop, naming the file and the fix, if a cached result predates D20 (pre_d20)."""
+    keys = list(np.load(store_path).files) if store_path.exists() else []
+    why = pre_d20(json.loads(json_path.read_text()), keys)
+    if why:
+        raise StaleResult(f"{json_path.name}: {why}. {fix}")
+
+
+def sweep_files(results_path: Path) -> list[Path]:
     run_id = json.loads(results_path.read_text())["run_id"]
     d = results_path.parent
-    files = [d / f"sweep_{run_id}.json", d / f"sweep_logits_{run_id}.npz",
-             d / f"sweep_val_logits_{run_id}.npz"]
-    if all(f.exists() for f in files):
-        print(f"{run_id}: reusing its sweep")
-        rescore(files[0])  # a sweep from before D20 gets its ranked score arrays
-    else:
-        sweep(results_path, data_root=data_root)
+    return [d / f"sweep_{run_id}.json", d / f"sweep_logits_{run_id}.npz",
+            d / f"sweep_val_logits_{run_id}.npz"]
+
+
+def current_sweep(results_path: str | Path) -> Path | None:
+    """The run's cached sweep brought up to D20, or None if it has none. A sweep written
+    before D20 is re-scored from its saved logits (exact, CPU only, recorded in the JSON:
+    src.evaluate.rescore); anything still stale after that stops here with the reason."""
+    files = sweep_files(Path(results_path))
+    if not all(f.exists() for f in files):
+        return None
+    print(f"{files[0].stem.removeprefix('sweep_')}: reusing its sweep")
+    rescore(files[0])
+    require_current(files[0], files[1], "Delete the sweep files and run its sweep again.")
     return files[0]
+
+
+def ensure_sweep(results_path: str | Path, data_root: str | None = None) -> Path:
+    """The run's sweep (test and validation logits for every condition): the cached one if
+    it is current (current_sweep), else run now."""
+    results_path = Path(results_path)
+    found = current_sweep(results_path)
+    if found is None:
+        sweep(results_path, data_root=data_root)
+        found = sweep_files(results_path)[0]
+    return found
+
+
+def check_cached(base_results: str | Path, seeds: Sequence[int] = MEMBER_SEEDS) -> None:
+    """Notebook 03, before any training: every member already in Drive has its sweep
+    brought up to D20 or stops with the reason, so a stale cache is found before GPU time
+    is spent on the members still missing."""
+    base_results = Path(base_results)
+    for seed in seeds:
+        found = find_run(base_results.parent, seed, json.loads(base_results.read_text())[
+            "config"]["model"])
+        if found is not None:
+            current_sweep(found)
+
+
+def find_ensemble(d: str | Path, base_run_id: str) -> Path | None:
+    """The newest ensemble in d whose members include this run, if notebook 03 ran."""
+    found = [p for p in sorted(Path(d).glob("ensemble_*.json"))
+             if base_run_id in [m["run_id"] for m in json.loads(p.read_text())["members"]]]
+    return found[-1] if found else None
 
 
 def softmax64(logits: np.ndarray) -> np.ndarray:
