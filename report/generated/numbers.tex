@@ -2,8 +2,9 @@
 % generator-sha256: ca5d5f72bb00d677ed7bfb48e3746b357880cedd4c841ec2add98899a388c742
 % source: results/colab_20261110/results_resnet50_source_20261110-083456.json sha256=db870efcc2e67ea1aaaf7dbe201c4915bc63aed456c84b507b9d32936c1ec389
 % source: results/colab_20261110/results_resnet50_supplied_20261110-090100.json sha256=57d184258927e227306311c40f5521171cecb87bd484cdaf5ebee4748f6ac3d8
-% source: results/colab_20261110/sweep_resnet50_source_20261110-083456.json sha256=f92c1ef86a8137dcaf36347ee85095fdc6d9cff94d21228bcafdd90294ee91b6
-% body-sha256: c5d8e2ba03eb7e70b81fd18651cc51e395f800742db71377ede3591382075ba0
+% source: results/colab_20261110/sweep_resnet50_source_20261110-083456.json sha256=b2ec84a3be6aa84b79301660533d62f256cf9602a6ebb44ea805e2f0ae7893f3
+% source: results/colab_20261110/plantseg_resnet50_source_20261110-083456.json sha256=4bb56b0669da2a7dc4662b5083601c6d06cd06fd2c3b978815ea069b073d4e77
+% body-sha256: 0fd2c6fd6309deb1aad939c3668e7f48966982f29660e08ecf1dea572447bb5e
 \usepackage{xspace}
 \providecommand{\pending}[1]{\textbf{[pending: #1]}\xspace}
 \providecommand{\notaresult}[1]{\textbf{[NOT A RESULT: #1]}\xspace}
@@ -60,44 +61,44 @@
 \newcommand{\eceSevFiveDarken}{0.1138\xspace}  % darkness, severity 5, T = 1
 \newcommand{\accSevFiveOcclusion}{0.9869\xspace}  % occlusion, severity 5
 \newcommand{\eceSevFiveOcclusion}{0.1415\xspace}  % occlusion, severity 5, T = 1
-\newcommand{\satDarkFive}{229\xspace}  % darkness severity 5, T_lbfgs: predictions with max softmax exactly 1.0
-\newcommand{\satDarkFiveWrong}{16\xspace}  % of those, wrong
+\newcommand{\satDarkFive}{231\xspace}  % darkness severity 5, T_lbfgs: predictions with max softmax exactly 1.0
+\newcommand{\satDarkFiveWrong}{19\xspace}  % of those, wrong
 \newcommand{\satDarkFiveErrors}{196\xspace}  % darkness severity 5: all wrong predictions
 \newcommand{\satDarkFiveEntropy}{0\xspace}  % darkness severity 5, T_lbfgs: predictions sharing the top entropy score
 \newcommand{\satDarkFiveMargin}{0\xspace}  % darkness severity 5: predictions sharing the top margin
 \newcommand{\satConditions}{21 of 21\xspace}  % conditions where max softmax at T_lbfgs is exactly 1.0 for more than one prediction
-\newcommand{\satRange}{28--608\xspace}  % fewest and most predictions at max softmax 1.0, T_lbfgs
+\newcommand{\satRange}{28--609\xspace}  % fewest and most predictions at max softmax 1.0, T_lbfgs
 \newcommand{\satLimitPct}{1\%\xspace}  % no AURC is reported from a curve with more of its predictions tied (D20)
-\newcommand{\psN}{\pending{plantseg}\xspace}
-\newcommand{\psBrN}{\pending{plantseg}\xspace}
-\newcommand{\psBrCorrect}{\pending{plantseg}\xspace}
-\newcommand{\psBrAcc}{\pending{plantseg}\xspace}
-\newcommand{\psBrAccCI}{\pending{plantseg}\xspace}
-\newcommand{\psBrMeanConf}{\pending{plantseg}\xspace}
-\newcommand{\psBrBinsOccupied}{\pending{plantseg}\xspace}
-\newcommand{\psBrBinsUnderFive}{\pending{plantseg}\xspace}
-\newcommand{\psBrNoWarning}{\pending{plantseg}\xspace}
-\newcommand{\psBrSensN}{\pending{plantseg}\xspace}
-\newcommand{\psBrSensAcc}{\pending{plantseg}\xspace}
-\newcommand{\psBrSensAccCI}{\pending{plantseg}\xspace}
-\newcommand{\psThreshold}{\pending{plantseg}\xspace}
-\newcommand{\psCleanMeanConf}{\pending{plantseg}\xspace}
-\newcommand{\psCleanNoWarning}{\pending{plantseg}\xspace}
-\newcommand{\psSevereCondition}{\pending{plantseg}\xspace}
-\newcommand{\psSevereMeanConf}{\pending{plantseg}\xspace}
-\newcommand{\psSevereNoWarning}{\pending{plantseg}\xspace}
-\newcommand{\psDownyN}{\pending{plantseg}\xspace}
-\newcommand{\psDownyMeanConf}{\pending{plantseg}\xspace}
-\newcommand{\psDownyMedianConf}{\pending{plantseg}\xspace}
-\newcommand{\psDownyShareNinety}{\pending{plantseg}\xspace}
-\newcommand{\psDownyNoWarning}{\pending{plantseg}\xspace}
-\newcommand{\psLeafSpotN}{\pending{plantseg}\xspace}
-\newcommand{\psLeafSpotMeanConf}{\pending{plantseg}\xspace}
-\newcommand{\psLeafSpotMedianConf}{\pending{plantseg}\xspace}
-\newcommand{\psLeafSpotShareNinety}{\pending{plantseg}\xspace}
-\newcommand{\psLeafSpotNoWarning}{\pending{plantseg}\xspace}
-\newcommand{\psLeafrollN}{\pending{plantseg}\xspace}
-\newcommand{\psLeafrollMeanConf}{\pending{plantseg}\xspace}
-\newcommand{\psLeafrollMedianConf}{\pending{plantseg}\xspace}
-\newcommand{\psLeafrollShareNinety}{\pending{plantseg}\xspace}
-\newcommand{\psLeafrollNoWarning}{\pending{plantseg}\xspace}
+\newcommand{\psN}{334\xspace}  % PlantSeg leaves analysed, each photograph once
+\newcommand{\psBrN}{25\xspace}  % black rot leaves: SMALL, quote with the interval
+\newcommand{\psBrCorrect}{16\xspace}
+\newcommand{\psBrAcc}{0.6400\xspace}  % black rot leaves, the one class that maps
+\newcommand{\psBrAccCI}{[0.445, 0.798]\xspace}  % Wilson 95%
+\newcommand{\psBrMeanConf}{0.6464\xspace}
+\newcommand{\psBrBinsOccupied}{10\xspace}  % of 15 confidence bins: why there is no ECE at this n (D17)
+\newcommand{\psBrBinsUnderFive}{9\xspace}  % occupied bins holding fewer than 5 images
+\newcommand{\psBrNoWarning}{12.0\%\xspace}  % share accepted without a warning
+\newcommand{\psBrSensN}{17\xspace}  % without close-ups, wide views and shoots
+\newcommand{\psBrSensAcc}{0.7647\xspace}
+\newcommand{\psBrSensAccCI}{[0.527, 0.904]\xspace}
+\newcommand{\psThreshold}{0.9132\xspace}  % max softmax, chosen on validation (D10)
+\newcommand{\psCleanMeanConf}{0.9221\xspace}  % PlantVillage clean, T = 1
+\newcommand{\psCleanNoWarning}{78.7\%\xspace}
+\newcommand{\psSevereCondition}{Gaussian blur, severity 5\xspace}  % lowest-accuracy severity-5 condition
+\newcommand{\psSevereMeanConf}{0.6410\xspace}
+\newcommand{\psSevereNoWarning}{4.1\%\xspace}
+\newcommand{\psDownyN}{174\xspace}  % out of distribution: confidence only
+\newcommand{\psDownyMeanConf}{0.5524\xspace}
+\newcommand{\psDownyMedianConf}{0.5267\xspace}
+\newcommand{\psDownyShareNinety}{2.3\%\xspace}  % share with confidence >= 0.9
+\newcommand{\psDownyNoWarning}{2.3\%\xspace}
+\newcommand{\psLeafSpotN}{74\xspace}  % out of distribution: confidence only
+\newcommand{\psLeafSpotMeanConf}{0.6666\xspace}
+\newcommand{\psLeafSpotMedianConf}{0.6838\xspace}
+\newcommand{\psLeafSpotShareNinety}{8.1\%\xspace}  % share with confidence >= 0.9
+\newcommand{\psLeafSpotNoWarning}{6.8\%\xspace}
+\newcommand{\psLeafrollN}{61\xspace}  % out of distribution: confidence only
+\newcommand{\psLeafrollMeanConf}{0.6314\xspace}
+\newcommand{\psLeafrollMedianConf}{0.6403\xspace}
+\newcommand{\psLeafrollShareNinety}{9.8\%\xspace}  % share with confidence >= 0.9
+\newcommand{\psLeafrollNoWarning}{4.9\%\xspace}

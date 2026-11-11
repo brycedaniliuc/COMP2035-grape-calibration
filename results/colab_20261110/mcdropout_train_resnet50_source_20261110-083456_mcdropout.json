@@ -1,0 +1,41 @@
+{
+ "mc_id": "resnet50_source_20261110-083456_mcdropout",
+ "base_run_id": "resnet50_source_20261110-083456",
+ "p_drop": 0.5,
+ "head_epochs": 5,
+ "best_val_loss": 0.35719399039185495,
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 0.3675827628643099,
+   "val_loss": 0.35719399039185495,
+   "val_acc": 1.0
+  },
+  {
+   "epoch": 2,
+   "train_loss": 0.3634958987942029,
+   "val_loss": 0.35782590391013425,
+   "val_acc": 1.0
+  },
+  {
+   "epoch": 3,
+   "train_loss": 0.361987449758504,
+   "val_loss": 0.3580991498550954,
+   "val_acc": 1.0
+  },
+  {
+   "epoch": 4,
+   "train_loss": 0.36278335069345274,
+   "val_loss": 0.35763796796939645,
+   "val_acc": 1.0
+  },
+  {
+   "epoch": 5,
+   "train_loss": 0.3616392191968451,
+   "val_loss": 0.35766168861162095,
+   "val_acc": 1.0
+  }
+ ],
+ "minutes": 3.86,
+ "head": "mcdropout_head_resnet50_source_20261110-083456_mcdropout.pt"
+}

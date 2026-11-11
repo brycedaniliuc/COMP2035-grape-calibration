@@ -512,7 +512,8 @@ confidence interval for the true ECE.
   arm64 laptop, differ by about one ulp. That reorders scores only where they are tied or
   nearly tied, and the sweep breaks ties by input order. The worst curve, darkness severity
   5 at T_lbfgs = 0.17, has max softmax saturated to exactly 1.0 for 229 of 610 images (16 of
-  them wrong): 276 distinct scores, not 610. One ulp moves an image into or out of that tied
+  them wrong) as scored on arm64; 231 (19 wrong) as scored in Colab: 276 distinct scores,
+  not 610. One ulp moves an image into or out of that tied
   group.
 - **Fix 1: rank on the exact arrays.** The sweep, the ensemble and MC dropout now store the
   exact score arrays each coverage curve was ranked on: in `sweep_logits_<run>.npz` beside
@@ -572,12 +573,17 @@ confidence interval for the true ECE.
   - `top_score`: that highest score
   - `tied_fraction`: the fraction of all predictions that share their score with another
 
-  The real sweep had its stored arrays, so the statistic was added from them, and nothing
-  else changed (`saturation_added` in the JSON). On the real run, at T_lbfgs:
+  On the real run, from the sweep notebook 02 re-ran in Colab on 2026-11-11 (logits
+  bit-identical to the first run; score arrays stored by the sweep itself), at T_lbfgs:
   - **Max softmax** is exactly 1.0 for more than one prediction in all 21 distinct
-    conditions, for between 28 and 608 of the 610 predictions.
-  - **The headline case is darkness severity 5:** 229 predictions at exactly 1.0, 16 of them
+    conditions, for between 28 and 609 of the 610 predictions.
+  - **The headline case is darkness severity 5:** 231 predictions at exactly 1.0, 19 of them
     wrong, out of 196 errors in that condition.
+  - **These counts depend on the machine.** Whether a float32 max softmax rounds to exactly
+    1.0 differs between x86 and arm64. Scored on arm64 (the earlier local re-score), the
+    same logits gave 229 and 16, and 28 to 608; other conditions moved by 0 to 5. Accuracy,
+    ECE, every reported AURC (two decimals) and every threshold are unchanged. The report
+    uses the Colab values, which are the sweep's own.
   - **Entropy and margin** never share their top score, in any condition.
 
   Where it appears:
@@ -629,6 +635,32 @@ confidence interval for the true ECE.
     reason.
   - **Tested on the fixture:** each stale case is built and caught. For the ensemble, the
     test fails if head training or model loading starts first.
+
+- **The threshold check across machines (2026-11-12).** The same one-ulp difference broke
+  verify's threshold check on three real outputs (seed 44 member at 99%, ensemble at 95%,
+  MC dropout at 90%). Each threshold is one validation image's float32 score as computed in
+  Colab. Recomputed here, that image scored one or two ulp lower, so verify took it for a
+  lower candidate that also met the target. The thresholds were right; the check was not.
+  `src.verify.threshold_checks` now:
+  - places validation images by float64 score: above the threshold, below it, or within
+    `THRESHOLD_BAND` = 1e-6 of it (8x the largest difference measured, 1.2e-7), where
+    either side is possible on another machine
+  - tries every placement of the images inside the band, keeps those that give the
+    accepted count and accuracy Colab reported in every condition, and fails if none does
+  - requires every placement kept to meet the target, and adding any image not accepted
+    (the next lower candidate) to break it
+  - checks the held-out test numbers exactly on the stored float32 arrays the threshold
+    was applied to (D20 fix 1); without them, a test image inside the band fails as
+    undecidable
+
+  No tolerance was loosened: the counting is exact, and only which side of the threshold an
+  image fell on is taken from the reported counts, and only where float32 could decide it
+  either way. On the real run, one target (ensemble, 99%) had two images inside the band, 4e-7
+  apart, one wrong; only one placement matches the reported counts. All other targets have
+  just the threshold image inside the band. Tested (`tests/test_verify_threshold.py`): an
+  honest threshold passes; a threshold that is not the lowest, reported counts no
+  placement gives, wrong held-out numbers, and an undecidable test image each fail; a near
+  tie inside the band is settled by the counts.
 
 ## Still open (2026-11-11)
 

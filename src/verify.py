@@ -308,51 +308,117 @@ def tier1_sweep(res: dict, sw: dict, lg: dict, test_logits: np.ndarray,
     return out
 
 
+THRESHOLD_BAND = 1e-6  # images whose float64 max softmax lies closer than this to a
+# threshold might fall on either side of it on another machine: two float32 computations of
+# one score (Colab x86, arm64 here) differ by a few ulp, at most 1.2e-7 on the real run (D20).
+# The band is 8x that.
+MAX_NEAR = 10  # at most this many distinct images inside the band: 2^10 placements tried
+
+
 def threshold_checks(sw: dict, lg: dict, val_lg: dict) -> list[Check]:
     """The max-softmax threshold, with separate code: on validation it meets every target
-    and the next lower score does not; on test, the accepted counts, accuracies and the
-    conditions below target are as reported. Scores are first checked against this module's
-    own float64 softmax; the counting is then exact (no tolerance band, which near-tied
-    confidences would make meaningless)."""
+    and the next lower image does not; on test, the accepted counts, accuracies and the
+    conditions below target are as reported. Counting is exact (no tolerance band, which
+    near-tied confidences would make meaningless).
+
+    The threshold is a float32 score from the machine that chose it, and float32 differs
+    between machines by an ulp or two (D20), so this module's own float32 cannot say which
+    side of it an image fell. Instead, images are placed by their float64 score: above the
+    threshold, below it, or inside THRESHOLD_BAND of it, where either side is possible.
+    Validation: every placement of the images inside the band is tried, and only those
+    giving the accepted count and accuracy Colab reported in each condition are kept. If none
+    is kept the
+    reported result is impossible (FAIL). Every one kept must meet the target, and adding
+    any image that was not accepted (the next lower candidate) must not. Test: the exact
+    float32 arrays the threshold was applied to are stored with the sweep (D20) and
+    compared directly; without them, an image inside the band of the threshold makes the
+    test numbers undecidable (FAIL, with the reason)."""
+    from itertools import product
+
     keys = [k for k in lg if k != "labels" and "__" not in k]
     stores = (("v", val_lg), ("t", lg))
-    conf = {s: {k: scores32(st[k])[0] for k in keys} for s, st in stores}
+    s64 = {s: {k: softmax64(st[k]).max(1) for k in keys} for s, st in stores}
     agree = max(score_agreement(st[k]) for s, st in stores for k in keys)
     ok = {s: {k: (st[k].argmax(1) == st["labels"]) for k in keys} for s, st in stores}
+    stored = {k: lg.get(f"{k}__scores__max_softmax") for k in keys}
+    exact_test = all(v is not None for v in stored.values())
 
-    def meets(split: str, t: float, target: float) -> bool:
-        return all(ok[split][k][conf[split][k] >= t].mean() >= target
-                   for k in keys if (conf[split][k] >= t).any())
+    def meets(split: str, acc: dict[str, np.ndarray], target: float) -> bool:
+        return all(ok[split][k][acc[k]].mean() >= target for k in keys if acc[k].any())
 
-    all_val = np.concatenate(list(conf["v"].values()))
-    bad_val, bad_test, n = [], [], 0
+    all_val = np.unique(np.concatenate(list(s64["v"].values())))
+    bad_val: list[str] = []
+    bad_test: list[str] = []
+    n, settled = 0, 0
+    if agree >= THRESHOLD_BAND / 2:  # the band must hold the float32 rounding it allows for
+        bad_val.append(f"float32 rounding {agree:.1e} too large for the band")
     for tgt, r in sw["threshold"]["by_score"]["max_softmax"].items():
         if not r["validation"]["found"]:
             continue
         n += 1
         t, target = r["validation"]["threshold"], float(tgt)
-        lower = all_val[all_val < t]
-        if not meets("v", t, target) or (lower.size and meets("v", float(lower.max()), target)):
-            bad_val.append(tgt)
-        below = []
+        near = all_val[np.abs(all_val - t) <= THRESHOLD_BAND]  # identical values tie anywhere
+        if not near.size or near.size > MAX_NEAR:
+            bad_val.append(f"{tgt}: {near.size} images within {THRESHOLD_BAND:.0e} of t")
+            continue
+        sure = {k: s64["v"][k] > t + THRESHOLD_BAND for k in keys}
+        reported = r["validation"]["per_condition"]
+
+        def as_reported(acc: dict[str, np.ndarray], reported: dict = reported) -> bool:
+            return all(int(acc[k].sum()) == reported[k]["n_accepted"] and (
+                not acc[k].any()
+                or abs(float(ok["v"][k][acc[k]].mean()) - reported[k]["acc_accepted"]) < 1e-12)
+                for k in keys)
+        kept = []
+        for place in product((False, True), repeat=near.size):
+            if not any(place):  # the image the threshold came from is accepted
+                continue
+            inside = near[list(place)]
+            acc = {k: sure[k] | np.isin(s64["v"][k], inside) for k in keys}
+            if as_reported(acc):
+                kept.append((place, acc))
+        if not kept:
+            bad_val.append(f"{tgt}: no placement gives the reported accepted counts")
+            continue
+        settled += near.size > 1
+        for place, acc in kept:
+            out_band = [float(v) for v, p in zip(near, place, strict=True) if not p]
+            below = all_val[all_val < t - THRESHOLD_BAND]
+            nxt = out_band or ([float(below.max())] if below.size else [])
+            if not meets("v", acc, target) or any(
+                    meets("v", {k: acc[k] | (s64["v"][k] == x) for k in keys}, target)
+                    for x in nxt):
+                bad_val.append(tgt)
+                break
+        below_t = []
         for k in keys:
-            acc_mask = conf["t"][k] >= t
+            if exact_test:
+                acc_mask = stored[k] >= t
+            else:
+                if (np.abs(s64["t"][k] - t) <= THRESHOLD_BAND).any():
+                    bad_test.append(f"{tgt}/{k}: undecidable, an image within "
+                                    f"{THRESHOLD_BAND:.0e} of t and no stored scores")
+                    continue
+                acc_mask = s64["t"][k] >= t
             got = r["test"]["per_condition"][k]
             want_acc = float(ok["t"][k][acc_mask].mean()) if acc_mask.any() else None
             if want_acc is not None and want_acc < target:
-                below.append(k)
+                below_t.append(k)
             if got["n_accepted"] != int(acc_mask.sum()) or (
                     want_acc is not None and abs(got["acc_accepted"] - want_acc) > 1e-12):
                 bad_test.append(f"{tgt}/{k}")
-        if sorted(below) != sorted(r["test"]["below_target"]):
+        if sorted(below_t) != sorted(r["test"]["below_target"]):
             bad_test.append(f"{tgt}/below_target")
+    how = (f"; images placed by float64 score, {settled} target(s) with more than one "
+           "image inside the band settled by the reported counts" if n else "")
     return [("threshold: scores agree with float64 softmax", 1,
              "PASS" if agree < SCORE_TOL else "FAIL", f"max |diff| {agree:.1e}"),
             ("threshold: chosen on validation, lowest that meets target", 1,
              "PASS" if not bad_val else "FAIL", f"{n} targets" + (f"; {bad_val}" if bad_val
-                                                                 else "")),
+                                                                 else how)),
             ("threshold: held-out test numbers re-derived", 1,
-             "PASS" if not bad_test else "FAIL", f"{n} targets x {len(keys)} conditions"
+             "PASS" if not bad_test else "FAIL", f"{n} targets x {len(keys)} conditions, "
+             + ("on the stored scores (exact)" if exact_test else "by float64 score")
              + (f"; {bad_test[:5]}" if bad_test else ""))]
 
 
@@ -554,8 +620,10 @@ def sample_method_checks(label: str, method: dict, probs: dict, val_probs: dict,
                 for k, v in st.items() if "__" not in k}
     val_logs = logs(val_probs)
     val_logs["labels"] = val_probs["labels"]
+    test_logs = logs(probs)  # with the stored max softmax the threshold was applied to
+    test_logs.update({k: v for k, v in probs.items() if k.endswith("__scores__max_softmax")})
     out += [(f"{label} {name}", t, st, det)
-            for name, t, st, det in threshold_checks(method, logs(probs), val_logs)]
+            for name, t, st, det in threshold_checks(method, test_logs, val_logs)]
     return out
 
 
