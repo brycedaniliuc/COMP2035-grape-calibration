@@ -12,29 +12,35 @@ threshold can and cannot be trusted.
 
 ## Status: what exists and what does not
 
+The report uses the runs of 10–11 November 2026 (Colab, Tesla T4), stored in
+`results/colab_20261110/`. The September 2026 baseline runs in `results/source/` and
+`results/supplied/` came first; their weights and logits were not kept, so the November
+runs retrained both splits from the same seeded split.
+
 | | Status | Where |
 |---|---|---|
-| Dataset audit and train/test leakage measurement | **Done** | `results/*/audit.json` |
+| Dataset audit and train/test leakage measurement | **Done** | `results/colab_20261110/audit_*.json` |
 | Leak-free split at the level of the source leaf | **Done** | `src/data.py` |
-| ResNet-50 baseline, `source` and `supplied` splits (Sept 2026, Colab T4) | **Done** | `results/source/`, `results/supplied/` |
-| ECE, reliability diagrams, temperature scaling on clean data | **Done** | same |
-| Degradation sweep (blur, brighten, darken, occlusion × 5 severities) | **Built and tested on a fixture; not yet run on the real model** | `src/degrade.py`, `src/evaluate.py` |
-| Coverage curves, three confidence scores, threshold derivation | **Built and tested; not yet run on the real model** | `src/evaluate.py` |
-| Figures, independent verification | **Built and tested; not yet run on the real model** | `src/figures.py`, `src/verify.py` |
-| The real degradation run | **Pending**: one Colab session | [`HANDOVER.md`](HANDOVER.md) |
-| Prediction + confidence + warning tool | **Built and tested on the fixture**; its real threshold comes from the Colab run | `src/predict.py` |
-| Deep ensemble (3 members) through the same degradation sweep, compared with the single model; mutual information as the disagreement score | **Built and tested on the fixture; not yet run on the real model** (notebook 03) | `src/ensemble.py` |
-| MC dropout (dropout before the final layer, head retrained, 20 passes) through the same sweep; one figure comparing single model, ensemble and MC dropout | **Built and tested on the fixture; optional, not yet run on the real model** (notebook 05) | `src/mcdropout.py` |
+| ResNet-50 baseline, `source` and `supplied` splits | **Done** (Nov 2026; first run Sept 2026) | `results/colab_20261110/results_*.json` |
+| ECE, reliability diagrams, temperature scaling on clean data | **Done** | same, and `figures_*` |
+| Degradation sweep (blur, brighten, darken, occlusion × 5 severities) | **Done** (notebook 02) | `sweep_resnet50_source_20261110-083456.json` |
+| Coverage curves, three confidence scores, threshold chosen on validation and checked on held-out test | **Done** | same |
+| Figures, independent verification of every reported number | **Done**: all outputs pass `src.verify` | `figures_*`, `src/verify.py` |
+| Deep ensemble (3 members, seeds 42–44) through the same sweep; mutual information as the disagreement score | **Done** (notebook 03) | `ensemble_resnet50_source_ens3_20261111-120456.json` |
+| MC dropout (dropout p = 0.5 before the final layer, head retrained, 20 passes) through the same sweep | **Done** (notebook 05) | `mcdropout_resnet50_source_20261110-083456_mcdropout.json` |
+| Field photographs: PlantSeg v6 grape leaves (black rot accuracy, n = 25; the other three diseases as out-of-distribution confidence only) | **Done** (notebook 04); leaf filter: 564 images tagged by eye against a stated rule | `plantseg_resnet50_source_20261110-083456.json`, `results/plantseg/`, D14–D16 |
+| Prediction + confidence + warning tool | **Done**; it reads the threshold from a sweep file | `src/predict.py` |
 | Field images (LDD in the submitted plan) | Not used. This repo runs the plan's §3.4 contingency instead: degraded held-out PlantVillage | `DECISIONS.md` D11 |
-| Field photographs: PlantSeg v6 grape leaves (black rot accuracy, n = 25; the other three classes as out-of-distribution confidence only) | **Leaf filter done** (564 images tagged by eye against a stated rule); **analysis built and tested, real run pending** (notebook 04) | `results/plantseg/`, `src/plantseg.py`, D14–D16 |
+| Darkening and occlusion severities | **Our own design**, not ImageNet-C's; open for confirmation | `DECISIONS.md` D7 |
 
-No result of the degradation study appears in this README, because none exists yet.
+The files named without a folder are in `results/colab_20261110/`.
 
 ---
 
-## Findings so far
+## Findings
 
-Every number below is read from a file in `results/`.
+Every number below is read from a file in `results/`, named beside it. Files named without
+a folder are in `results/colab_20261110/`.
 
 ### 1 · The supplied train/test split leaks
 
@@ -48,7 +54,8 @@ augmentation was done *before* the split, so copies of one leaf sit on both side
 | Test **originals** whose leaf appears in train | 621 of 816 (**76.1%**) |
 | Per class: Black rot / Esca / Leaf blight / Healthy | 89.7% / 76.5% / 87.7% / **100.0%** |
 
-Sources: `results/source/audit.json` (identical to `results/supplied/audit.json`). The same
+Sources: `results/colab_20261110/audit_20261110-083456.json` (the same numbers as the
+September `results/source/audit.json` and `results/supplied/audit.json`). The same
 numbers are re-derived from the filenames by separate code in `tests/build_fixture.py`
 (`full_dataset_audit` in `tests/fixture/manifest.json`) and checked by
 `tests/test_data.py::test_full_dataset_audit_matches_september_audit_json`.
@@ -61,29 +68,89 @@ during training), ResNet-50 classifies **every test image correctly**:
 | | `source` (leak-free) | `supplied` (leaky) |
 |---|---|---|
 | Test images | 610 | 1,805 |
-| Test accuracy | **1.0000** | 1.0000 |
-| Mean confidence | 0.9222 | 0.9255 |
-| ECE (15 bins) | 0.0778 | 0.0745 |
+| Test accuracy [Wilson 95% CI] | **1.0000** [0.994, 1.000] | 1.0000 [0.998, 1.000] |
+| Mean confidence | 0.9221 | 0.9244 |
+| ECE (15 bins) | 0.0779 | 0.0756 |
 
-Sources: `results/source/results_resnet50_source.json`,
-`results/supplied/results_resnet50_supplied.json`.
+Sources: `results_resnet50_source_20261110-083456.json`,
+`results_resnet50_supplied_20261110-090100.json`. The September runs gave the same
+accuracy, with mean confidence 0.9222 and 0.9255 and ECE 0.0778 and 0.0745
+(`results/source/results_resnet50_source.json`,
+`results/supplied/results_resnet50_supplied.json`).
 
 The model is **underconfident**, not overconfident: accuracy exceeds confidence. Label
 smoothing of 0.1 over 4 classes makes the training target for the true class 0.925, close to
-the observed mean confidence. All 610 confidences fall in three adjacent bins between 0.80
-and 1.0, almost all in the top two (`results/source/reliability_before_resnet50_source.png`).
-With so little spread, confidence has almost nothing to rank.
+the observed mean confidence. All 610 confidences fall in three adjacent 15-bin intervals
+between 0.80 and 1.0: 2 in 0.80–0.87, 503 in 0.87–0.93 and 105 in 0.93–1.0 (computed from
+`logits_resnet50_source_20261110-083456.npz`; see `reliability_clean_*` in
+`figures_resnet50_source_20261110-083456/`). With so little spread, confidence has almost
+nothing to rank.
 
 ### 3 · Temperature scaling is undefined on a saturated task
 
-At the kept checkpoint, validation accuracy was 1.0000 in both runs (the `history` field of
-each results JSON). With no validation errors, validation NLL keeps falling as the
-temperature *T* shrinks, so it has **no minimum**. The optimiser (LBFGS) stopped where its
-iteration budget ran out: at 0.237 (`source`) and 0.051 (`supplied`). Those numbers are
-optimiser endpoints, not fitted temperatures. The resulting "post-calibration" ECE of about
-0 (1.9 × 10⁻⁶ for `source`) only means every confidence was pushed to 1. **Post-hoc
-calibration needs errors to fit against, and a saturated benchmark supplies none.** This is
-why the degradation study, where errors occur, is the real experiment.
+At the kept checkpoint, validation accuracy was 1.0000 in both runs. With no validation
+errors, validation NLL keeps falling as the temperature *T* shrinks, so it has **no
+minimum**. The optimiser (LBFGS) stops where its iteration budget runs out: at 0.17
+(`source`) and 0.241 (`supplied`) in the November runs, and at 0.237 and 0.051 in September.
+Those numbers are optimiser endpoints, not fitted temperatures. The resulting
+"post-calibration" ECE of about 0 (1.2 × 10⁻⁹ for `source`) only means every confidence was
+pushed towards 1. **Post-hoc calibration needs errors to fit against, and a saturated
+benchmark supplies none.** This is why the degradation study, where errors occur, is the
+real experiment.
+
+### 4 · Under corruption, confidence falls more slowly than accuracy
+
+At severity 5 (`sweep_resnet50_source_20261110-083456.json`, T = 1):
+
+| Corruption, severity 5 | Accuracy [95% CI] | Mean confidence | ECE |
+|---|---|---|---|
+| Gaussian blur, σ = 6 px | 0.4148 [0.376, 0.454] | 0.6410 | 0.2406 |
+| Darkening, V − 0.5 | 0.6787 [0.641, 0.715] | 0.7818 | 0.1138 |
+| Occlusion, 40% | 0.9869 [0.974, 0.993] | 0.8489 | 0.1415 |
+| Brightening, V + 0.5 | 0.9934 [0.983, 0.997] | 0.9177 | 0.0820 |
+
+At the LBFGS endpoint, max softmax is exactly 1.0 for more than one prediction in all 21
+conditions (clean and 20 corrupted), for 28 to 609 of the 610 images. Under darkening at
+severity 5, 231 predictions sit at exactly 1.0 and 19 of them are wrong (of 196 errors).
+Max softmax cannot rank those, so no AURC is reported at that temperature (`DECISIONS.md`
+D20).
+
+### 5 · The threshold
+
+For a 95% accuracy target, the threshold on max softmax (T = 1) chosen on degraded
+validation images is **0.9132**. Applied unchanged to the held-out degraded test images, it
+meets the target in **23 of 24** conditions: four corruptions at severities 0–5, where
+severity 0 is the unaltered image. It accepts 58.1% of images on average and refers 41.9%,
+and it refers no condition entirely. The miss is darkening at severity 5: 154 images
+accepted (25.2%), accuracy 0.9286 [0.877, 0.960]. Source: the sweep file above.
+
+The same procedure on the other two methods:
+
+| Method | Threshold | Held-out conditions meeting 95% | Mean coverage |
+|---|---|---|---|
+| Single model | 0.9132 | 23 of 24 | 58.1% |
+| Deep ensemble, 3 members | 0.8646 | 24 of 24 | 78.3% |
+| MC dropout, 20 passes | 0.9028 | 23 of 24 (misses darkening s5) | 59.1% |
+
+Sources: the sweep file, `ensemble_resnet50_source_ens3_20261111-120456.json`,
+`mcdropout_resnet50_source_20261110-083456_mcdropout.json`.
+
+### 6 · Field photographs (PlantSeg v6)
+
+The single model on 334 PlantSeg grape leaf photographs, each photograph once
+(`plantseg_resnet50_source_20261110-083456.json`):
+
+- **Black rot**, the one PlantSeg class that is also a model class: 16 of 25 correct,
+  accuracy **0.6400** [0.445, 0.798], mean confidence 0.6464. At the 0.9132 threshold, 12.0%
+  of them are accepted without a warning. n = 25 is small; quote the interval.
+- **Diseases the model was not trained on** (confidence only; the warning cannot recognise
+  them as out of scope):
+
+| Disease | Leaves | Mean confidence | Accepted without a warning |
+|---|---|---|---|
+| Downy mildew | 174 | 0.5524 | 2.3% |
+| Leaf spot | 74 | 0.6666 | 6.8% |
+| Leafroll | 61 | 0.6314 | 4.9% |
 
 ---
 
@@ -138,6 +205,18 @@ why the degradation study, where errors occur, is the real experiment.
   comparison only, labelled optimistic. A threshold that only works by referring everything
   is flagged as such, not reported as a success. Every threshold is printed with a list of
   what it does not cover (`THRESHOLD_LIMITS` in `src/evaluate.py`).
+- **Deep ensemble.** Three `source`-split models trained with the same protocol and seeds
+  42, 43 and 44; the prediction is the mean softmax at T = 1. Mutual information between
+  members is the disagreement score (`DECISIONS.md` D13). The ensemble goes through the same
+  sweep and threshold procedure as the single model.
+- **MC dropout.** A dropout layer (p = 0.5) before the final linear layer of the seed-42
+  model; only that head is retrained, for the protocol's 5 head epochs. The prediction is
+  the mean softmax over 20 passes with dropout on, then the same sweep and threshold.
+- **Field photographs.** PlantSeg v6 grape images, tagged by eye as leaf, berry or other
+  against a rule fixed before tagging (`DECISIONS.md` D14–D16); only leaf photographs are
+  used. Black rot is the only PlantSeg
+  class that is also a model class, so it is the only one with an accuracy. The other
+  diseases are reported as confidence only, against the threshold chosen above.
 
 ---
 
@@ -237,11 +316,32 @@ because the MiKTeX `pdflatex` in `/usr/local/bin` cannot build its format file.
 
 ### The real experiment (Colab T4)
 
-`notebooks/01_baseline_calibration.ipynb` (training) and
-`notebooks/02_degradation_study.ipynb` (sweep, figures, verification). Both clone this repo
-and import `src/`, so Colab runs exactly the code the tests ran. Step-by-step instructions,
-timings, and the files to check are in [`HANDOVER.md`](HANDOVER.md). The September 2026
-notebook that produced `results/` is kept, unchanged, in `notebooks/archive/`.
+Five notebooks, run in the order given in [`RUNSHEET.md`](RUNSHEET.md):
+
+| Notebook | Does |
+|---|---|
+| `01_baseline_calibration.ipynb` | trains ResNet-50 on the `source` and `supplied` splits |
+| `02_degradation_study.ipynb` | the sweep, coverage curves, threshold, figures and verification |
+| `03_deep_ensemble.ipynb` | trains members with seeds 43 and 44 and runs the ensemble through the sweep |
+| `04_plantseg_field.ipynb` | downloads PlantSeg v6 from Zenodo and runs the field analysis |
+| `05_mc_dropout.ipynb` | retrains the head with dropout and runs MC dropout through the sweep |
+
+Each clones this repo and imports `src/`, so Colab runs exactly the code the tests ran.
+Every cell, timing and output file is described in [`HANDOVER.md`](HANDOVER.md).
+`tools/import_colab.py` copies the outputs home, regenerates the report numbers and runs
+`src.verify` on everything. The September 2026 notebook that produced `results/source/` and
+`results/supplied/` is kept, unchanged, in `notebooks/archive/`.
+
+To check the stored November outputs without a GPU:
+
+```bash
+D=results/colab_20261110
+.venv/bin/python -m src.verify --run $D/results_resnet50_source_20261110-083456.json
+.venv/bin/python -m src.verify --ensemble $D/ensemble_resnet50_source_ens3_20261111-120456.json
+.venv/bin/python -m src.verify --mcdropout $D/mcdropout_resnet50_source_20261110-083456_mcdropout.json
+.venv/bin/python -m src.verify --plantseg $D/plantseg_resnet50_source_20261110-083456.json
+.venv/bin/python -m src.verify --generated report/generated
+```
 
 Tested locally with Python 3.13.5 and the versions pinned in `requirements.txt`. In Colab,
 the preinstalled CUDA build of PyTorch is used instead of the CPU pin.
@@ -261,9 +361,11 @@ tools/          build_notebooks.py (generates and validates the notebooks),
                 make_tables.py (report tables and number macros from the results JSON),
                 import_colab.py (brings the Colab outputs home and checks them),
                 plantseg_contact_sheets.py (the PlantSeg leaf-filter sheets)
-report/         the final report: main.tex (ACM sigconf skeleton), refs.bib, generated/
-results/        the September 2026 runs: results JSON, audit, reliability diagrams
-figures/        the corruption protocol figure (sweep figures follow the Colab run)
+report/         the final report: main.tex (ACM sigconf), refs.bib, generated/
+results/        colab_20261110/ = the November 2026 runs the report uses (results, splits,
+                logits, sweeps, ensemble, MC dropout, PlantSeg, figures_*/);
+                source/, supplied/ = the September 2026 runs; plantseg/ = the leaf filter
+figures/        the corruption protocol figure
 DECISIONS.md    every design choice not fixed by the submitted plan, with the reasoning
 RUNSHEET.md     the Colab day, step by step
 HANDOVER.md     the reference behind it: every cell, every file
