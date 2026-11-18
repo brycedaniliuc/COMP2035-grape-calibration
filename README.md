@@ -160,12 +160,15 @@ HANDOVER.md     the reference behind it: every cell, every file
 
 The images come from PlantVillage (Hughes & Salathé, arXiv:1511.08060), via the Kaggle "New
 Plant Diseases Dataset" (offline-augmented copy, labelled "Data files © Original Authors").
-
+The dataset author's Hugging Face card (`mohanty/PlantVillage`) gives the licence as
+**CC BY-SA 3.0**. The dataset itself is not in this repository. The 80 fixture images and the
+corruption-grid figure are, under CC BY-SA 3.0 with attribution: see
 `tests/fixture/IMAGES-LICENSE.md`.
 
 The field photographs come from PlantSeg v6 (Wei et al. 2026; Zenodo record 16665770,
 CC BY 4.0). No PlantSeg image is in this repository. `results/plantseg/leaf_filter.csv` holds
-only each image's filename.
+only each image's filename, PlantSeg's own labels, and the tags assigned here; notebook 04
+downloads the images from Zenodo.
 
 The code is MIT licensed (`LICENSE`).
 
