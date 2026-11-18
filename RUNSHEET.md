@@ -1,5 +1,8 @@
 # RUNSHEET — the Colab day, step by step
 
+> This run was completed on 10 November 2026; the outputs are in `results/colab_20261110/`.
+> The steps below are kept as the record of how it was run.
+
 Follow the steps in order. Nothing has to be remembered. Times are for a Colab T4: the
 training times were measured in September; everything else is an estimate.
 

@@ -1,5 +1,9 @@
 # HANDOVER — running the real experiment in Google Colab
 
+> The run described here was completed on 10 November 2026. Its outputs are in
+> `results/colab_20261110/` and are the numbers the report uses. This file is kept as the
+> record of how, and as the instructions for anyone repeating it.
+
 **For the day itself, follow `RUNSHEET.md`:** one page of numbered steps. This file is the
 reference behind it: what each cell does, what lands in Drive, and why.
 
@@ -35,8 +39,9 @@ in Drive (a trained member, a sweep) is reused, not repeated.
 
 1. **The code comes from GitHub.** The notebooks clone
    `https://github.com/brycedaniliuc/COMP2035-grape-calibration` (public) at `REPO_REF`, which
-   is `main` by default. Leave it at `main`. There is no release tag yet; the old `v1.0` tag
-   was deleted because it chose the threshold on the test images (DECISIONS.md D10).
+   is `main` by default. Leave it at `main`. The `v1.0` tag marks the submitted state. An
+   earlier tag of the same name was deleted because it chose the threshold on the test
+   images (DECISIONS.md D10).
 2. **The dataset zip must be in Drive.** Upload
    `~/Downloads/Literature Review paper/Grape/grape_dataset_for_colab.zip` (160.6 MB) to the
    **top level of My Drive**, with exactly that name. The September runs used this same zip,

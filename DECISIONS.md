@@ -1,8 +1,11 @@
-# DECISIONS — not yet confirmed with the supervisor
+# DECISIONS — design choices and their reasoning
 
 Each item is a design choice that `CLAUDE.md` and the submitted paper do not fix. Each has a
 recommendation, which stays a recommendation until the owner (and where needed the
 supervisor) confirms it. Status is **OPEN** until then.
+
+All are **RESOLVED** except **D7**, the darkening and occlusion severities, which remain this
+project's own design and have not been confirmed with the supervisor.
 
 ---
 
@@ -96,7 +99,7 @@ known leaks to find, and they are named in `tests/fixture/MANIFEST.md`.
 **Recommendation.** Keep it. If an artificially planted leak is wanted as well, it can be added
 under a separate role.
 
-## D7 · Degradation severities — OPEN (two of four are our own design)
+## D7 · Degradation severities — OPEN (two of four are this project's own design)
 
 **Verified from source.** These come from hendrycks/robustness,
 `ImageNet-C/create_c/make_imagenet_c.py` (commit e0377d4), by Hendrycks & Dietterich
@@ -106,11 +109,11 @@ under a separate role.
 - **Brightness +**: HSV V += 0.1, 0.2, 0.3, 0.4, 0.5, clipped. This is `brightness`,
   verbatim. ImageNet-C only brightens.
 - **Pipeline**: ImageNet-C applies its corruptions after `Resize(256)` → `CenterCrop(224)`
-  and casts with `np.uint8` (truncation). We do the same, so the sigmas are on the same pixel
-  scale. **Difference:** ImageNet-C then saves JPEG at quality 85. We corrupt in memory and
+  and casts with `np.uint8` (truncation). This project does the same, so the sigmas are on the same pixel
+  scale. **Difference:** ImageNet-C then saves JPEG at quality 85. This project corrupts in memory and
   skip that second lossy step.
 
-**Our adaptations (not from ImageNet-C):**
+**Adaptations made here (not from ImageNet-C):**
 - **Brightness −** (darkening): HSV V −= 0.1 … 0.5, the mirror of `brightness`. The brief
   asks for exposure shift "in both directions" and ImageNet-C has no darkening. Severity 5
   is close to black (see `figures/corruption_grid_*`), which is harsh by construction.
@@ -119,7 +122,7 @@ under a separate role.
   ImageNet-C has no occlusion corruption. The nearest is `spatter` (mud blobs), which is not
   a controlled occluder.
 
-**Recommendation.** Keep these. Report the two adapted series as our own design in the
+**Recommendation.** Keep these. Report the two adapted series as this project's own design in the
 Method section, not as ImageNet-C.
 
 ## D8 · Redistributing PlantVillage images in a public repo — RESOLVED (owner accepted CC BY-SA 3.0, 2026-11-09)
@@ -134,7 +137,7 @@ corruption-grid figure are published under CC BY-SA 3.0, with attribution, as st
 - The dataset author's Hugging Face card, https://huggingface.co/datasets/mohanty/PlantVillage
   (account `mohanty`), gives `license: cc-by-sa-3.0`, both on the page and in the raw README
   YAML. This is the only explicit licence found for the images.
-- The Kaggle copy we actually use ("New Plant Diseases Dataset", vipoooool / Samir Bhattarai)
+- The Kaggle copy used here ("New Plant Diseases Dataset", vipoooool / Samir Bhattarai)
   is labelled "Data files © Original Authors". It is an offline-augmented derivative of
   https://github.com/spMohanty/PlantVillage-Dataset.
 - The GitHub repos (spMohanty, salathegroup) show no licence file. The GitHub API returned
@@ -271,7 +274,7 @@ file, Mask ratio, URL, License, Split). Images are in `Plantseg/images/{train,va
 
 **The grape images (`Plant == "Grape"`): 564, in four classes.**
 
-| PlantSeg disease | Images | train / val / test (PlantSeg's split) | Matches our classes? |
+| PlantSeg disease | Images | train / val / test (PlantSeg's split) | Matches these classes? |
 |---|---|---|---|
 | grape downy mildew | 280 | 194 / 30 / 56 | no |
 | grape black rot | 122 | 85 / 13 / 24 | **by name**: Black_rot |
@@ -284,7 +287,7 @@ are other plants.
 **A visual look (thumbnails of every image in the two possibly matching classes, not a
 count for the report):**
 - Most of the 122 black rot images show **berries or clusters**; roughly a fifth show
-  leaves. Our model was trained only on PlantVillage leaves.
+  leaves. The model here was trained only on PlantVillage leaves.
 - All 91 leaf spot images show leaves in the field, with a mix of spot types. Nothing in
   the metadata says that "leaf spot" is Isariopsis leaf spot.
 
@@ -294,7 +297,7 @@ another organ, one may match, and two do not match at all.
 **Recommendation for phase B (owner decides before anything is built):**
 - Run the classifier over all 564 grape images and report the **confidence distribution**
   for each PlantSeg class: out-of-distribution confidence, never accuracy.
-- Also report **which of our four classes it predicts** for each PlantSeg class. For black
+- Also report **which of the four classes it predicts** for each PlantSeg class. For black
   rot this one number is checkable ("of PlantSeg's 122 black rot images, mostly berries, the
   model called x% Black_rot"). Label it as agreement on a mostly non-leaf subset, not
   field accuracy.
