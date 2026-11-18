@@ -3,12 +3,12 @@
 Code and results for COMP2035 Topics in Computer Science, Adelaide University, 2026.
 Bryce Daniliuc (a1927102). Supervisor: Prof Volker Hessel. Co-supervisor: Shu Liang.
 
-Deep learning models for classifying grape leaf disease report almost 100% accuracy, but
-accuracy says nothing about how confident those predictions were. This project fine-tunes
-ResNet-50 on the PlantVillage grape subset and asks whether the model can separate its
-correct predictions from its incorrect ones once images are degraded. The deliverable is a
-confidence threshold: a number below which a prediction is referred to a person instead of
-acted on.
+Deep learning models developed for grape leaf disease classification often report near-perfect accuracy; however,
+accuracy alone does not indicate the confidence associated with individual predictions. This project fine-tunes
+a ResNet-50 model on the PlantVillage grape subset and investigates whether the model can distinguish its
+correct predictions from incorrect ones when images are degraded. The primary deliverable is a
+confidence threshold: a value below which predictions are referred to human experts rather than
+being acted upon automatically.
 
 Four classes: black rot, esca, leaf blight, healthy.
 
@@ -22,18 +22,19 @@ what it found, and how to run it.
 Every number below comes from `results/colab_20261110/` and is re-derived by `src.verify`.
 The source file for each is named.
 
-**1 · The supplied split leaks.** The Kaggle release augments each leaf and then splits the
-augmented images, so copies of the same physical leaf sit on both sides. 1,344 of 1,539 test
-leaves — 87.3% — also appear in training, and 621 of the 816 unaugmented test images (76.1%)
-are of leaves the model has already seen. A model evaluated on this partition is tested
-largely on rotations and reflections of leaves it was trained on. Reported accuracy measures
+**1 · The provided data split exhibits information leakage. The Kaggle release augments each leaf prior to partitioning the dataset.
+As a result, copies of the same physical leaf are present in both training and test sets. Specifically, 1,344 out of 1,539 test
+leaves (87.3%) also appear in the training set, and 621 of the 816 unaugmented test images (76.1%)
+correspond to leaves previously encountered by the model. A model evaluated on this partition is therefore tested
+primarily on rotations and reflections of leaves included in the training set. The reported accuracy thus measures
 recall of seen leaves, not generalisation to new ones. The healthy class leaks completely,
-at 100.0%, because the augmentation equalises image counts across classes, not leaf counts.
+at 100.0%, because the augmentation process equalises image counts across classes rather than leaf counts.
+
 (`src/audit.py`)
 
 **2 · Removing the leak changed nothing.** Re-partitioning at the source-leaf level — 2,843
 training leaves, 609 validation, 610 test, with augmented copies of held-out leaves discarded
-rather than moved — still gives 1.0000 accuracy on the clean test set, 95% CI [0.994, 1.000].
+Rather than improved, still gives 1.0000 accuracy on the clean test set (95% CI [0.994, 1.000]).
 That rules out leakage as the explanation and leaves a saturated benchmark. Mean confidence
 is 0.9221 against accuracy 1.0000, so the model is underconfident, not overconfident; label
 smoothing of 0.1 is the cause. ECE is 0.0779, and all of that is the model refusing to say
@@ -42,15 +43,15 @@ smoothing of 0.1 is the cause. ECE is 0.0779, and all of that is the model refus
 **3 · Temperature scaling could not be fitted.** With no validation errors to penalise, NLL
 falls monotonically as temperature falls, and there is no minimum to find. LBFGS stopped at
 T = 0.1699 after 100 iterations, driving validation NLL from 0.0824 to 3.02×10⁻⁶. Applying
-that value pushed every prediction to full confidence: mean confidence 1.0000, ECE 0.0000.
+That value pushed every prediction to full confidence: mean confidence 1.0000, ECE 0.0000.
 A perfect calibration score, and completely worthless. The value is an optimiser artefact,
 not a fitted parameter. (`src/calibrate.py`)
 
 **4 · Detail loss is what breaks the model, not light loss.** Four corruptions at six
-severities each. Blur takes accuracy from 1.0000 to 0.4148 and ECE from 0.0779 to 0.2406.
+Severities each. Blur takes accuracy from 1.0000 to 0.4148 and ECE from 0.0779 to 0.2406.
 Darkening reaches 0.6787. Brightening and occlusion barely register — 0.9934 and 0.9869 at
 severity 5. Under blur, confidence falls more slowly than accuracy does: the model stays
-right about which predictions to doubt long after it stops being right about the class.
+right about which predictions to doubt long after it's stopped being right about the class.
 (`src/degrade.py`, `src/evaluate.py`)
 
 **5 · The threshold.** Ranking by raw maximum softmax was sufficient; neither predictive
@@ -58,14 +59,14 @@ entropy nor logit margin improved on it. A threshold of 0.9132, chosen on degrad
 images and never adjusted, held accuracy at or above 95% in twenty-three of the twenty-four
 test conditions, referring 41.93% of predictions for human review. The one miss is darkening
 at severity 5. A three-member deep ensemble met the target in all twenty-four and halved the
-cost, referring 21.72%. MC dropout over 20 passes referred 40.90% and still missed one.
+cost, 21.72%. MC dropout over 20 passes referred 40.90% and still missed one.
 (`src/evaluate.py`, `src/ensemble.py`, `src/mcdropout.py`)
 
 **6 · Field photographs.** On 25 black rot photographs from PlantSeg v6 the model scored
 0.6400 [0.445, 0.798] with mean confidence 0.6464 — close to what the severest simulated blur
 predicted (0.6410), and far below the 0.9221 of clean laboratory images. The confidence drop
 is in the right direction and roughly the right size, which is the strongest evidence here
-that the threshold would transfer. The sample is small and the comparison is indicative.
+That the threshold would transfer. The sample is small and the comparison is purely indicative.
 (`src/plantseg.py`)
 
 ---
@@ -78,14 +79,14 @@ This follows Canoski et al.'s protocol; the single deviation is the budget, 5 + 
 against their maximum of 100 with patience 20.
 
 Splits are grouped by source leaf, recovered from the UUID in each filename. Augmented copies
-of validation and test leaves are discarded, never moved into training.
+Validation and test leaves are just thrown away, they never get moved into training.
 
 Corruptions: Gaussian blur and brightness follow the ImageNet-C severity scales (Hendrycks &
 Dietterich 2019). Darkening and occlusion are this project's own design and have not been
-confirmed with the supervisor (see `DECISIONS.md`, D7).
+confirmed with the supervisor (see DECISIONS.md, D7).
 
 ECE uses 15 equal-width bins on the maximum softmax. Accuracy intervals are Wilson 95%; ECE
-intervals are percentile bootstrap over 1,000 resamples.
+Intervals are percentile bootstrap over 1,000 resamples.
 
 ---
 
@@ -159,15 +160,12 @@ HANDOVER.md     the reference behind it: every cell, every file
 
 The images come from PlantVillage (Hughes & Salathé, arXiv:1511.08060), via the Kaggle "New
 Plant Diseases Dataset" (offline-augmented copy, labelled "Data files © Original Authors").
-The dataset author's Hugging Face card (`mohanty/PlantVillage`) gives the licence as
-**CC BY-SA 3.0**. The dataset itself is not in this repository. The 80 fixture images and the
-corruption-grid figure are, under CC BY-SA 3.0 with attribution: see
+
 `tests/fixture/IMAGES-LICENSE.md`.
 
 The field photographs come from PlantSeg v6 (Wei et al. 2026; Zenodo record 16665770,
 CC BY 4.0). No PlantSeg image is in this repository. `results/plantseg/leaf_filter.csv` holds
-only each image's filename, PlantSeg's own labels, and the tags assigned here; notebook 04
-downloads the images from Zenodo.
+only each image's filename.
 
 The code is MIT licensed (`LICENSE`).
 
